@@ -1,0 +1,144 @@
+# Prerequisites
+*.d
+
+.tmp
+*cling-build*
+node_modules
+*_generated.*
+examples/webclient/dist
+build-*
+
+# Mac OS X files
+*.DS_Store
+
+# ctag files
+.tags
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Editors
+.vscode
+.idea/
+
+# Build
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+build/*
+CMakeFiles/*
+CMakeFiles
+xcode/*
+CMakeLists\.txt\.user
+cmake-build-*/
+/*.sln
+/*.xcodeproj
+/Makefile
+*.target.xml
+*.exe.config
+CTestTestfile.cmake
+CMakeScripts
+Testing
+install_manifest.txt
+compile_commands.json
+__pycache__/
+
+# coverage results
+coverage
+build/coverage
+
+# Build 3dparty
+build-iwyu/
+build-g3log/
+abseil/
+
+compile_commands\.json
+
+include-what-you-use
+!submodules/include-what-you-use
+
+# Ignore Unix backup files
+*~
+
+# Ignore vscode
+
+# Ignore build artifacts
+bin
+build
+out
+
+# Test results
+Testing/
+
+# Ignore intermediate folders
+intermediate/
+
+# Ignore any saved local files
+saved/
+
+# Explcitly ignore Mac DS_Store files, regardless of where they are
+.DS_Store
+
+# Ignore thirdparty folders
+thirdparty/
+#submodules/
+
+# log
+*.log
+
+*.directory
+
+*.autosave
+*.txt.user.*
+/trace_report.json
+/typescript
+/cling
+/graph_info.json
+/environment.sh.env
+/deactivate.sh
+/conaninfo.txt
+/conanbuildinfo.txt
+/conanbuildinfo.cmake
+/conan_paths.cmake
+/conan.lock
+/activate.sh
+/examples/basis_lib/activate.sh
+/examples/basis_lib/conan.lock
+/examples/basis_lib/conan_imports_manifest.txt
+/examples/basis_lib/conan_paths.cmake
+/examples/basis_lib/conanbuildinfo.cmake
+/examples/basis_lib/conanbuildinfo.txt
+/examples/basis_lib/conaninfo.txt
+/examples/basis_lib/deactivate.sh
+/examples/basis_lib/environment.sh.env
+/examples/basis_lib/graph_info.json
+*.gdb_history
+/conan_imports_manifest.txt
+/tests/data/asset_complete.json
