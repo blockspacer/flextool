@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include "flextool/ToolPlugin.hpp"
+#include "flexlib/ToolPlugin.hpp"
 #include "flextool/PluginManager.hpp"
 #include "flexlib/parser_constants.hpp"
 
@@ -207,7 +207,7 @@ static boost::optional<int> thread_num_arg;
 
 static std::vector<std::string> ctp_scripts_search_paths;
 
-static std::vector<std::string> pathsToPluginFiles;
+static std::vector<std::string> pathsToExtraPluginFiles;
 
 template<class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
@@ -749,7 +749,7 @@ static void process_ctp_scripts_dir(
           clingInterpreter.loadFile(full_path);
           //InterpreterModule::moduleToSources["main_module"].push_back(full_path.string());
           /// \todo use boost outcome for error reporting
-          DLOG(INFO)
+          DVLOG(9)
             << "added to InterpreterModule file "
             << full_path.string();
         }
@@ -780,7 +780,7 @@ static void tryAppendHeadersPathArg(
     + path.value());
   if(!base::PathExists(path)) {
     LOG(WARNING)
-      << "Unable to find path: "
+      << "Unable to find path to headers: "
       << path;
   }
 }
@@ -972,7 +972,7 @@ static const char* threads_arg_name = "threads,J";
 static const char* ctp_scripts_paths_arg_name = "ctp_scripts_paths,C";
 // paths to plugin files that
 // must be loaded independently from plugins configuration file
-static const char* pathsToPluginFilesArg = "load_plugin";
+static const char* pathsToExtraPluginFilesArg = "load_plugin";
 
 int main(int argc, char* argv[]) {
   po::variables_map vm;
@@ -997,8 +997,8 @@ int main(int argc, char* argv[]) {
       (ctp_scripts_paths_arg_name
        , po::value(&ctp_scripts_search_paths)->multitoken()
        , "list of paths where toll will search for ctp_scripts subfolder")
-      (pathsToPluginFilesArg
-       , po::value(&pathsToPluginFiles)->multitoken()
+      (pathsToExtraPluginFilesArg
+       , po::value(&pathsToExtraPluginFiles)->multitoken()
        , "paths to plugin files that "
          "must be loaded independently from plugins configuration file")
       (outdir_arg_name
@@ -1070,7 +1070,7 @@ int main(int argc, char* argv[]) {
   }
 
   if(plugin_dir_arg.is_initialized() && !plugin_dir_arg.value().empty()) {
-    DLOG(INFO) << "plugin_dir_arg " << plugin_dir_arg.value();
+    DVLOG(9) << "plugin_dir_arg " << plugin_dir_arg.value();
     ctp::Options::pathToDirWithPlugins
       = base::MakeAbsoluteFilePath(
           base::FilePath(plugin_dir_arg.value()));
@@ -1091,7 +1091,7 @@ int main(int argc, char* argv[]) {
     = dir_exe.AppendASCII("plugins").AppendASCII("plugins.conf");
 
   if(plugin_conf_arg.is_initialized() && !plugin_conf_arg.value().empty()) {
-    DLOG(INFO) << "plugin_conf_arg " << plugin_conf_arg.value();
+    DVLOG(9) << "plugin_conf_arg " << plugin_conf_arg.value();
     ctp::Options::pathToDirWithPluginsConfigFile
       = base::MakeAbsoluteFilePath(
           base::FilePath(plugin_conf_arg.value()));
@@ -1139,24 +1139,6 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<entt::dispatcher> main_events_dispatcher
     = std::make_unique<entt::dispatcher>();
   plug_mgr.connect_to_dispatcher(*main_events_dispatcher);
-
-  {
-    main_events_dispatcher->trigger<
-        backend::PluginManager::Events::Startup
-      >(backend::PluginManager::Events::Startup{
-        .pathToDirWithPlugins = ctp::Options::pathToDirWithPlugins
-        , .pathToPluginsConfFile = ctp::Options::pathToDirWithPluginsConfigFile
-        , .pathsToPluginFiles =  ctp::Options::pathsToPluginFiles
-      }
-    );
-    // each loaded plugin must receive |connect_plugins_to_dispatcher|
-    if(!plug_mgr.countLoadedPlugins()) {
-      LOG(WARNING)
-        << "unable to find plugins in plugins directory: "
-        << dir_exe.AppendASCII("plugins").MaybeAsASCII();
-    }
-    plug_mgr.connect_plugins_to_dispatcher(*main_events_dispatcher);
-  }
 
   std::vector<std::string> args_storage;
   std::vector<std::string> cling_extra_args;
@@ -1301,8 +1283,8 @@ int main(int argc, char* argv[]) {
   }
 #endif // CLING_IS_ON
 
-  for(const std::string& it: pathsToPluginFiles) {
-    ctp::Options::pathsToPluginFiles.push_back(base::FilePath{it});
+  for(const std::string& it: pathsToExtraPluginFiles) {
+    ctp::Options::pathsToExtraPluginFiles.push_back(base::FilePath{it});
     DVLOG(9)
       << "added path to plugin file: "
       << it;
@@ -1376,7 +1358,27 @@ int main(int argc, char* argv[]) {
       process_ctp_scripts_dir(it, clingInterpreter);
     }
   }
+#endif // defined(CLING_IS_ON)
 
+  {
+    main_events_dispatcher->trigger<
+        backend::PluginManager::Events::Startup
+      >(backend::PluginManager::Events::Startup{
+        .pathToDirWithPlugins = ctp::Options::pathToDirWithPlugins
+        , .pathToPluginsConfFile = ctp::Options::pathToDirWithPluginsConfigFile
+        , .pathsToExtraPluginFiles =  ctp::Options::pathsToExtraPluginFiles
+      }
+    );
+    // each loaded plugin must receive |connect_plugins_to_dispatcher|
+    if(!plug_mgr.countLoadedPlugins()) {
+      LOG(WARNING)
+        << "unable to find plugins in plugins directory: "
+        << dir_exe.AppendASCII("plugins").MaybeAsASCII();
+    }
+    plug_mgr.connect_plugins_to_dispatcher(*main_events_dispatcher);
+  }
+
+#if defined(CLING_IS_ON)
   main_events_dispatcher->trigger<
     plugin::ToolPlugin::Events::RegisterClingInterpreter>(
       plugin::ToolPlugin::Events::RegisterClingInterpreter{

@@ -42,7 +42,7 @@ class flextoolConan(ConanFile):
         #"*:shared=False",
         "enable_clang_from_conan=False",
         "use_system_boost=False",
-        "enable_tests=False",
+        "enable_tests=True",
         "enable_sanitizers=False",
         # boost
         "boost:without_atomic=True",
@@ -110,6 +110,8 @@ class flextoolConan(ConanFile):
         "openssl:shared=True",
         # chromium_base
         "chromium_base:use_alloc_shim=True",
+        # chromium_tcmalloc
+        "chromium_tcmalloc:use_alloc_shim=True",
     )
 
     generators = 'cmake_find_package', "cmake", "cmake_paths"

@@ -1,6 +1,6 @@
 #include "flextool/PluginManager.hpp" // IWYU pragma: associated
 
-#include "flextool/ToolPlugin.hpp"
+#include "flexlib/ToolPlugin.hpp"
 
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
@@ -168,18 +168,32 @@ void PluginManager::startup(const Events::Startup& event)
 
   // append path to plugins that
   // must be loaded independently of configuration file
-  for(const base::FilePath& pluginPath: event.pathsToPluginFiles) {
-    filtered_plugins.push_back(pluginPath.value());
+  for(const base::FilePath& pluginPath: event.pathsToExtraPluginFiles) {
+    DVLOG(9)
+      << "added plugin: "
+      << pluginPath;
+    filtered_plugins.push_back(
+      /*
+      * @note If passing a file path, the implementation expects forward
+      *      slashes as directory separators.
+      * Use @ref Utility::Directory::fromNativeSeparators()
+      *      to convert from platform-specific format.
+      */
+      Corrade::Utility::Directory::fromNativeSeparators(pluginPath.value()));
   }
 
   for(std::vector<std::string>::const_iterator it = filtered_plugins.begin()
       ; it != filtered_plugins.end(); ++it)
   {
-    const std::string& plugin_name = *it;
+    const std::string& pluginNameOrPath = *it;
+
+    // The implementation expects forward slashes as directory separators.
+    DCHECK(Corrade::Utility::Directory::fromNativeSeparators(
+             pluginNameOrPath) == pluginNameOrPath);
 
     DVLOG(9)
       << "plugin enabled: "
-      << plugin_name;
+      << pluginNameOrPath;
 
     /**
      * @brief Load a plugin
@@ -215,29 +229,71 @@ void PluginManager::startup(const Events::Startup& event)
      *      @ref LoadState::NotFound.
     **/
     const bool is_loaded
-      = static_cast<bool>(manager_->load(plugin_name)
-        & (Corrade::PluginManager::LoadState::Loaded
-           | Corrade::PluginManager::LoadState::Static)
+      = static_cast<bool>(manager_->load(pluginNameOrPath)
+          & (Corrade::PluginManager::LoadState::Loaded
+          | Corrade::PluginManager::LoadState::Static)
         );
     if(!is_loaded) {
         LOG(ERROR)
           << "The requested plugin "
-          << plugin_name
+          << pluginNameOrPath
           << " cannot be loaded.";
         DCHECK(false);
         continue;
     }
+
+    /**
+    @brief Extract filename (without path) from filename
+
+    If the filename doesn't contain any slash, returns whole string, otherwise
+    returns everything after last slash.
+    @attention The implementation expects forward slashes as directory separators.
+        Use @ref fromNativeSeparators() to convert from a platform-specific format.
+    @see @ref path(), @ref splitExtension()
+    */
+    const std::string pluginNameOrFilenameWithExt
+        = Corrade::Utility::Directory::filename(pluginNameOrPath);
+
+    DCHECK(base::FilePath{pluginNameOrPath}
+            .BaseName().value()
+              == pluginNameOrFilenameWithExt);
+
+    /**
+    @brief Split basename and extension
+    @m_since{2019,10}
+
+    Returns a pair `(root, ext)` where @cpp root + ext == path @ce, and ext is
+    empty or begins with a period and contains at most one period. Leading periods
+    on the filename are ignored, @cpp splitExtension("/home/.bashrc") @ce returns
+    @cpp ("/home/.bashrc", "") @ce. Behavior equivalent to Python's
+    @cb{.py} os.path.splitext() @ce.
+    @attention The implementation expects forward slashes as directory separators.
+        Use @ref fromNativeSeparators() to convert from a platform-specific format.
+    @see @ref path(), @ref filename(), @ref String::partition()
+    */
+    const std::string pluginName
+        = Corrade::Utility::Directory::splitExtension(pluginNameOrFilenameWithExt).first;
+
+    DCHECK(base::FilePath{pluginNameOrFilenameWithExt}
+            .BaseName().RemoveExtension().value()
+              == pluginName);
+
+    DCHECK(static_cast<bool>(manager_->loadState(pluginName)
+                               & (Corrade::PluginManager::LoadState::Loaded
+                               | Corrade::PluginManager::LoadState::Static)
+                             ));
 
     /// Returns new instance of given plugin.
     /// \note The plugin must be already
     /// successfully loaded by this manager.
     /// \note The returned value is never |nullptr|
     PluginPtr plugin
-      = manager_->instantiate(plugin_name);
+      /// \note must be plugin name, not path to file
+      = manager_->instantiate(pluginName);
     if(!plugin) {
       LOG(ERROR)
         << "The requested plugin "
-        << plugin_name
+        << pluginNameOrPath
         << " cannot be instantiated.";
       DCHECK(false);
       continue;

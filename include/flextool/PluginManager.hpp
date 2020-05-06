@@ -43,7 +43,7 @@ public:
     struct Startup {
       base::FilePath pathToDirWithPlugins;
       base::FilePath pathToPluginsConfFile;
-      std::vector<base::FilePath> pathsToPluginFiles;
+      std::vector<base::FilePath> pathsToExtraPluginFiles;
     };
     struct Shutdown {
       // event parameters

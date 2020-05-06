@@ -62,8 +62,6 @@ GIT_SSL_NO_VERIFY=true \
       conan create . conan/stable \
       -s build_type=Debug -s cling_conan:build_type=Release \
       --profile clang \
-          -o shared=False \
-          -o enable_clang_from_conan=False \
-          -o enable_tests=True \
-          -o *:use_alloc_shim=True
+          -o flextool:enable_clang_from_conan=False \
+          -o flextool:enable_tests=True
 ```
