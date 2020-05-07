@@ -116,8 +116,6 @@ class flextoolConan(ConanFile):
 
     generators = 'cmake_find_package', "cmake", "cmake_paths"
 
-
-
     # build-only option
     # see https://github.com/conan-io/conan/issues/6967
     # conan ignores changes in environ, so
@@ -234,7 +232,7 @@ class flextoolConan(ConanFile):
 
         def add_cmake_option(var_name, value):
             value_str = "{}".format(value)
-            var_value = "ON" if bool(strtobool(value_str)) else "OFF"
+            var_value = "ON" if bool(strtobool(value_str.lower())) else "OFF"
             self.output.info('added cmake definition %s = %s' % (var_name, var_value))
             cmake.definitions[var_name] = var_value
 
