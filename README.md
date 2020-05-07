@@ -63,5 +63,5 @@ GIT_SSL_NO_VERIFY=true \
       -s build_type=Debug -s cling_conan:build_type=Release \
       --profile clang \
           -o flextool:enable_clang_from_conan=False \
-          -o flextool:enable_tests=True
+          -e flextool:enable_tests=True
 ```

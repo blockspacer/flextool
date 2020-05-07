@@ -4,6 +4,9 @@ from conans.tools import os_info
 import os, re, stat, fnmatch, platform, glob
 from functools import total_ordering
 
+# if you using python less than 3 use from distutils import strtobool
+from distutils.util import strtobool
+
 class flextoolConan(ConanFile):
     name = "flextool"
     version = "master"
@@ -33,7 +36,6 @@ class flextoolConan(ConanFile):
 
     options = {
         "use_system_boost": [True, False],
-        "enable_tests": [True, False],
         "enable_clang_from_conan": [True, False],
         "enable_sanitizers": [True, False]
     }
@@ -42,7 +44,6 @@ class flextoolConan(ConanFile):
         #"*:shared=False",
         "enable_clang_from_conan=False",
         "use_system_boost=False",
-        "enable_tests=True",
         "enable_sanitizers=False",
         # boost
         "boost:without_atomic=True",
@@ -103,7 +104,6 @@ class flextoolConan(ConanFile):
         # flexlib
         "flexlib:shared=False",
         "flexlib:enable_clang_from_conan=False",
-        "flexlib:enable_tests=True",
         # FakeIt
         "FakeIt:integration=catch",
         # openssl
@@ -115,6 +115,29 @@ class flextoolConan(ConanFile):
     )
 
     generators = 'cmake_find_package', "cmake", "cmake_paths"
+
+
+
+    # build-only option
+    # see https://github.com/conan-io/conan/issues/6967
+    # conan ignores changes in environ, so
+    # use `conan remove` if you want to rebuild package
+    def _environ_option(self, name, default = 'true'):
+      env_val = default.lower() # default, must be lowercase!
+      # allow both lowercase and uppercase
+      if name.upper() in os.environ:
+        env_val = os.getenv(name.upper())
+      elif name.lower() in os.environ:
+        env_val = os.getenv(name.lower())
+      # strtobool:
+      #   True values are y, yes, t, true, on and 1;
+      #   False values are n, no, f, false, off and 0.
+      #   Raises ValueError if val is anything else.
+      #   see https://docs.python.org/3/distutils/apiref.html#distutils.util.strtobool
+      return bool(strtobool(env_val))
+
+    def _is_tests_enabled(self):
+      return self._environ_option("ENABLE_TESTS", default = 'true')
 
     @property
     def _source_dir(self):
@@ -129,7 +152,7 @@ class flextoolConan(ConanFile):
         self.build_requires("cmake_build_options/master@conan/stable")
 
     def requirements(self):
-        if self.options.enable_tests:
+        if self._is_tests_enabled():
             self.requires("catch2/[>=2.1.0]@bincrafters/stable")
             self.requires("gtest/[>=1.8.0]@bincrafters/stable")
             self.requires("FakeIt/[>=2.0.4]@gasuketsu/stable")
@@ -209,6 +232,14 @@ class flextoolConan(ConanFile):
         cmake.parallel = True
         cmake.verbose = True
 
+        def add_cmake_option(var_name, value):
+            value_str = "{}".format(value)
+            var_value = "ON" if bool(strtobool(value_str)) else "OFF"
+            self.output.info('added cmake definition %s = %s' % (var_name, var_value))
+            cmake.definitions[var_name] = var_value
+
+        add_cmake_option("ENABLE_TESTS", self._is_tests_enabled())
+
         cmake.definitions["CONAN_AUTO_INSTALL"] = 'OFF'
 
         if self.settings.compiler == 'gcc':
@@ -223,10 +254,6 @@ class flextoolConan(ConanFile):
         cmake.definitions["ENABLE_SANITIZERS"] = 'ON'
         if not self.options.enable_sanitizers:
             cmake.definitions["ENABLE_SANITIZERS"] = 'OFF'
-
-        cmake.definitions["ENABLE_TESTS"] = 'ON'
-        if not self.options.enable_tests:
-            cmake.definitions["ENABLE_TESTS"] = 'OFF'
 
         cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = 'conan_paths.cmake'
 
