@@ -205,6 +205,8 @@ static boost::optional<std::string> cling_includes_dir_arg;
 
 static boost::optional<int> thread_num_arg;
 
+static std::vector<std::string> cling_scripts;
+
 static std::vector<std::string> ctp_scripts_search_paths;
 
 static std::vector<std::string> pathsToExtraPluginFiles;
@@ -749,7 +751,7 @@ static void process_ctp_scripts_dir(
           clingInterpreter.loadFile(full_path);
           //InterpreterModule::moduleToSources["main_module"].push_back(full_path.string());
           /// \todo use boost outcome for error reporting
-          DVLOG(9)
+          VLOG(9)
             << "added to InterpreterModule file "
             << full_path.string();
         }
@@ -807,15 +809,31 @@ static void tryAppendHeadersPathArg(
  *     - Build path
  **/
 static void add_default_clang_args(
-    const base::FilePath clangHeadersPath
+    const base::FilePath clangBuildPath
+    , const base::FilePath clangHeadersPath
     , std::vector<std::string> &args)
 {
   const char kIncludeFlag[] = "-extra-arg=-I";
+  const char kBuildPathFlag[] = "-p=";
 
   base::FilePath dir_exe;
   if (!base::PathService::Get(base::DIR_EXE, &dir_exe)) {
     NOTREACHED();
     return;
+  }
+
+  if(!clangBuildPath.empty()) {
+    if(base::PathExists(clangBuildPath)) {
+      args.push_back(kBuildPathFlag
+        + clangBuildPath.value());
+      LOG(INFO)
+        << "added clang build path: "
+        << clangBuildPath;
+    } else {
+      LOG(WARNING)
+        << "Unable to clang build path: "
+        << clangBuildPath;
+    }
   }
 
   args.push_back("clang_app"); // app name
@@ -899,7 +917,8 @@ static void add_default_cling_args(
   clingInterpreterArgs.push_back("-DBOOST_SYSTEM_NO_DEPRECATED");
   clingInterpreterArgs.push_back("-DBOOST_ERROR_CODE_HEADER_ONLY");
 
-  clingInterpreterArgs.push_back("EmbedCling"); // app name
+  clingInterpreterArgs.push_back("cling_app"); // app name
+
   clingInterpreterArgs.push_back("--std=c++17");
 
   // include paths
@@ -970,6 +989,7 @@ static const char* cling_includes_dir_arg_name = "cling_includes_dir";
 static const char* threads_arg_name = "threads,J";
 /// \todo remove
 static const char* ctp_scripts_paths_arg_name = "ctp_scripts_paths,C";
+static const char* cling_scripts_arg_name = "cling_scripts";
 // paths to plugin files that
 // must be loaded independently from plugins configuration file
 static const char* pathsToExtraPluginFilesArg = "load_plugin";
@@ -980,6 +1000,28 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Allowed options");
   try {
     desc.add_options()
+      ///\todo use cling to change file path to generated file
+      /// $exec(
+      ///   generated(path = ./src/filename.cpp.gen);
+      /// )
+      ///\todo support plugins that change default generator behavior (change .generated postfix in filename)
+      /// plugin must use flexlib file save pipeline (it is vector<pair<function>,datasource>)
+      /// other plugin can change flexlib file save pipeline (add .datetime postfix after .generated postfix)
+      ///\todo support per-file metadata, pass to plugin load event
+      ///\todo support in config file for ordered file path list with per-file rules (infile/outfile-may be same as infile or without prefix/json metadata)
+      ///\todo allow plugins to hook into file parsing pipeline, have custom cmd args, change main loop to `watcher`
+      ///\todo allow plugins to use `localstorage` to save arbitrary KV data. Remove $export
+      ///\todo refactor typeclass
+      /// file parsing order must be set in conf file
+      /// plugin hooks in parsed event, filtered by pipeline rule "typeclass"
+      /// AFTER rule "typeclass" parsed, plugin can save libtooling output into member vars
+      /// AFTER rule "typeclass_instance" parsed, plugin can use libtooling output stored in member vars
+      /// if no data in member vars - error
+      ///\todo allow plugins to use parser cache. Add plugin to cache libtooling matchresult with some KV storage
+      /// cache:
+      /// $(make_reflect;localCache("typeclassCache","key1;somedata;");after_make_reflect;localCache("typeclassCache","key2;somedata;"))
+      /// plugin may register cache observer with key "typeclassCache"
+      /// plugin may register cache observer for any key
       (help_arg_name, "produce help message")
       (version_arg_name, "produce version message")
       (clang_includes_dir_arg_name
@@ -994,6 +1036,9 @@ int main(int argc, char* argv[]) {
       (plugin_conf_arg_name
        , po::value(&plugin_conf_arg)->default_value(boost::none, "")
        , "path to plugins configuration file")
+      (cling_scripts_arg_name
+       , po::value(&cling_scripts)->multitoken()
+       , "list of C++ files what need to be loaded by Cling interpreter")
       (ctp_scripts_paths_arg_name
        , po::value(&ctp_scripts_search_paths)->multitoken()
        , "list of paths where toll will search for ctp_scripts subfolder")
@@ -1070,7 +1115,7 @@ int main(int argc, char* argv[]) {
   }
 
   if(plugin_dir_arg.is_initialized() && !plugin_dir_arg.value().empty()) {
-    DVLOG(9) << "plugin_dir_arg " << plugin_dir_arg.value();
+    VLOG(9) << "plugin_dir_arg " << plugin_dir_arg.value();
     ctp::Options::pathToDirWithPlugins
       = base::MakeAbsoluteFilePath(
           base::FilePath(plugin_dir_arg.value()));
@@ -1091,7 +1136,7 @@ int main(int argc, char* argv[]) {
     = dir_exe.AppendASCII("plugins").AppendASCII("plugins.conf");
 
   if(plugin_conf_arg.is_initialized() && !plugin_conf_arg.value().empty()) {
-    DVLOG(9) << "plugin_conf_arg " << plugin_conf_arg.value();
+    VLOG(9) << "plugin_conf_arg " << plugin_conf_arg.value();
     ctp::Options::pathToDirWithPluginsConfigFile
       = base::MakeAbsoluteFilePath(
           base::FilePath(plugin_conf_arg.value()));
@@ -1143,8 +1188,20 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> args_storage;
   std::vector<std::string> cling_extra_args;
 
+  // outdir can contain `compile_commands.json`.
+  // To create compile_commands.json
+  // set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  // or
+  // set_target_properties(... ENABLE_EXPORTS 1)
+  // see https://releases.llvm.org/9.0.0/tools/clang/docs/LibTooling.html
+  base::FilePath clangBuildPath{};
+  if(outdir_arg.is_initialized() && !outdir_arg.value().empty()) {
+    clangBuildPath = base::FilePath{outdir_arg.value()};
+  }
+
   /// \note must be before all custom arguments
-  add_default_clang_args(clangHeadersPath, args_storage);
+  add_default_clang_args(
+    clangBuildPath, clangHeadersPath, args_storage);
 
   /// \note forward unregistered options to clang libtooling
   for (const auto& o : (*parsed_options).options) {
@@ -1153,7 +1210,7 @@ int main(int argc, char* argv[]) {
       for(size_t i = 0; i < o.value.size(); i++) {
         const std::string combined_for_clang
           = o.string_key + o.value[i];
-        DVLOG(9) << "forwarded unregistered option "
+        VLOG(9) << "forwarded unregistered option "
                       "to clang libtooling: "
                       << combined_for_clang;
         if(combined_for_clang.empty()) {
@@ -1274,10 +1331,10 @@ int main(int argc, char* argv[]) {
   }
 
 #if defined(CLING_IS_ON)
-  DVLOG(9) << "ctp_scripts_search_paths (" << ctp_scripts_search_paths.size() << "): ";
+  VLOG(9) << "ctp_scripts_search_paths (" << ctp_scripts_search_paths.size() << "): ";
   for(const std::string& it: ctp_scripts_search_paths) {
     ctp::Options::ctp_scripts_search_paths.push_back(it);
-    DVLOG(9)
+    VLOG(9)
       << "added path to cling interpreter files: "
       << it;
   }
@@ -1285,16 +1342,16 @@ int main(int argc, char* argv[]) {
 
   for(const std::string& it: pathsToExtraPluginFiles) {
     ctp::Options::pathsToExtraPluginFiles.push_back(base::FilePath{it});
-    DVLOG(9)
+    VLOG(9)
       << "added path to plugin file: "
       << it;
   }
 
-  DVLOG(9) << "Current path is " << fs::current_path();
-  DVLOG(9) << "srcdir: Local path is " << srcdir_arg.get_value_or("");
-  DVLOG(9) << "srcdir: Absolute path is " << ctp::Options::src_path;
-  DVLOG(9) << "outdir: Local path is " << outdir_arg.get_value_or("");
-  DVLOG(9) << "outdir: Absolute path is " << ctp::Options::res_path;
+  VLOG(9) << "Current path is " << fs::current_path();
+  VLOG(9) << "srcdir: Local path is " << srcdir_arg.get_value_or("");
+  VLOG(9) << "srcdir: Absolute path is " << ctp::Options::src_path;
+  VLOG(9) << "outdir: Local path is " << outdir_arg.get_value_or("");
+  VLOG(9) << "outdir: Absolute path is " << ctp::Options::res_path;
 
   auto chrono_then = std::chrono::steady_clock::now();
 
@@ -1342,6 +1399,14 @@ int main(int argc, char* argv[]) {
         , clingInterpreterArgs
         , clingIncludePaths
   );
+
+  for(const fs::path& full_path: cling_scripts) {
+    clingInterpreter.loadFile(full_path);
+    LOG(INFO)
+      << "added to InterpreterModule file "
+      << full_path.string();
+  }
+
   if(ctp::Options::ctp_scripts_search_paths.empty()) {
     LOG(WARNING)
       << "command-line argument ctp_scripts_paths not provided. "
@@ -1369,6 +1434,14 @@ int main(int argc, char* argv[]) {
         , .pathsToExtraPluginFiles =  ctp::Options::pathsToExtraPluginFiles
       }
     );
+
+    /// \todo allow plugins to notify other plugins about
+    /// their startup with custom data
+    /// all you need is to store main_events_dispatcher in plugin
+    /// and send startup event via that main_events_dispatcher
+    /// other plugins ust load special library or headers
+    /// to process that startup event with same main_events_dispatcher
+
     // each loaded plugin must receive |connect_plugins_to_dispatcher|
     if(!plug_mgr.countLoadedPlugins()) {
       LOG(WARNING)
