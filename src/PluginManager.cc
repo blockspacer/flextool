@@ -57,7 +57,7 @@ void PluginManager::startup(const Events::Startup& event)
 
   TRACE_EVENT0("toplevel", "PluginManager::startup()");
 
-  DVLOG(9) << "(PluginManager) startup";
+  VLOG(9) << "(PluginManager) startup";
 
   const std::string executable_path
     = ::Corrade::Utility::Directory::path(
@@ -85,7 +85,7 @@ void PluginManager::startup(const Events::Startup& event)
   CHECK(!pathToPluginsConfFile.empty())
       << "invalid path to plugins configuration file";
 
-  DVLOG(9)
+  VLOG(9)
     << "using plugins configuration file: "
     << pathToPluginsConfFile;
 
@@ -124,7 +124,7 @@ void PluginManager::startup(const Events::Startup& event)
    */
   manager_->setPluginDirectory(event.pathToDirWithPlugins.value());
 
-  DVLOG(9)
+  VLOG(9)
     << "Using plugin directory: "
     << manager_->pluginDirectory();
 
@@ -169,7 +169,7 @@ void PluginManager::startup(const Events::Startup& event)
   // append path to plugins that
   // must be loaded independently of configuration file
   for(const base::FilePath& pluginPath: event.pathsToExtraPluginFiles) {
-    DVLOG(9)
+    VLOG(9)
       << "added plugin: "
       << pluginPath;
     filtered_plugins.push_back(
@@ -191,7 +191,7 @@ void PluginManager::startup(const Events::Startup& event)
     DCHECK(Corrade::Utility::Directory::fromNativeSeparators(
              pluginNameOrPath) == pluginNameOrPath);
 
-    DVLOG(9)
+    VLOG(9)
       << "plugin enabled: "
       << pluginNameOrPath;
 
@@ -299,12 +299,12 @@ void PluginManager::startup(const Events::Startup& event)
       continue;
     }
 
-    DVLOG(9)
+    VLOG(9)
       << "=== loading plugin ==";
-    DVLOG(9)
+    VLOG(9)
       << "plugin title:       "
       << plugin->title();
-    DVLOG(9)
+    VLOG(9)
       << "plugin description: "
       << plugin->description().substr(0, 100)
       << "...";
@@ -312,7 +312,7 @@ void PluginManager::startup(const Events::Startup& event)
     plugin->load();
 
     loaded_plugins_.push_back(std::move(plugin));
-    DVLOG(9)
+    VLOG(9)
       << "=== plugin loaded ==";
   }
 
@@ -328,7 +328,7 @@ void PluginManager::shutdown(const Events::Shutdown& event)
 
   TRACE_EVENT0("toplevel", "PluginManager::shutdown()");
 
-  DVLOG(9) << "(PluginManager) shutdown";
+  VLOG(9) << "(PluginManager) shutdown";
 
   /// \note destructor of ::Corrade::PluginManager::Manager
   /// also unloads all plugins
