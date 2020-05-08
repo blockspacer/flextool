@@ -1000,6 +1000,7 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Allowed options");
   try {
     desc.add_options()
+      ///\todo allow per-plugin generation of cmake script with list of generated files
       ///\todo use cling to change file path to generated file
       /// $exec(
       ///   generated(path = ./src/filename.cpp.gen);
