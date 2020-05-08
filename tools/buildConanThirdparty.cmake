@@ -522,3 +522,14 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/flexlib" # target to build
   ALWAYS_BUILD)
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers"
+      "https://github.com/blockspacer/flex_support_headers.git"
+      "")
+endif()
+conan_build_target_if(
+  "flex_support_headers" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers" # target to build
+  ALWAYS_BUILD)
