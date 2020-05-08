@@ -261,7 +261,6 @@ class flextoolConan(ConanFile):
     # Importing files copies files from the local store to your project.
     def imports(self):
         dest = os.getenv("CONAN_IMPORT_PATH", "bin")
-        self.output.info("CONAN_IMPORT_PATH is ${CONAN_IMPORT_PATH}")
         self.copy("license*", dst=dest, ignore_case=True)
         self.copy("*.dll", dst=dest, src="bin")
         self.copy("*.so", dst=dest, src="bin")
