@@ -29,9 +29,16 @@
 
 Main project page: https://blockspacer.github.io/flex_docs/
 
+## Tutorials and examples
+
+- [Tutorial](https://blockspacer.github.io/flex_docs/tutorial/)
+- [Usage](https://blockspacer.github.io/flex_docs/building_projects/)
+- [Plugins](https://blockspacer.github.io/flex_docs/adding_plugins/)
+- [Tracing and log levels](https://blockspacer.github.io/flex_docs/bug_report/)
+
 ## Before installation
 
-## Dependencies
+- [installation guide](https://blockspacer.github.io/flex_docs/download/)
 
 - conan packages
 
@@ -66,7 +73,6 @@ GIT_SSL_NO_VERIFY=true \
           -o flextool:enable_clang_from_conan=False \
           -e flextool:enable_tests=True
 ```
-
 
 ## Standing on the Shoulders of Giants
 
@@ -110,14 +116,6 @@ See LICENSE for the full content of the licenses.
 - I'm an example that you can copy, if you want :)
 - I work on many things like...
 - My hobbies include...
-- [twitter](https://twitter.com/example)
-  [![facebook-alt][facebook-img]](https://facebook.com/example)
-  [![google-img][google-img]](https://plus.google.com/+Example)
-  [![tumblr-alt][tumblr-img]](https://example.tumblr.com)
-  [![dribbble-alt][dribbble-img]](https://dribbble.com/example)
-  [github](https://github.com/example)
-  [![freeCodeCamp](imgs/freecodecamp.png)](https://www.freecodecamp.org/example)
-  [linkedin](https://www.linkedin.com/in/example/)
 
 ### Contributors List 👌
 
