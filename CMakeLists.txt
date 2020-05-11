@@ -269,7 +269,7 @@ set_source_files_properties(${PROJECT_BINARY_DIR}/version.hpp
 
 add_executable(${LIB_NAME}
   ${flextool_SOURCES}
-  ${flextool_src_DIR}/main_native.cpp
+  ${flextool_src_DIR}/main.cc
   ${flextool_include_DIR}/version.hpp
 )
 
@@ -406,7 +406,6 @@ target_compile_definitions(${LIB_NAME} PRIVATE
   ${flextool_PRIVATE_DEFINES}
   # https://stackoverflow.com/a/30877725
   BOOST_SYSTEM_NO_DEPRECATED BOOST_ERROR_CODE_HEADER_ONLY
-  IS_CXXCTP=1
 )
 
 target_compile_definitions(${LIB_NAME} PUBLIC

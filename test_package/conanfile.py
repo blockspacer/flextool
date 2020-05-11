@@ -37,4 +37,37 @@ class TestPackageConan(ConanFile):
 
     def test(self):
         if not tools.cross_building(self.settings):
-            self.run("flextool --version", run_environment=True)
+            self.output.info('self.source_folder = %s' % (self.source_folder))
+            #
+            # cling_includes must point to cling/Interpreter/RuntimeUniverse.h
+            #
+            cling_conan_ROOT = self.deps_cpp_info["cling_conan"].rootpath
+            cling_includes = cling_conan_ROOT
+            cling_includes = os.path.join(cling_includes, "include")
+            self.output.info('cling_includes = %s' % (cling_includes))
+            #
+            # clang_includes must point to stddef.h from lib/clang/5.0.0/include
+            #
+            clang_includes = cling_conan_ROOT
+            clang_includes = os.path.join(clang_includes, "lib")
+            clang_includes = os.path.join(clang_includes, "clang")
+            clang_includes = os.path.join(clang_includes, "5.0.0")
+            clang_includes = os.path.join(clang_includes, "include")
+            self.output.info('clang_includes = %s' % (clang_includes))
+            # NOTE: must use `--extra-arg`, not `-extra-arg`
+            test_invalid_arg="-extra-arg=-Itest_INVALID_argument"
+            #
+            # run executable
+            # NOTE: generates file in filesystem
+            #
+            flextool_cmd = "flextool" \
+              " --outdir=." \
+              " --indir=." \
+              " --vmodule=*=100 --enable-logging=stderr --log-level=100" \
+              " --extra-arg=-I{}" \
+              " {}" \
+              " --extra-arg=-I{}" \
+              " {}/main.cpp".format(
+              cling_includes, test_invalid_arg, clang_includes, self.source_folder)
+            self.output.info('flextool_cmd = %s' % (flextool_cmd))
+            self.run(flextool_cmd, run_environment=True)

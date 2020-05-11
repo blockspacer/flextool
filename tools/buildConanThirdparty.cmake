@@ -84,6 +84,7 @@ macro(cmake_make_dir DIR_PATH)
     endif()
 endmacro(cmake_make_dir)
 
+# NOTE: specify OPTIONS with ';' like "-b;v0.2.1"
 macro(git_clone WORKING_DIRECTORY PATH_URI OPTIONS)
     message(STATUS "running `git clone` for ${PATH_URI}")
     execute_process(
@@ -481,13 +482,24 @@ endif()
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/corrade")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/corrade"
-      "https://github.com/mosra/corrade.git"
+      "http://github.com/mosra/corrade.git"
       "")
 endif()
 conan_build_target_if(
   "corrade" # target to clean
   "magnum/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/corrade" # target to build
+  ALWAYS_BUILD)
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/type_safe")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/type_safe"
+      "http://github.com/foonathan/type_safe.git"
+      "-b;v0.2.1")
+endif()
+conan_build_target_if(
+  "type_safe" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/type_safe" # target to build
   ALWAYS_BUILD)
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/basis")

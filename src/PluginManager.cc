@@ -272,7 +272,8 @@ void PluginManager::startup(const Events::Startup& event)
     @see @ref path(), @ref filename(), @ref String::partition()
     */
     const std::string pluginName
-        = Corrade::Utility::Directory::splitExtension(pluginNameOrFilenameWithExt).first;
+        = Corrade::Utility::Directory::splitExtension(
+            pluginNameOrFilenameWithExt).first;
 
     DCHECK(base::FilePath{pluginNameOrFilenameWithExt}
             .BaseName().RemoveExtension().value()
