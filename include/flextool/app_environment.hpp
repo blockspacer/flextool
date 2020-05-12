@@ -9,6 +9,7 @@
 #include <base/files/file_path.h>
 #include <base/at_exit.h>
 #include <base/message_loop/message_loop.h>
+#include <basis/i18n.hpp>
 
 #include <basis/scoped_log_run_time.hpp>
 
@@ -88,6 +89,10 @@ public:
 
   // allows to schedule arbitrary tasks on main loop
   scoped_refptr<base::SingleThreadTaskRunner> main_loop_task_runner;
+
+  i18n::I18n i18n{
+    nullptr // locale
+  };
 
 private:
   DISALLOW_COPY_AND_ASSIGN(ScopedAppEnvironment);

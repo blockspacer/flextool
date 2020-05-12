@@ -29,13 +29,13 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
     return os;
 }
 
-const char kExtraClangFlag[] = "-extra-arg";
+static const char kExtraClangFlag[] = "-extra-arg";
 
-const char kExtraIncludeFlag[] = "-extra-arg=-I";
+static const char kExtraIncludeFlag[] = "-extra-arg=-I";
 
-const char kClingIncludeFlag[] = "-I";
+static const char kClingIncludeFlag[] = "-I";
 
-const char kClangBuildPathFlag[] = "-p=";
+static const char kClangBuildPathFlag[] = "-p=";
 
 static bool add_default_clang_args(
     const base::FilePath clangBuildPath

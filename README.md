@@ -8,7 +8,7 @@
 <p align="center">A fully open source, powerful solution for modification and generation of C++ source code. Reduce the amount of boilerplate code in your C++ projects.</p>
 <hr />
 
-﻿![Open Source Love](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-pink.svg)
+![Open Source Love](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-pink.svg)
 ![First Timers Only](https://img.shields.io/badge/first--timers--only-friendly-blue.svg?style=flat)
 ![Up For Grabs](https://img.shields.io/badge/up--for--grabs-friendly-green.svg?style=flat)
 ![GitHub](https://img.shields.io/github/license/blockspacer/flextool.svg)
@@ -81,7 +81,7 @@ That project possible because of [flexferrum's `autoprogrammer`](https://github.
 Articles about flexferrum's `autoprogrammer` in media:
 
 - [RUS] метаклассах по-русски https://habr.com/ru/article/448466/
-- [RUS] Метаклассы в C++17 Фантастика? Реальность! https://assets.ctfassets.net/oxjq45e8ilak/55bGdX2PnYzmrpM8rwCjcE/791e7eee3236c2023e86e169faca8a0e/Sergei_Sadovnikov_Metaclasses_in_C___dream_Reality.pdf
+- [RUS] Метаклассы в C++17 Фантастика? � еальность! https://assets.ctfassets.net/oxjq45e8ilak/55bGdX2PnYzmrpM8rwCjcE/791e7eee3236c2023e86e169faca8a0e/Sergei_Sadovnikov_Metaclasses_in_C___dream_Reality.pdf
 
 ## LICENSE for open source components
 
@@ -117,7 +117,7 @@ See LICENSE for the full content of the licenses.
 - I work on many things like...
 - My hobbies include...
 
-### Contributors List 👌
+### Contributors List
 
 #### A
 
@@ -134,7 +134,7 @@ See LICENSE for the full content of the licenses.
 
 #### C
 
-##### Cássio Espíndola
+##### Cassio Espindola
 
 - Analyst Developer
 - [github](https://github.com/cassioesp)

@@ -9,6 +9,7 @@
 #include <basis/cmd_util.hpp>
 #include <basis/tracing_util.hpp>
 #include <basis/scoped_log_run_time.hpp>
+#include <basis/i18n.hpp>
 
 #include <base/files/file_util.h>
 #include <base/path_service.h>
@@ -153,7 +154,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 }
 
 static const base::FilePath::CharType kIcuDataFileName[]
-  = FILE_PATH_LITERAL("./resources/icu/icudtl.dat");
+  = FILE_PATH_LITERAL("./resources/icu/optimal/icudt64l.dat");
 
 /// \todo make use of it
 //static std::vector<fs::path> find_ctp_scripts_dirs(

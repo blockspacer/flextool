@@ -59,8 +59,10 @@ static const char DEFAULT_EVENT_CATEGORIES[]
 
 } // namespace
 
+// extern
 const char kDefaultPluginsDir[] = "plugins";
 
+// extern
 const char kDefaultPluginsConfig[] = "plugins.conf";
 
 /// \todo
@@ -362,6 +364,10 @@ base::FilePath AppCmdOptions::cmdKeyToFile(
   return filePath;
 }
 
+///\todo flextool will save file with all source code transformations applied,
+/// including `rewriter.InsertText`.
+/// flextool will save file with `.generated` extention,
+/// but user can provide >>>> custom path for each generated file <<<<
 ///\todo allow per-plugin generation of cmake script with list of generated files
 ///\todo use cling to change file path to generated file
 /// $exec(
