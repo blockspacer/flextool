@@ -90,9 +90,7 @@ public:
   // allows to schedule arbitrary tasks on main loop
   scoped_refptr<base::SingleThreadTaskRunner> main_loop_task_runner;
 
-  i18n::I18n i18n{
-    nullptr // locale
-  };
+  std::unique_ptr<i18n::I18n> i18n;
 
 private:
   DISALLOW_COPY_AND_ASSIGN(ScopedAppEnvironment);

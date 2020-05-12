@@ -419,10 +419,26 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     "" // logFile
   );
 
+  if (!base::PathService::Get(base::DIR_EXE, &dir_exe_)) {
+    NOTREACHED();
+    // stop app execution with EXIT_FAILURE
+    return false;
+  }
+
+  if(!base::PathExists(dir_exe_.Append(kIcuDataFileName))) {
+    LOG(ERROR)
+      << "unable to load icu i18n data file: "
+      << dir_exe_.Append(kIcuDataFileName);
+    // stop app execution with EXIT_FAILURE
+    return false;
+  }
+
   icu_util::initICUi18n(kIcuDataFileName);
 
-  /// \todo
-  //initPathService();
+  /// \note you must init ICU before i18n
+  i18n = std::make_unique<i18n::I18n>(
+    nullptr // locale
+  );
 
   {
     const int num_cores
@@ -454,12 +470,6 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   //base::MemoryPressureListener::SetNotificationsSuppressed(false);
 
   base::StatisticsRecorder::InitLogOnShutdown();
-
-  if (!base::PathService::Get(base::DIR_EXE, &dir_exe_)) {
-    NOTREACHED();
-    // stop app execution with EXIT_FAILURE
-    return false;
-  }
 
   {
     DCHECK(main_events_dispatcher);
