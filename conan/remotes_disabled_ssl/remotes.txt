@@ -4,3 +4,4 @@ skypjack https://api.bintray.com/conan/skypjack/conan False
 conan-doom_strong_types https://api.bintray.com/conan/milerius/doom_strong_types False
 google_aardappel_flatbuffers https://api.bintray.com/conan/aardappel/flatbuffers False
 Manu343726 https://api.bintray.com/conan/manu343726/conan-packages False
+outcome https://api.bintray.com/conan/ned14/Outcome False
