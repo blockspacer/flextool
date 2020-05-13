@@ -691,6 +691,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   }
 
   {
+    VLOG(9)
+      << "creating"
+         " clingInterpreter";
     DCHECK(!clingInterpreterArgs.empty());
     DCHECK(!clingIncludePaths.empty());
     clingInterpreter
@@ -705,6 +708,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   for(const base::FilePath& full_path: appCmd.scriptFiles()) {
     DCHECK(clingInterpreter);
     DCHECK(!full_path.empty());
+    VLOG(9)
+      << "calling"
+         " clingInterpreter->loadFile";
     clingInterpreter->loadFile(full_path.value());
     LOG(INFO)
       << "added to InterpreterModule file "
@@ -738,6 +744,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     }
 
     {
+      VLOG(9)
+        << "running"
+           " backend::PluginManager::Events::Startup";
       DCHECK(main_events_dispatcher);
       // must have default value
       DCHECK(!appCmd.pluginsDir().empty());
@@ -770,6 +779,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     }
 
     {
+      VLOG(9)
+        << "running"
+           " plug_mgr.connect_plugins_to_dispatcher";
       DCHECK(main_events_dispatcher);
       plug_mgr.connect_plugins_to_dispatcher(*main_events_dispatcher);
     }
@@ -777,6 +789,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
 
 #if defined(CLING_IS_ON)
   {
+    VLOG(9)
+      << "creating"
+         " plugin::ToolPlugin::Events::RegisterClingInterpreter";
     DCHECK(clingInterpreter);
     DCHECK(main_events_dispatcher);
     main_events_dispatcher->trigger<
@@ -788,12 +803,20 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   }
 #endif // defined(CLING_IS_ON)
 
-  annotationMethods
-    = std::make_unique<
-        ::flexlib::AnnotationMethods
-      >();
+  {
+    VLOG(9)
+      << "creating"
+         " flexlib::AnnotationMethods";
+    annotationMethods
+      = std::make_unique<
+          ::flexlib::AnnotationMethods
+        >();
+  }
 
   {
+    VLOG(9)
+      << "creating"
+         " flexlib::AnnotationParser";
     DCHECK(annotationMethods);
     annotationParser
       = std::make_unique<
@@ -802,6 +825,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   }
 
   {
+    VLOG(9)
+      << "creating"
+         " flexlib::AnnotationMatchHandler";
     CHECK(!outDir.empty())
       << "you must provide output directory";
     DCHECK(annotationParser);
@@ -821,6 +847,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   }
 
   {
+    VLOG(9)
+      << "creating"
+         " clang_utils::AnnotationMatchOptions";
     DCHECK(!base::StringPiece(::flexlib::kAnnotateAttrName).empty());
     DCHECK(anotationMatchHandler);
     annotationMatchOptions =
@@ -842,6 +871,9 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
 
   /// \note allow plugins to process commands before pre-built logic
   {
+    VLOG(9)
+      << "sending"
+         " plugin::ToolPlugin::Events::RegisterAnnotationMethods";
     DCHECK(annotationMethods);
     DCHECK(sourceTransformPipeline);
     main_events_dispatcher->trigger<

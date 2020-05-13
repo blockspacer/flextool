@@ -172,6 +172,14 @@ void PluginManager::startup(const Events::Startup& event)
     VLOG(9)
       << "added plugin: "
       << pluginPath;
+    if(pluginPath.empty() || !base::PathExists(pluginPath)) {
+      LOG(ERROR)
+        << "invalid path to plugin file: "
+        << pluginPath;
+      CHECK(false)
+        << "path does not exist: "
+        << pluginPath;
+    }
     filtered_plugins.push_back(
       /*
       * @note If passing a file path, the implementation expects forward

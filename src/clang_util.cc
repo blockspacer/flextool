@@ -212,6 +212,10 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
   if(base::PathExists(base::FilePath(arg)))
   {
     return true;
+  } else {
+    LOG(WARNING)
+      << "path does not exist: "
+      << arg;
   }
 
   return false;
@@ -492,8 +496,8 @@ void FileSaveHandler::saveFile(
 ){
   std::string full_file_path = fileEntry->getName();
   VLOG(9)
-      << "full_file_path is "
-      << full_file_path;
+    << "full_file_path is "
+    << full_file_path;
   if(full_file_path.empty()) {
     LOG(WARNING)
         << "unable to save file, invalid file path";
@@ -502,8 +506,8 @@ void FileSaveHandler::saveFile(
 
   const std::string filename = fs::path(full_file_path).filename();
   VLOG(9)
-      << "filename is "
-      << filename;
+    << "filename is "
+    << filename;
   if(filename.empty()) {
     LOG(WARNING)
         << "unable to save file, invalid file name";
@@ -511,8 +515,8 @@ void FileSaveHandler::saveFile(
   }
 
   VLOG(9)
-      << "** EndSourceFileAction for: "
-      << fileEntry->getName().str();
+    << "** EndSourceFileAction for: "
+    << fileEntry->getName().str();
 
   const std::string originalFileExtention
       = fs::path(full_file_path).extension();
@@ -533,8 +537,8 @@ void FileSaveHandler::saveFile(
 
   if (shouldFlushFile) {
     VLOG(9)
-        << "writing data to file with path = "
-        << out_path.value();
+      << "writing data to file with path = "
+      << out_path.value();
 
     std::error_code error_code;
 
@@ -546,8 +550,12 @@ void FileSaveHandler::saveFile(
     outFile.close();
     if(error_code != std::error_code{}) {
       LOG(ERROR)
-          << "Could not save file "
-          << out_path;
+        << "Could not save file: "
+        << out_path;
+    } else {
+      LOG(INFO)
+        << "Saved file: "
+        << out_path;
     }
 
     // we expect absolute path
