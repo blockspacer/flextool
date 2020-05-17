@@ -13,15 +13,11 @@ set(LIB_NAME ${PROJECT_NAME})
 
 option(ENABLE_TESTS "Enable tests" OFF)
 
-set(BUILD_SHARED_LIBS
-  FALSE CACHE BOOL
-  "Use .so/.dll")
-
-if(BUILD_SHARED_LIBS)
-  set(CORE_LIB_TYPE SHARED)
-else()
-  set(CORE_LIB_TYPE STATIC)
-endif(BUILD_SHARED_LIBS)
+# Hack to depend NOT on CONAN_PKG::libname, but on libname directly
+# See for details
+# https://docs.conan.io/en/latest/developing_packages/workspaces.html
+set(LOCAL_BUILD FALSE CACHE BOOL "LOCAL_BUILD")
+message(STATUS "LOCAL_BUILD=${LOCAL_BUILD}")
 
 set(ENABLE_CLING TRUE CACHE BOOL "ENABLE_CLING")
 message(STATUS "ENABLE_CLING=${ENABLE_CLING}")
@@ -235,11 +231,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(flextool_include_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/flextool")
 set(flextool_src_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-include(cmake/PlatformChecks)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PlatformChecks.cmake)
 
-include(cmake/CommonOptions)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CommonOptions.cmake)
 
-include(cmake/ProjectFiles)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectFiles.cmake)
 
 add_library(${LIB_NAME}-test-includes INTERFACE)
 
@@ -253,13 +249,6 @@ macro(add_relative_include_dir TARGET VISIBILITY_BUILD VISIBILITY_INSTALL NEW_EL
   target_include_directories( ${LIB_NAME}-test-includes SYSTEM INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/${NEW_ELEM} )
 endmacro(add_relative_include_dir)
-
-# NOTE: cling does not support static libs, so we use SHARED
-# https://github.com/root-project/cling/issues/280
-# https://gitlab.kitware.com/cmake/cmake/issues/16473
-#add_library(${LIB_NAME} ${CORE_LIB_TYPE}
-#  ${flextool_SOURCES}
-#)
 
 configure_file(${flextool_include_DIR}/version.hpp.in
   ${flextool_include_DIR}/version.hpp)
@@ -282,8 +271,13 @@ list(APPEND USED_3DPARTY_LIBS
   ${build_util_LIB}
 )
 
+set(flexlib CONAN_PKG::flexlib)
+if(LOCAL_BUILD)
+  set(flexlib flexlib)
+endif(LOCAL_BUILD)
+
 list(APPEND USED_3DPARTY_LIBS
-  CONAN_PKG::flexlib
+  ${flexlib}
   CONAN_PKG::basis
   CONAN_PKG::clang_folly_conan
   CONAN_PKG::boost
@@ -334,6 +328,7 @@ set(USED_SYSTEM_LIBS
     ${LIBLZMA_LIBRARIES} # used by folly
     CACHE INTERNAL "USED_SYSTEM_LIBS")
 
+message(STATUS "flextool USED_3DPARTY_LIBS=${USED_3DPARTY_LIBS}")
 target_link_libraries(${LIB_NAME} PUBLIC#PRIVATE
   ${USED_3DPARTY_LIBS}
   ${USED_SYSTEM_LIBS}
@@ -425,7 +420,7 @@ add_custom_command( TARGET ${LIB_NAME} PRE_BUILD
     $<TARGET_FILE_DIR:${LIB_NAME}>/resources )
 
 # install and export steps
-include(cmake/Exports)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Exports.cmake)
 
 if(ENABLE_TESTS)
   add_subdirectory( tests )

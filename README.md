@@ -158,8 +158,6 @@ Allows to build multiple projects at once, it just creates `CMakeLists.txt` with
 
 See for details [https://docs.conan.io/en/latest/developing_packages/workspaces.html](https://docs.conan.io/en/latest/developing_packages/workspaces.html)
 
-Build all projects into `local_build` folder as in `conan editable mode` section (see README of each project), but without enabling `conan editable mode`.
-
 For example, we want to build both flextool and flexlib at the same time (flextool requires flexlib).
 
 ```bash
@@ -167,14 +165,13 @@ For example, we want to build both flextool and flexlib at the same time (flexto
 cd ~
 
 # Replace paths to yours!
-# Make sure local_build folder exists for each project!
 # Make sure each project in NOT in editable mode!
 cat <<EOF > ~/conanws.yml
 editables:
     flexlib/master@conan/stable:
-        path: /......../flexlib/local_build/package_dir
+        path: /......../flexlib
     flextool/master@conan/stable:
-        path: /......../flextool/local_build/package_dir
+        path: /......../flextool
 layout: layout_flex
 workspace_generator: cmake
 root:
@@ -184,7 +181,7 @@ EOF
 cat <<EOF > ~/layout_flex
 # This helps to define the location of CMakeLists.txt within package
 [source_folder]
-../
+.
 
 # This defines where the conanbuildinfo.cmake will be written to
 [build_folder]
@@ -234,9 +231,12 @@ export CC=clang-6.0
 build_type=Debug
 
 # configure via cmake
+# NOTE: -DLOCAL_BUILD=TRUE
 cmake -E time cmake . \
+  -DLOCAL_BUILD=TRUE \
   -DENABLE_TESTS=TRUE \
-  -DBUILD_SHARED_LIBS=TRUE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -Dflex_reflect_plugin_BUILD_SHARED_LIBS=TRUE \
   -DCONAN_AUTO_INSTALL=OFF \
   -DCMAKE_BUILD_TYPE=${build_type}
 
@@ -255,8 +255,6 @@ cmake -E time cmake --build . \
   --config ${build_type} \
   --target flexlib_run_all_tests
 ```
-
-On each change of project configuration (added new file etc.) you must run `conan source` and `conan package` as in `conan editable mode` section (see README of each project).
 
 Workspace allows to make quick changes in existing source files.
 
@@ -282,17 +280,17 @@ add plugins to yml file:
 ```yml
 editables:
     flexlib/master@conan/stable:
-        path: /hdd/flexlib/local_build/package_dir
+        path: /hdd/flexlib
     flextool/master@conan/stable:
-        path: /hdd/CXXCTP/flextool/local_build/package_dir
+        path: /hdd/CXXCTP/flextool
     flex_reflect_plugin/master@conan/stable:
-        path: /hdd/flex_reflect_plugin/local_build/package_dir
+        path: /hdd/flex_reflect_plugin
     squarets/master@conan/stable:
-        path: /hdd/squarets/local_build/package_dir
+        path: /hdd/squarets
     flex_squarets_plugin/master@conan/stable:
-        path: /hdd/flex_squarets_plugin/local_build/package_dir
+        path: /hdd/flex_squarets_plugin
     flex_typeclass_plugin/master@conan/stable:
-        path: /hdd/flex_typeclass_plugin/local_build/package_dir
+        path: /hdd/flex_typeclass_plugin
 layout: layout_flex
 workspace_generator: cmake
 root:
