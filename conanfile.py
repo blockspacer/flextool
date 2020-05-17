@@ -1,4 +1,4 @@
-from conans import ConanFile, CMake, tools, AutoToolsBuildEnvironment, RunEnvironment
+from conans import ConanFile, CMake, tools, AutoToolsBuildEnvironment, RunEnvironment, python_requires
 from conans.errors import ConanInvalidConfiguration, ConanException
 from conans.tools import os_info
 import os, re, stat, fnmatch, platform, glob
@@ -7,7 +7,9 @@ from functools import total_ordering
 # if you using python less than 3 use from distutils import strtobool
 from distutils.util import strtobool
 
-class flextoolConan(ConanFile):
+conan_build_helper = python_requires("conan_build_helper/[~=0.0]@conan/stable")
+
+class flextoolConan(conan_build_helper.CMakePackage):
     name = "flextool"
     version = "master"
     url = "https://CHANGE_ME"
@@ -116,27 +118,6 @@ class flextoolConan(ConanFile):
 
     generators = 'cmake_find_package', "cmake", "cmake_paths"
 
-    # build-only option
-    # see https://github.com/conan-io/conan/issues/6967
-    # conan ignores changes in environ, so
-    # use `conan remove` if you want to rebuild package
-    def _environ_option(self, name, default = 'true'):
-      env_val = default.lower() # default, must be lowercase!
-      # allow both lowercase and uppercase
-      if name.upper() in os.environ:
-        env_val = os.getenv(name.upper())
-      elif name.lower() in os.environ:
-        env_val = os.getenv(name.lower())
-      # strtobool:
-      #   True values are y, yes, t, true, on and 1;
-      #   False values are n, no, f, false, off and 0.
-      #   Raises ValueError if val is anything else.
-      #   see https://docs.python.org/3/distutils/apiref.html#distutils.util.strtobool
-      return bool(strtobool(env_val))
-
-    def _is_tests_enabled(self):
-      return self._environ_option("ENABLE_TESTS", default = 'true')
-
     @property
     def _source_dir(self):
         return "."
@@ -221,22 +202,12 @@ class flextoolConan(ConanFile):
 
         self.requires("clang_folly_conan/v2019.01.14.00@conan/stable")
 
-    def package(self):
-        cmake = CMake(self)
-        cmake.install()
-
     def _configure_cmake(self):
         cmake = CMake(self)
         cmake.parallel = True
         cmake.verbose = True
 
-        def add_cmake_option(var_name, value):
-            value_str = "{}".format(value)
-            var_value = "ON" if bool(strtobool(value_str.lower())) else "OFF"
-            self.output.info('added cmake definition %s = %s' % (var_name, var_value))
-            cmake.definitions[var_name] = var_value
-
-        add_cmake_option("ENABLE_TESTS", self._is_tests_enabled())
+        self.add_cmake_option(cmake, "ENABLE_TESTS", self._is_tests_enabled())
 
         cmake.definitions["CONAN_AUTO_INSTALL"] = 'OFF'
 
@@ -353,6 +324,11 @@ class flextoolConan(ConanFile):
 
         cmake = self._configure_cmake()
         cmake.install()
+
+        # Local build
+        # see https://docs.conan.io/en/latest/developing_packages/editable_packages.html
+        if not self.in_local_cache:
+            self.copy("conanfile.py", dst=".", keep_path=False)
 
     def package_id(self):
         del self.info.settings.compiler

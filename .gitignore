@@ -2,6 +2,7 @@
 *.d
 
 .tmp
+local_build
 *cling-build*
 node_modules
 *_generated.*

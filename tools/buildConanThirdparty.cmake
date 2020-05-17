@@ -212,6 +212,17 @@ endif()
 
 cmake_make_dir("${CURRENT_SCRIPT_DIR}/.tmp")
 
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper"
+      "http://github.com/blockspacer/conan_build_helper.git"
+      "")
+endif()
+conan_build_target_if(
+  "cmake_platform_detection" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper" # target to build
+  ALWAYS_BUILD)
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cmake_platform_detection_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cmake_platform_detection_conan"
       "http://github.com/blockspacer/cmake_platform_detection_conan.git"

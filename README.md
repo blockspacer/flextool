@@ -1,4 +1,4 @@
-&nbsp;
+﻿&nbsp;
 <p align="center">
   <a href="https://blockspacer.github.io/flex_docs">
     <img src="https://blockspacer.github.io/flex_docs/images/logo.png" width="100px" alt="flextool" />
@@ -81,7 +81,255 @@ That project possible because of [flexferrum's `autoprogrammer`](https://github.
 Articles about flexferrum's `autoprogrammer` in media:
 
 - [RUS] метаклассах по-русски https://habr.com/ru/article/448466/
-- [RUS] Метаклассы в C++17 Фантастика? � еальность! https://assets.ctfassets.net/oxjq45e8ilak/55bGdX2PnYzmrpM8rwCjcE/791e7eee3236c2023e86e169faca8a0e/Sergei_Sadovnikov_Metaclasses_in_C___dream_Reality.pdf
+- [RUS] Метаклассы в C++17 Фантастика? � еальность! https://assets.ctfassets.net/oxjq45e8ilak/55bGdX2PnYzmrpM8rwCjcE/791e7eee3236c2023e86e169faca8a0e/Sergei_Sadovnikov_Metaclasses_in_C___dream_Reality.pdf
+
+
+## For contibutors: conan editable mode
+
+With the editable packages, you can tell Conan where to find the headers and the artifacts ready for consumption in your local working directory.
+There is no need to run `conan create` or `conan export-pkg`.
+
+See for details [https://docs.conan.io/en/latest/developing_packages/editable_packages.html](https://docs.conan.io/en/latest/developing_packages/editable_packages.html)
+
+Build locally:
+
+```bash
+CONAN_REVISIONS_ENABLED=1 \
+CONAN_VERBOSE_TRACEBACK=1 \
+CONAN_PRINT_RUN_COMMANDS=1 \
+CONAN_LOGGING_LEVEL=10 \
+GIT_SSL_NO_VERIFY=true \
+  cmake -E time \
+    conan install . \
+    --install-folder local_build \
+    -s build_type=Debug -s cling_conan:build_type=Release \
+    --profile clang \
+        -o flextool:enable_clang_from_conan=False \
+        -e flextool:enable_tests=True
+
+CONAN_REVISIONS_ENABLED=1 \
+CONAN_VERBOSE_TRACEBACK=1 \
+CONAN_PRINT_RUN_COMMANDS=1 \
+CONAN_LOGGING_LEVEL=10 \
+GIT_SSL_NO_VERIFY=true \
+  cmake -E time \
+    conan source . --source-folder local_build
+
+conan build . \
+  --build-folder local_build
+
+conan package . \
+  --build-folder local_build \
+  --package-folder local_build/package_dir
+```
+
+Set package to editable mode:
+
+```bash
+conan editable add local_build/package_dir \
+  flextool/master@conan/stable
+```
+
+Note that `conanfile.py` modified to detect local builds via `self.in_local_cache`
+
+After change source in folder local_build (run commands in source package folder):
+
+```
+conan build . \
+  --build-folder local_build
+
+conan package . \
+  --build-folder local_build \
+  --package-folder local_build/package_dir
+```
+
+Build your test project
+
+In order to revert the editable mode just remove the link using:
+
+```bash
+conan editable remove \
+  flextool/master@conan/stable
+```
+
+## For contibutors: conan workspace
+
+Allows to build multiple projects at once, it just creates `CMakeLists.txt` with `add_subdirectory` pointing to each package folder.
+
+See for details [https://docs.conan.io/en/latest/developing_packages/workspaces.html](https://docs.conan.io/en/latest/developing_packages/workspaces.html)
+
+Build all projects into `local_build` folder as in `conan editable mode` section (see README of each project), but without enabling `conan editable mode`.
+
+For example, we want to build both flextool and flexlib at the same time (flextool requires flexlib).
+
+```bash
+# change ~ to desired build folder
+cd ~
+
+# Replace paths to yours!
+# Make sure local_build folder exists for each project!
+# Make sure each project in NOT in editable mode!
+cat <<EOF > ~/conanws.yml
+editables:
+    flexlib/master@conan/stable:
+        path: /......../flexlib/local_build/package_dir
+    flextool/master@conan/stable:
+        path: /......../flextool/local_build/package_dir
+layout: layout_flex
+workspace_generator: cmake
+root:
+    - flextool/master@conan/stable
+EOF
+
+cat <<EOF > ~/layout_flex
+# This helps to define the location of CMakeLists.txt within package
+[source_folder]
+../
+
+# This defines where the conanbuildinfo.cmake will be written to
+[build_folder]
+build/{{settings.build_type}}
+EOF
+
+cat <<EOF > CMakeLists.txt
+cmake_minimum_required(VERSION 3.0)
+
+project(WorkspaceProject)
+
+include(\${CMAKE_BINARY_DIR}/conanworkspace.cmake)
+conan_workspace_subdirectories()
+EOF
+
+# must contain `include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)` without `\`
+cat CMakeLists.txt
+```
+
+```bash
+# Tested with clang 6.0
+export CXX=clang++-6.0
+export CC=clang-6.0
+
+mkdir build_release
+
+cd build_release
+
+# combines options from all projects
+conan workspace install \
+  ../conanws.yml --profile=clang \
+  -s build_type=Debug -s cling_conan:build_type=Release \
+    -o flextool:enable_clang_from_conan=False \
+    -e flextool:enable_tests=True \
+    -o flexlib:shared=False \
+    -o flexlib:enable_clang_from_conan=False \
+    -e flexlib:enable_tests=True
+```
+
+Build into folder created by `conan workspace install`:
+
+```bash
+export CXX=clang++-6.0
+export CC=clang-6.0
+
+# NOTE: change `build_type=Debug` to `build_type=Release` in production
+build_type=Debug
+
+# configure via cmake
+cmake -E time cmake . \
+  -DENABLE_TESTS=TRUE \
+  -DBUILD_SHARED_LIBS=TRUE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=${build_type}
+
+# build code
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  -- -j8
+
+# run unit tests for flextool
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flextool_run_all_tests
+
+# run unit tests for flexlib
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flexlib_run_all_tests
+```
+
+On each change of project configuration (added new file etc.) you must run `conan source` and `conan package` as in `conan editable mode` section (see README of each project).
+
+Workspace allows to make quick changes in existing source files.
+
+We use `self.in_local_cache` to detect conan editable mode:
+
+```python
+# Local build
+# see https://docs.conan.io/en/latest/developing_packages/editable_packages.html
+if not self.in_local_cache:
+    self.copy("conanfile.py", dst=".", keep_path=False)
+```
+
+Make sure that all targets have globally unique names.
+
+For example, you can not have in each project target with same name like "test". You can solve that issue by adding project-specific prefix to name of each target like "${ROOT_PROJECT_NAME}-test_main_gtest".
+
+Because `CMAKE_BINARY_DIR` will point to folder created by `conan workspace install` - make sure that you prefer `CMAKE_CURRENT_BINARY_DIR` to `CMAKE_BINARY_DIR` etc.
+
+## For contibutors: conan workspace with plugins
+
+add plugins to yml file:
+
+```yml
+editables:
+    flexlib/master@conan/stable:
+        path: /hdd/flexlib/local_build/package_dir
+    flextool/master@conan/stable:
+        path: /hdd/CXXCTP/flextool/local_build/package_dir
+    flex_reflect_plugin/master@conan/stable:
+        path: /hdd/flex_reflect_plugin/local_build/package_dir
+    squarets/master@conan/stable:
+        path: /hdd/squarets/local_build/package_dir
+    flex_squarets_plugin/master@conan/stable:
+        path: /hdd/flex_squarets_plugin/local_build/package_dir
+    flex_typeclass_plugin/master@conan/stable:
+        path: /hdd/flex_typeclass_plugin/local_build/package_dir
+layout: layout_flex
+workspace_generator: cmake
+root:
+    - flextool/master@conan/stable
+    - flex_reflect_plugin/master@conan/stable
+    - squarets/master@conan/stable
+    - flex_squarets_plugin/master@conan/stable
+    - flex_typeclass_plugin/master@conan/stable
+```
+
+add plugins options to `conan workspace install`:
+
+```bash
+# combines options from all projects
+conan workspace install \
+  ../conanws.yml --profile=clang \
+  -s build_type=Debug -s cling_conan:build_type=Release \
+    -o flextool:enable_clang_from_conan=False \
+    -e flextool:enable_tests=True \
+    -o flexlib:shared=False \
+    -o flexlib:enable_clang_from_conan=False \
+    -e flexlib:enable_tests=True \
+    -o flex_reflect_plugin:shared=True \
+    -o flex_reflect_plugin:enable_clang_from_conan=False \
+    -e flex_reflect_plugin:enable_tests=True \
+    -o squarets:shared=False \
+    -o squarets:enable_clang_from_conan=False \
+    -e squarets:enable_tests=True \
+    -o flex_squarets_plugin:shared=False \
+    -o flex_squarets_plugin:enable_clang_from_conan=False \
+    -e flex_squarets_plugin:enable_tests=True \
+    -o flex_typeclass_plugin:shared=False \
+    -o flex_typeclass_plugin:enable_clang_from_conan=False \
+    -e flex_typeclass_plugin:enable_tests=True
+```
+
+build and test workspace
 
 ## LICENSE for open source components
 

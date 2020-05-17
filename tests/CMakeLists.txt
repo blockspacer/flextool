@@ -1,12 +1,12 @@
 cmake_minimum_required( VERSION 3.13.3 FATAL_ERROR )
 
-set( PROJECT_NAME "${ROOT_PROJECT_NAME}-tests" )
-set( PROJECT_DESCRIPTION "unit tests" )
-set( ${PROJECT_NAME}_PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "${PROJECT_NAME}_PROJECT_DIR" )
-
 set(ROOT_PROJECT_NAME ${LIB_NAME})
 set(ROOT_PROJECT_LIB ${LIB_NAME})
 set(${ROOT_PROJECT_NAME}_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+
+set( PROJECT_NAME "${ROOT_PROJECT_NAME}-tests" )
+set( PROJECT_DESCRIPTION "unit tests" )
+set( ${PROJECT_NAME}_PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "${PROJECT_NAME}_PROJECT_DIR" )
 
 # Get CMAKE_MODULE_PATH from parent project
 #include( ${ROOT_PROJECT_DIR}/cmake/Utils.cmake )
@@ -21,8 +21,8 @@ endif()
 
 set( GTEST_TEST_ARGS --gtest_shuffle)
 
-add_library(catch2-root INTERFACE)
-target_include_directories( catch2-root SYSTEM INTERFACE
+add_library(${ROOT_PROJECT_NAME}-catch2-root INTERFACE)
+target_include_directories( ${ROOT_PROJECT_NAME}-catch2-root SYSTEM INTERFACE
   ${CONAN_CATCH2_ROOT}/include/catch2 )
 get_target_property (FakeIt_IMPORTED_LOCATION CONAN_PKG::catch2 INTERFACE_INCLUDE_DIRECTORIES)
 message( "CONAN_PKG::catch2=${catch2_IMPORTED_LOCATION}" )
@@ -34,7 +34,7 @@ list(APPEND TESTS_3DPARTY_LIBS
     CONAN_PKG::gtest
     CONAN_PKG::FakeIt
     CONAN_PKG::catch2
-    catch2-root # so FakeIt will be able to see 'catch.hpp'
+    ${ROOT_PROJECT_NAME}-catch2-root # so FakeIt will be able to see 'catch.hpp'
     ${USED_3DPARTY_LIBS}
     ${ROOT_PROJECT_NAME}-test-includes
 )
@@ -127,21 +127,23 @@ macro(tests_add_executable target source_list TEST_ARGS TEST_LIB)
   endif()
 endmacro()
 
-add_library( test_main_catch OBJECT
+
+set(test_main_catch "${ROOT_PROJECT_NAME}-test_main_catch")
+add_library( ${test_main_catch} OBJECT
   main.cpp
   #${${ROOT_PROJECT_NAME}_SRCS} # all source files  of root project without main.cpp
   #${THIRDPARTY_SOURCES}
   testsCommon.h # include in IDE
   )
 
-set_property(TARGET test_main_catch PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${test_main_catch} PROPERTY CXX_STANDARD 17)
 
 # ensure that dependencies build before <target> does.
-add_dependencies(test_main_catch ${ROOT_PROJECT_LIB})
+add_dependencies(${test_main_catch} ${ROOT_PROJECT_LIB})
 
-set_test_compile_options( test_main_catch )
+set_test_compile_options( ${test_main_catch} )
 
-target_link_libraries(test_main_catch PUBLIC
+target_link_libraries(${test_main_catch} PUBLIC
   # 3dparty libs
   ${TESTS_3DPARTY_LIBS}
   # system libs
@@ -150,24 +152,25 @@ target_link_libraries(test_main_catch PUBLIC
   ${ROOT_PROJECT_LIB}
 )
 
-target_compile_definitions( test_main_catch PUBLIC
+target_compile_definitions( ${test_main_catch} PUBLIC
   "-DUSE_CATCH_TEST=1" )
 
-add_library( test_main_gtest OBJECT
+set(test_main_gtest "${ROOT_PROJECT_NAME}-test_main_gtest")
+add_library( ${test_main_gtest} OBJECT
   main.cpp
   #${${ROOT_PROJECT_NAME}_SRCS} # all source files  of root project without main.cpp
   #${THIRDPARTY_SOURCES}
   testsCommon.h # include in IDE
   )
 
-set_property(TARGET test_main_gtest PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${test_main_gtest} PROPERTY CXX_STANDARD 17)
 
 # ensure that dependencies build before <target> does.
-add_dependencies(test_main_gtest ${ROOT_PROJECT_LIB})
+add_dependencies(${test_main_gtest} ${ROOT_PROJECT_LIB})
 
-set_test_compile_options( test_main_gtest )
+set_test_compile_options( ${test_main_gtest} )
 
-target_link_libraries(test_main_gtest PUBLIC
+target_link_libraries(${test_main_gtest} PUBLIC
   # 3dparty libs
   ${TESTS_3DPARTY_LIBS}
   # system libs
@@ -176,7 +179,7 @@ target_link_libraries(test_main_gtest PUBLIC
   ${ROOT_PROJECT_LIB}
 )
 
-target_compile_definitions( test_main_gtest PUBLIC
+target_compile_definitions( ${test_main_gtest} PUBLIC
   "-DUSE_GTEST_TEST=1" )
 
 #target_link_libraries( test_main PUBLIC
@@ -202,20 +205,20 @@ if(${ROOT_PROJECT_NAME}_BUILD_TESTS)
   set ( pimpl_deps
     pimpl.test.cpp
   )
-  tests_add_executable(pimpl
-    "${pimpl_deps}" "${CATCH2_TEST_ARGS}" "test_main_catch")
+  tests_add_executable(${ROOT_PROJECT_NAME}-pimpl
+    "${pimpl_deps}" "${CATCH2_TEST_ARGS}" "${test_main_catch}")
 
   set ( gmock_deps
     gmock.test.cpp
   )
-  tests_add_executable(gmock
-    "${gmock_deps}" "${GTEST_TEST_ARGS}" "test_main_gtest")
+  tests_add_executable(${ROOT_PROJECT_NAME}-gmock
+    "${gmock_deps}" "${GTEST_TEST_ARGS}" "${test_main_gtest}")
 
   set ( fakeit_deps
     fakeit.test.cpp
   )
-  tests_add_executable(fakeit
-    "${fakeit_deps}" "${CATCH2_TEST_ARGS}" "test_main_catch")
+  tests_add_executable(${ROOT_PROJECT_NAME}-fakeit
+    "${fakeit_deps}" "${CATCH2_TEST_ARGS}" "${test_main_catch}")
 endif()
 
 #add_to_tests_list(utils)
@@ -224,20 +227,21 @@ endif()
 #tests_add_executable(check_all ${UNIT_TEST_SOURCE_LIST} ${GTEST_TEST_ARGS})
 #message(FATAL_ERROR ${UNIT_TEST_SOURCE_LIST})
 
+message(STATUS "flextool: copying ${CMAKE_CURRENT_SOURCE_DIR}/data")
 # "pimpl" is one of test program names
-add_custom_command( TARGET pimpl POST_BUILD
+add_custom_command( TARGET ${ROOT_PROJECT_NAME}-pimpl POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy_directory
-                        ${CMAKE_SOURCE_DIR}/tests/data ${CMAKE_BINARY_DIR}/bin/$<CONFIG>/tests/data )
+                        ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_BINARY_DIR}/bin/$<CONFIG>/tests/data )
 
 enable_testing()
 
 # Run ALL tests with verbose output
 # Usage: cmake --build build --target run_all_tests
-add_custom_target(run_all_tests
+add_custom_target(${ROOT_PROJECT_NAME}_run_all_tests
     DEPENDS ${ROOT_PROJECT_LIB} ${ALL_TESTS_LIST_VERBOSE}
 )
 foreach(target IN LISTS ALL_TESTS_LIST_VERBOSE)
-  add_dependencies(run_all_tests ${target})
+  add_dependencies(${ROOT_PROJECT_NAME}_run_all_tests ${target})
 endforeach()
 
 option(ENABLE_CODE_COVERAGE "ENABLE CODE COVERAGE" OFF)
@@ -248,7 +252,7 @@ if (ENABLE_CODE_COVERAGE)
   #set(CMAKE_CXX_FLAGS "-g -O0 -Wall -fprofile-arcs -ftest-coverage")
   #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
 
-  target_compile_options(run_all_tests PRIVATE
+  target_compile_options(${ROOT_PROJECT_NAME}_run_all_tests PRIVATE
     -g -O0 -Wall -fprofile-arcs -ftest-coverage
   )
   set(CMAKE_EXE_LINKER_FLAGS

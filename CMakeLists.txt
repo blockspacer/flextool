@@ -126,10 +126,10 @@ if (CONAN_AUTO_INSTALL)
   )
 endif()
 
-if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-  list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/)
-  include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-  include(${CMAKE_BINARY_DIR}/conan_paths.cmake OPTIONAL)
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake")
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR}/)
+  include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+  include(${CMAKE_CURRENT_BINARY_DIR}/conan_paths.cmake OPTIONAL)
   conan_basic_setup(
     # prevent conan_basic_setup from resetting cmake variables
     TARGETS
