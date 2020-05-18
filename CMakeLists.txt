@@ -103,8 +103,7 @@ message(STATUS "${FetchContent_conan_auto_install}_SOURCE_DIR = ${${FetchContent
 message(STATUS "${FetchContent_conan_auto_install}_BINARY_DIR = ${${FetchContent_conan_auto_install}_BINARY_DIR}")
 include(${${FetchContent_conan_auto_install}_SOURCE_DIR}/conan-auto-install.cmake)
 option(CONAN_AUTO_INSTALL "Let CMake call conan install automatically"
-  #OFF # disable by default cause llvm requires long build with CONAN_LLVM_SINGLE_THREAD_BUILD=1
-  ON
+  OFF
 )
 if (CONAN_AUTO_INSTALL)
   set(CONAN_PROFILE
@@ -165,10 +164,6 @@ check_supported_os() # from Utils.cmake
 
 # Keep symbols for JIT resolution
 set(LLVM_NO_DEAD_STRIP 1)
-
-if(NOT TARGET CONAN_PKG::flexlib)
-  message(FATAL_ERROR "Use flexlib from conan")
-endif()
 
 if(NOT TARGET CONAN_PKG::chromium_base)
   message(FATAL_ERROR "Use chromium_base from conan")
@@ -271,6 +266,9 @@ list(APPEND USED_3DPARTY_LIBS
   ${build_util_LIB}
 )
 
+if(NOT TARGET CONAN_PKG::flexlib)
+  message(FATAL_ERROR "Use flexlib from conan")
+endif()
 set(flexlib CONAN_PKG::flexlib)
 if(LOCAL_BUILD)
   set(flexlib flexlib)
@@ -359,6 +357,15 @@ set_target_properties(${LIB_NAME}
     CXX_EXTENSIONS OFF
     CMAKE_CXX_STANDARD_REQUIRED ON
 )
+
+if(LOCAL_BUILD)
+  # bin
+  list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_BINARY_DIR})
+  list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_BINARY_DIR})
+  # lib
+  #link_directories(${CMAKE_BINARY_DIR}/lib)
+  #link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
+endif(LOCAL_BUILD)
 
 # POSITION_INDEPENDENT_CODE for -fPIC
 set_property(TARGET ${LIB_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)

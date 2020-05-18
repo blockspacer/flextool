@@ -156,6 +156,8 @@ conan editable remove \
 
 Allows to build multiple projects at once, it just creates `CMakeLists.txt` with `add_subdirectory` pointing to each package folder.
 
+NOTE: You can open workspace in IDE as usual CMake based project (change build directory to WorkspaceProject path)!
+
 See for details [https://docs.conan.io/en/latest/developing_packages/workspaces.html](https://docs.conan.io/en/latest/developing_packages/workspaces.html)
 
 For example, we want to build both flextool and flexlib at the same time (flextool requires flexlib).
@@ -187,6 +189,16 @@ cat <<EOF > ~/layout_flex
 [build_folder]
 build/{{settings.build_type}}
 EOF
+```
+
+```bash
+# Tested with clang 6.0
+export CXX=clang++-6.0
+export CC=clang-6.0
+
+mkdir build_flex
+
+cd build_flex
 
 cat <<EOF > CMakeLists.txt
 cmake_minimum_required(VERSION 3.0)
@@ -195,25 +207,20 @@ project(WorkspaceProject)
 
 include(\${CMAKE_BINARY_DIR}/conanworkspace.cmake)
 conan_workspace_subdirectories()
+
+add_dependencies(flextool flexlib)
 EOF
 
 # must contain `include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)` without `\`
 cat CMakeLists.txt
-```
-
-```bash
-# Tested with clang 6.0
-export CXX=clang++-6.0
-export CC=clang-6.0
-
-mkdir build_release
-
-cd build_release
 
 # combines options from all projects
 conan workspace install \
   ../conanws.yml --profile=clang \
   -s build_type=Debug -s cling_conan:build_type=Release \
+    -o openssl:shared=True \
+    -o chromium_base:use_alloc_shim=True \
+    -o chromium_tcmalloc:use_alloc_shim=True \
     -o flextool:enable_clang_from_conan=False \
     -e flextool:enable_tests=True \
     -o flexlib:shared=False \
@@ -236,24 +243,32 @@ cmake -E time cmake . \
   -DLOCAL_BUILD=TRUE \
   -DENABLE_TESTS=TRUE \
   -DBUILD_SHARED_LIBS=FALSE \
+  -Dflexlib_BUILD_SHARED_LIBS=FALSE \
   -Dflex_reflect_plugin_BUILD_SHARED_LIBS=TRUE \
   -DCONAN_AUTO_INSTALL=OFF \
   -DCMAKE_BUILD_TYPE=${build_type}
+
+# remove generated files
+# change paths to yours
+# rm ~/flex_typeclass_plugin/build/Debug/*generated*
+
+# optional
+# rm CMakeCache.txt
 
 # build code
 cmake -E time cmake --build . \
   --config ${build_type} \
   -- -j8
 
-# run unit tests for flextool
-cmake -E time cmake --build . \
-  --config ${build_type} \
-  --target flextool_run_all_tests
-
 # run unit tests for flexlib
 cmake -E time cmake --build . \
   --config ${build_type} \
   --target flexlib_run_all_tests
+
+# run unit tests for flextool
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flextool_run_all_tests
 ```
 
 Workspace allows to make quick changes in existing source files.
@@ -280,25 +295,60 @@ add plugins to yml file:
 ```yml
 editables:
     flexlib/master@conan/stable:
-        path: /hdd/flexlib
+        path: /........./flexlib
     flextool/master@conan/stable:
-        path: /hdd/CXXCTP/flextool
+        path: /........./flextool
     flex_reflect_plugin/master@conan/stable:
-        path: /hdd/flex_reflect_plugin
+        path: /........./flex_reflect_plugin
     squarets/master@conan/stable:
-        path: /hdd/squarets
+        path: /........./squarets
     flex_squarets_plugin/master@conan/stable:
-        path: /hdd/flex_squarets_plugin
+        path: /........./flex_squarets_plugin
     flex_typeclass_plugin/master@conan/stable:
-        path: /hdd/flex_typeclass_plugin
+        path: /........./flex_typeclass_plugin
+    flex_meta_plugin/master@conan/stable:
+        path: /........./flex_meta_plugin
+    flex_meta_demo/master@conan/stable:
+        path: /........./flex_meta_demo
 layout: layout_flex
 workspace_generator: cmake
 root:
-    - flextool/master@conan/stable
     - flex_reflect_plugin/master@conan/stable
     - squarets/master@conan/stable
     - flex_squarets_plugin/master@conan/stable
     - flex_typeclass_plugin/master@conan/stable
+    - flex_meta_plugin/master@conan/stable
+    - flex_meta_demo/master@conan/stable
+```
+
+Use `add_dependencies` in `CMakeLists.txt`:
+
+```bash
+# Tested with clang 6.0
+export CXX=clang++-6.0
+export CC=clang-6.0
+
+mkdir build_flex
+
+cd build_flex
+
+cat <<EOF > CMakeLists.txt
+cmake_minimum_required(VERSION 3.0)
+
+project(WorkspaceProject)
+
+include(\${CMAKE_BINARY_DIR}/conanworkspace.cmake)
+conan_workspace_subdirectories()
+
+add_dependencies(flextool flexlib)
+add_dependencies(flex_reflect_plugin flextool)
+add_dependencies(flex_squarets_plugin squarets)
+add_dependencies(flex_squarets_plugin flextool)
+add_dependencies(flex_typeclass_plugin flextool)
+add_dependencies(flex_typeclass_plugin flex_squarets_plugin)
+add_dependencies(flex_meta_demo flex_meta_plugin)
+add_dependencies(flex_meta_demo flex_typeclass_plugin)
+EOF
 ```
 
 add plugins options to `conan workspace install`:
@@ -308,6 +358,9 @@ add plugins options to `conan workspace install`:
 conan workspace install \
   ../conanws.yml --profile=clang \
   -s build_type=Debug -s cling_conan:build_type=Release \
+    -o openssl:shared=True \
+    -o chromium_base:use_alloc_shim=True \
+    -o chromium_tcmalloc:use_alloc_shim=True \
     -o flextool:enable_clang_from_conan=False \
     -e flextool:enable_tests=True \
     -o flexlib:shared=False \
@@ -322,12 +375,88 @@ conan workspace install \
     -o flex_squarets_plugin:shared=False \
     -o flex_squarets_plugin:enable_clang_from_conan=False \
     -e flex_squarets_plugin:enable_tests=True \
+    -o flex_meta_plugin:shared=False \
+    -o flex_meta_plugin:enable_clang_from_conan=False \
+    -e flex_meta_plugin:enable_tests=True \
     -o flex_typeclass_plugin:shared=False \
     -o flex_typeclass_plugin:enable_clang_from_conan=False \
-    -e flex_typeclass_plugin:enable_tests=True
+    -e flex_typeclass_plugin:enable_tests=True \
+    -o flex_meta_demo:enable_clang_from_conan=False \
+    -e flex_meta_demo:enable_tests=True
 ```
 
 build and test workspace
+
+```bash
+export CXX=clang++-6.0
+export CC=clang-6.0
+
+# NOTE: change `build_type=Debug` to `build_type=Release` in production
+build_type=Debug
+
+# configure via cmake
+# NOTE: -DLOCAL_BUILD=TRUE
+cmake -E time cmake . \
+  -DLOCAL_BUILD=TRUE \
+  -DENABLE_TESTS=TRUE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -Dflexlib_BUILD_SHARED_LIBS=FALSE \
+  -Dflex_reflect_plugin_BUILD_SHARED_LIBS=TRUE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=${build_type}
+
+# remove generated files
+# change paths to yours
+# rm ~/flex_typeclass_plugin/build/Debug/*generated*
+
+# optional
+# rm CMakeCache.txt
+
+# build code
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  -- -j8
+
+# run unit tests for flexlib
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flexlib_run_all_tests
+
+# run unit tests for flextool
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flextool_run_all_tests
+
+# run unit tests for flex_reflect_plugin
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flex_reflect_plugin_run_all_tests
+
+# run unit tests for squarets
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target squarets_run_all_tests
+
+# run unit tests for flex_squarets_plugin
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flex_squarets_plugin_run_all_tests
+
+# run unit tests for flex_squarets_plugin
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flex_meta_plugin_run_all_tests
+
+# run unit tests for flex_squarets_plugin
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flex_typeclass_plugin_run_all_tests
+
+# run unit tests for flex_squarets_plugin
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flex_meta_demo_run_all_tests
+```
 
 ## LICENSE for open source components
 

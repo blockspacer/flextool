@@ -477,6 +477,20 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   }
 
   {
+    VLOG(9)
+      << "creating"
+         " plugin::ToolPlugin::Events::Init";
+    DCHECK(main_events_dispatcher);
+    main_events_dispatcher->trigger<
+      plugin::ToolPlugin::Events::Init>(
+        plugin::ToolPlugin::Events::Init{
+          argc
+          , argv
+        }
+      );
+  }
+
+  {
     const base::FilePath clangBuildPath = appCmd.outDir();
     DCHECK(!clangBuildPath.empty());
     const bool ok = clang_util::populateClangArguments(

@@ -34,7 +34,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
                        "assets/configuration_files/*", "assets/icu/*", "assets",
                        "docs/*", "licenses/*", "patches/*", "resources/*",
                        "submodules/*", "thirdparty/*", "third-party/*",
-                       "third_party/*", "base/*", "build/*", "flexlib/*")
+                       "third_party/*", "flexlib/*")
 
     options = {
         "use_system_boost": [True, False],
