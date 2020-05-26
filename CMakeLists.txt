@@ -141,7 +141,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 # Generate clang compilation database
 # see https://stackoverflow.com/a/31086619/10904212
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(cmake_platform_detection REQUIRED)
 run_cmake_platform_detection()
