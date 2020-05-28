@@ -306,6 +306,8 @@ editables:
         path: /........./flex_squarets_plugin
     flex_typeclass_plugin/master@conan/stable:
         path: /........./flex_typeclass_plugin
+    flex_pimpl_plugin/master@conan/stable:
+        path: /........./flex_pimpl_plugin
     flex_meta_plugin/master@conan/stable:
         path: /........./flex_meta_plugin
     flex_meta_demo/master@conan/stable:
@@ -317,6 +319,7 @@ root:
     - squarets/master@conan/stable
     - flex_squarets_plugin/master@conan/stable
     - flex_typeclass_plugin/master@conan/stable
+    - flex_pimpl_plugin/master@conan/stable
     - flex_meta_plugin/master@conan/stable
     - flex_meta_demo/master@conan/stable
 ```
@@ -344,6 +347,9 @@ add_dependencies(flextool flexlib)
 add_dependencies(flex_reflect_plugin flextool)
 add_dependencies(flex_squarets_plugin squarets)
 add_dependencies(flex_squarets_plugin flextool)
+add_dependencies(flex_pimpl_plugin flextool)
+add_dependencies(flex_pimpl_plugin flex_reflect_plugin)
+add_dependencies(flex_pimpl_plugin flex_squarets_plugin)
 add_dependencies(flex_typeclass_plugin flextool)
 add_dependencies(flex_typeclass_plugin flex_squarets_plugin)
 add_dependencies(flex_meta_demo flex_meta_plugin)
@@ -381,6 +387,9 @@ conan workspace install \
     -o flex_typeclass_plugin:shared=False \
     -o flex_typeclass_plugin:enable_clang_from_conan=False \
     -e flex_typeclass_plugin:enable_tests=True \
+    -o flex_pimpl_plugin:shared=False \
+    -o flex_pimpl_plugin:enable_clang_from_conan=False \
+    -e flex_pimpl_plugin:enable_tests=True \
     -o flex_meta_demo:enable_clang_from_conan=False \
     -e flex_meta_demo:enable_tests=True
 ```
@@ -451,6 +460,11 @@ cmake -E time cmake --build . \
 cmake -E time cmake --build . \
   --config ${build_type} \
   --target flex_typeclass_plugin_run_all_tests
+
+# run unit tests for flex_squarets_plugin
+cmake -E time cmake --build . \
+  --config ${build_type} \
+  --target flex_pimpl_plugin_run_all_tests
 
 # run unit tests for flex_squarets_plugin
 cmake -E time cmake --build . \
