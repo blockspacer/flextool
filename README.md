@@ -354,6 +354,8 @@ add_dependencies(flex_typeclass_plugin flextool)
 add_dependencies(flex_typeclass_plugin flex_squarets_plugin)
 add_dependencies(flex_meta_demo flex_meta_plugin)
 add_dependencies(flex_meta_demo flex_typeclass_plugin)
+add_dependencies(flex_meta_demo flex_pimpl_plugin)
+add_dependencies(flex_meta_demo flex_squarets_plugin)
 EOF
 ```
 

@@ -276,6 +276,7 @@ endif(LOCAL_BUILD)
 
 list(APPEND USED_3DPARTY_LIBS
   ${flexlib}
+  CONAN_PKG::doctest
   CONAN_PKG::basis
   CONAN_PKG::clang_folly_conan
   CONAN_PKG::boost
@@ -368,7 +369,8 @@ if(LOCAL_BUILD)
 endif(LOCAL_BUILD)
 
 # POSITION_INDEPENDENT_CODE for -fPIC
-set_property(TARGET ${LIB_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET ${LIB_NAME}
+  PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(ENABLE_CLING)
   find_package(Cling REQUIRED)

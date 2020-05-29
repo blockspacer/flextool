@@ -136,6 +136,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
             self.requires("gtest/[>=1.8.0]@bincrafters/stable")
             self.requires("FakeIt/[>=2.0.4]@gasuketsu/stable")
 
+        self.requires("doctest/[>=2.3.8]")
+
         if not self.options.use_system_boost:
             self.requires("boost/1.71.0@dev/stable")
 
