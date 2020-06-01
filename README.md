@@ -207,7 +207,13 @@ project(WorkspaceProject)
 
 set(flexlib_LOCAL_BUILD TRUE CACHE BOOL "flexlib_LOCAL_BUILD")
 
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flexlib/cmake)
+
 set(flextool_LOCAL_BUILD TRUE CACHE BOOL "flextool_LOCAL_BUILD")
+
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flextool/cmake)
 
 include(\${CMAKE_BINARY_DIR}/conanworkspace.cmake)
 conan_workspace_subdirectories()
@@ -301,6 +307,8 @@ add plugins to yml file:
 editables:
     basis/master@conan/stable:
         path: /........./basis
+    flex_support_headers/master@conan/stable:
+        path: /........./flex_support_headers
     flexlib/master@conan/stable:
         path: /........./flexlib
     flextool/master@conan/stable:
@@ -349,29 +357,64 @@ project(WorkspaceProject)
 
 set(basis_LOCAL_BUILD TRUE CACHE BOOL "basis_LOCAL_BUILD")
 
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./basis/cmake)
+
+set(flex_support_headers_LOCAL_BUILD TRUE CACHE BOOL "flex_support_headers_LOCAL_BUILD")
+
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flex_support_headers/cmake)
+
 set(flexlib_LOCAL_BUILD TRUE CACHE BOOL "flexlib_LOCAL_BUILD")
+
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flexlib/cmake)
 
 set(flextool_LOCAL_BUILD TRUE CACHE BOOL "flextool_LOCAL_BUILD")
 
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flextool/cmake)
+
 set(flex_reflect_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_reflect_plugin_LOCAL_BUILD")
+
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flex_reflect_plugin/cmake)
 
 set(squarets_LOCAL_BUILD TRUE CACHE BOOL "squarets_LOCAL_BUILD")
 
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./squarets/cmake)
+
 set(flex_squarets_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_squarets_plugin_LOCAL_BUILD")
+
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flex_squarets_plugin/cmake)
 
 set(flex_typeclass_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_typeclass_plugin_LOCAL_BUILD")
 
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flex_typeclass_plugin/cmake)
+
 set(flex_meta_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_meta_plugin_LOCAL_BUILD")
+
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flex_meta_plugin/cmake)
 
 set(flex_meta_demo_LOCAL_BUILD TRUE CACHE BOOL "flex_meta_demo_LOCAL_BUILD")
 
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flex_meta_demo/cmake)
+
 set(flex_pimpl_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_pimpl_plugin_LOCAL_BUILD")
 
-include(\${CMAKE_BINARY_DIR}/conanworkspace.cmake)
+# path to Find*.cmake file
+list(APPEND CMAKE_MODULE_PATH /........./flex_pimpl_plugin/cmake)
+
+include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)
 conan_workspace_subdirectories()
 
 add_dependencies(flexlib basis)
-add_dependencies(flextool flexlib basis)
+add_dependencies(flextool flexlib basis flex_support_headers)
 add_dependencies(flex_reflect_plugin flextool)
 add_dependencies(flex_squarets_plugin squarets)
 add_dependencies(flex_squarets_plugin flextool)

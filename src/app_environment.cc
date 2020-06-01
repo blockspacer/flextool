@@ -353,8 +353,28 @@ ScopedAppEnvironment::~ScopedAppEnvironment()
 
 bool ScopedAppEnvironment::init(int argc, char* argv[])
 {
-  VLOG(9)
-    << "creating application environment...";
+  DCHECK(argc > 0);
+
+  if (!base::PathService::Get(base::DIR_EXE, &dir_exe_)) {
+    NOTREACHED();
+    // stop app execution with EXIT_FAILURE
+    return false;
+  }
+
+  /// \note log all command-line arguments before
+  /// parsing them as program options
+  {
+    VLOG(9)
+      << "started "
+      << dir_exe_
+      << " with arguments:";
+    for(int i = 0; i < argc; ++i) {
+      VLOG(9)
+        << " "
+        << argv[i]
+        << " ";
+    }
+  }
 
   // set application command-line arguments
   {
@@ -417,12 +437,6 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   basis::initLogging(
     "" // logFile
   );
-
-  if (!base::PathService::Get(base::DIR_EXE, &dir_exe_)) {
-    NOTREACHED();
-    // stop app execution with EXIT_FAILURE
-    return false;
-  }
 
   if(!base::PathExists(dir_exe_.Append(kIcuDataFileName))) {
     LOG(ERROR)

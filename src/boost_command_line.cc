@@ -129,6 +129,8 @@ std::vector<UnergisteredOption>
 
 bool BoostCmd::init(int argc, char* argv[])
 {
+  DCHECK(argc > 0);
+
   DCHECK(!desc_.options().empty())
     << "you must register some command line options";
 
@@ -160,7 +162,20 @@ bool BoostCmd::init(int argc, char* argv[])
     DCHECK(!vm_.empty());
   }
   catch(std::exception& e) {
-    LOG(ERROR) << "ERROR: " << e.what();
+    // log all command-line arguments
+    {
+      LOG(ERROR)
+        << "app arguments:";
+      for(int i = 0; i < argc; ++i) {
+        LOG(ERROR)
+          << " "
+          << argv[i]
+          << " ";
+      }
+    }
+    LOG(ERROR)
+      << "ERROR: "
+      << e.what();
     return false;
   }
   catch(...) {

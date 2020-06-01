@@ -20,7 +20,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
     description = ("TODO.")
     license = "MIT" # CHANGE_ME
 
-    generators = "cmake", "cmake_paths", "virtualenv"#, "cmake_find_package_multi"
+    # NOTE: no cmake_find_package due to custom FindXXX.cmake
+    generators = "cmake", "cmake_paths", "virtualenv"
     settings = "os_build", "os", "arch", "compiler", "build_type", "arch_build"
 
     #exports = ["LICENSE.md", "assets"]
@@ -115,8 +116,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
         # chromium_tcmalloc
         "chromium_tcmalloc:use_alloc_shim=True",
     )
-
-    generators = 'cmake_find_package', "cmake", "cmake_paths"
 
     @property
     def _source_dir(self):
