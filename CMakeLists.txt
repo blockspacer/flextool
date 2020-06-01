@@ -16,8 +16,8 @@ option(ENABLE_TESTS "Enable tests" OFF)
 # Hack to depend NOT on CONAN_PKG::libname, but on libname directly
 # See for details
 # https://docs.conan.io/en/latest/developing_packages/workspaces.html
-set(LOCAL_BUILD FALSE CACHE BOOL "LOCAL_BUILD")
-message(STATUS "LOCAL_BUILD=${LOCAL_BUILD}")
+set(${PROJECT_NAME}_LOCAL_BUILD FALSE CACHE BOOL "${PROJECT_NAME}_LOCAL_BUILD")
+message(STATUS "${PROJECT_NAME}_LOCAL_BUILD=${${PROJECT_NAME}_LOCAL_BUILD}")
 
 set(ENABLE_CLING TRUE CACHE BOOL "ENABLE_CLING")
 message(STATUS "ENABLE_CLING=${ENABLE_CLING}")
@@ -270,14 +270,22 @@ if(NOT TARGET CONAN_PKG::flexlib)
   message(FATAL_ERROR "Use flexlib from conan")
 endif()
 set(flexlib CONAN_PKG::flexlib)
-if(LOCAL_BUILD)
+if(${PROJECT_NAME}_LOCAL_BUILD)
   set(flexlib flexlib)
-endif(LOCAL_BUILD)
+endif(${PROJECT_NAME}_LOCAL_BUILD)
+
+if(NOT TARGET CONAN_PKG::basis)
+  message(FATAL_ERROR "Use basis from conan")
+endif()
+set(basis CONAN_PKG::basis)
+if(basis_LOCAL_BUILD)
+  set(basis basis)
+endif(basis_LOCAL_BUILD)
 
 list(APPEND USED_3DPARTY_LIBS
   ${flexlib}
+  ${basis}
   CONAN_PKG::doctest
-  CONAN_PKG::basis
   CONAN_PKG::clang_folly_conan
   CONAN_PKG::boost
   CONAN_PKG::double-conversion
@@ -359,14 +367,14 @@ set_target_properties(${LIB_NAME}
     CMAKE_CXX_STANDARD_REQUIRED ON
 )
 
-if(LOCAL_BUILD)
+if(${PROJECT_NAME}_LOCAL_BUILD)
   # bin
   list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_BINARY_DIR})
   list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_BINARY_DIR})
   # lib
   #link_directories(${CMAKE_BINARY_DIR}/lib)
   #link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
-endif(LOCAL_BUILD)
+endif(${PROJECT_NAME}_LOCAL_BUILD)
 
 # POSITION_INDEPENDENT_CODE for -fPIC
 set_property(TARGET ${LIB_NAME}

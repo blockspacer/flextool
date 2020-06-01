@@ -111,7 +111,6 @@
 #include <base/debug/stack_trace.h>
 #include <base/memory/ptr_util.h>
 #include <base/sequenced_task_runner.h>
-#include <base/third_party/dynamic_annotations/dynamic_annotations.h>
 #include <base/threading/thread.h>
 #include <base/threading/thread_task_runner_handle.h>
 #include <base/process/process_handle.h>
