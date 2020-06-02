@@ -1,6 +1,5 @@
-# see https://github.com/chromium/chromium/blob/9db0b5162b8648833c3a6b1af044cebd9d7d3855/base/BUILD.gn
-
-cmake_minimum_required(VERSION 3.4)
+# Note: COMMAND_EXPAND_LISTS is keyword is only available with CMake version >= 3.8
+cmake_minimum_required(VERSION 3.8)
 
 # project() must be before checks, see https://stackoverflow.com/a/26437667/10904212
 set(PROJECT_NAME "flextool")
@@ -12,6 +11,8 @@ project(${PROJECT_NAME}
 set(LIB_NAME ${PROJECT_NAME})
 
 option(ENABLE_TESTS "Enable tests" OFF)
+
+option(ENABLE_CPPCHECK "Enable cppcheck" ON)
 
 # Hack to depend NOT on CONAN_PKG::libname, but on libname directly
 # See for details
@@ -28,15 +29,6 @@ message(STATUS "ENABLE_CLANG_FROM_CONAN=${ENABLE_CLANG_FROM_CONAN}")
 if(ENABLE_CLANG_FROM_CONAN AND ENABLE_CLING)
   message(FATAL_ERROR
     "don't use both ENABLE_CLING and ENABLE_CLANG_FROM_CONAN at the same time. cling already provides clang libtooling")
-endif()
-
-set(CUSTOM_PLUGINS
-    "${CMAKE_CURRENT_SOURCE_DIR}/custom_plugins.cmake"
-    CACHE STRING
-    "Path to custom plugins")
-message(STATUS "CUSTOM_PLUGINS=${CUSTOM_PLUGINS}")
-if(EXISTS ${CUSTOM_PLUGINS})
-  include(${CUSTOM_PLUGINS})
 endif()
 
 # --------------------------- conan configuration ------------------------------
@@ -305,8 +297,6 @@ list(APPEND USED_3DPARTY_LIBS
   #microsoft_gsl
 )
 
-set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 17)
-
 if(TARGET_EMSCRIPTEN)
   # use PROPERTY CXX_STANDARD 17
 else()
@@ -333,17 +323,13 @@ set(USED_SYSTEM_LIBS
     CACHE INTERNAL "USED_SYSTEM_LIBS")
 
 message(STATUS "flextool USED_3DPARTY_LIBS=${USED_3DPARTY_LIBS}")
-target_link_libraries(${LIB_NAME} PUBLIC#PRIVATE
+target_link_libraries(${LIB_NAME} PUBLIC
   ${USED_3DPARTY_LIBS}
   ${USED_SYSTEM_LIBS}
 )
 
 target_link_libraries( ${LIB_NAME} PRIVATE
   CONAN_PKG::entt
-  #${base_LIB}
-  #${build_util_LIB}
-  #CONAN_PKG::corrade
-  #Corrade::PluginManager
 )
 
 # without rtti you will get error:
@@ -351,13 +337,12 @@ target_link_libraries( ${LIB_NAME} PRIVATE
 target_compile_options(${LIB_NAME} PRIVATE
   -frtti)
 
-set(DEBUG_LIBRARY_SUFFIX "-d")
+set(DEBUG_LIBRARY_SUFFIX "")
 set_target_properties(${LIB_NAME}
   PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" # TODO: /lib
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" # TODO: /lib
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" # TODO: /bin
-    #OUTPUT_NAME "${LIB_NAME}$<$<CONFIG:Debug>:${DEBUG_LIBRARY_SUFFIX}>"
     ENABLE_EXPORTS 1
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF
@@ -368,9 +353,6 @@ if(${PROJECT_NAME}_LOCAL_BUILD)
   # bin
   list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_BINARY_DIR})
   list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_BINARY_DIR})
-  # lib
-  #link_directories(${CMAKE_BINARY_DIR}/lib)
-  #link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
 endif(${PROJECT_NAME}_LOCAL_BUILD)
 
 # POSITION_INDEPENDENT_CODE for -fPIC
@@ -381,7 +363,7 @@ if(ENABLE_CLING)
   find_package(Cling REQUIRED)
 
   list(APPEND CLING_DEFINITIONS CLING_IS_ON=1)
-  target_link_libraries(${LIB_NAME} PUBLIC#PRIVATE
+  target_link_libraries(${LIB_NAME} PUBLIC
     CONAN_PKG::cling_conan
   )
 
@@ -414,7 +396,13 @@ target_compile_options(${LIB_NAME} PRIVATE
 target_compile_definitions(${LIB_NAME} PRIVATE
   ${flextool_PRIVATE_DEFINES}
   # https://stackoverflow.com/a/30877725
-  BOOST_SYSTEM_NO_DEPRECATED BOOST_ERROR_CODE_HEADER_ONLY
+  BOOST_SYSTEM_NO_DEPRECATED
+  BOOST_ERROR_CODE_HEADER_ONLY
+  # TODO: make program_options work without rtti (boost::bad_any_cast)
+  #BOOST_NO_RTTI
+  #BOOST_NO_TYPEID
+  # TODO
+  #BOOST_NO_EXCEPTIONS
 )
 
 target_compile_definitions(${LIB_NAME} PUBLIC
@@ -439,3 +427,562 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Exports.cmake)
 if(ENABLE_TESTS)
   add_subdirectory( tests )
 endif()
+
+function(get_depends_properties RESULT_VARIABLE_NAME TARGET PROPERTIES)
+  foreach(PROPERTY ${PROPERTIES})
+    set(RESULT_${PROPERTY})
+  endforeach()
+  get_target_property(INTERFACE_LINK_LIBRARIES ${TARGET} INTERFACE_LINK_LIBRARIES)
+  if(INTERFACE_LINK_LIBRARIES)
+    foreach(INTERFACE_LINK_LIBRARY ${INTERFACE_LINK_LIBRARIES})
+      if(TARGET ${INTERFACE_LINK_LIBRARY})
+        get_depends_properties(TMP ${INTERFACE_LINK_LIBRARY} "${PROPERTIES}")
+        foreach(PROPERTY ${PROPERTIES})
+          set(RESULT_${PROPERTY} ${RESULT_${PROPERTY}} ${TMP_${PROPERTY}})
+        endforeach()
+      endif()
+    endforeach()
+  endif()
+  foreach(PROPERTY ${PROPERTIES})
+    get_target_property(TMP ${TARGET} ${PROPERTY})
+    if(TMP)
+      set(RESULT_${PROPERTY} ${RESULT_${PROPERTY}} ${TMP})
+    endif()
+    set(${RESULT_VARIABLE_NAME}_${PROPERTY} ${RESULT_${PROPERTY}} PARENT_SCOPE)
+  endforeach()
+endfunction()
+
+function(get_all_include_directories RESULT_VARIABLE_NAME TARGET)
+  get_depends_properties(RESULT ${TARGET} "INTERFACE_INCLUDE_DIRECTORIES;INTERFACE_SYSTEM_INCLUDE_DIRECTORIES")
+  set(RESULT ${RESULT_INTERFACE_INCLUDE_DIRECTORIES} ${RESULT_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
+  get_target_property(INCLUDE_DIRECTORIES ${TARGET} INCLUDE_DIRECTORIES)
+  if(INCLUDE_DIRECTORIES)
+    set(RESULT ${RESULT} ${INCLUDE_DIRECTORIES})
+  endif()
+  if(RESULT)
+    list(REMOVE_DUPLICATES RESULT)
+  endif()
+  set(${RESULT_VARIABLE_NAME} ${RESULT} PARENT_SCOPE)
+endfunction()
+
+function(get_all_compile_definitions RESULT_VARIABLE_NAME TARGET)
+  get_depends_properties(RESULT ${TARGET} "INTERFACE_COMPILE_DEFINITIONS")
+  set(RESULT ${RESULT_INTERFACE_COMPILE_DEFINITIONS})
+  get_target_property(COMPILE_DEFINITIONS ${TARGET} COMPILE_DEFINITIONS)
+  if(COMPILE_DEFINITIONS)
+    set(RESULT ${RESULT} ${COMPILE_DEFINITIONS})
+  endif()
+  if(RESULT)
+    list(REMOVE_DUPLICATES RESULT)
+  endif()
+  set(${RESULT_VARIABLE_NAME} ${RESULT} PARENT_SCOPE)
+endfunction()
+
+# EXAMPLE (joins defines by -D):
+# get_all_compile_definitions(DEFINES_VARIABLE_NAME, TARGET_NAME)
+# join_with_separator(DEFINES_VARIABLE_NAME, DEFINES_RESULT, "-D")
+function(join_with_separator)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    PATH_MUST_EXIST
+  )
+  set(oneValueArgs
+    START_SEPARATOR
+    END_SEPARATOR
+    RESULT_VARIABLE_NAME
+  )
+  set(multiValueArgs
+    INPUT
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  foreach(ITEM ${ARGUMENTS_INPUT})
+    set({ITEM_WITH_SEPARATOR
+      ${ARGUMENTS_START_SEPARATOR}${ITEM}${ARGUMENTS_END_SEPARATOR}
+    )
+    set(RESULT
+      ${RESULT}
+      "${ITEM_WITH_SEPARATOR}")
+  endforeach()
+  set(${ARGUMENTS_RESULT_VARIABLE_NAME} ${RESULT} PARENT_SCOPE)
+endfunction()
+
+# Define a function for enabling cppcheck per target. The option above
+# makes this redundant, as it enables it for all targets already. This
+# could be used in combination with custom target commands or by
+# overriding the add_* commands with custom implementation.
+function(target_enable_cppcheck)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    # empty
+  )
+  set(oneValueArgs
+    TARGET_NAME
+    HTML_REPORT
+  )
+  set(multiValueArgs
+    CPPCHECK_FULL_CMD
+    # adds options to default options
+    EXTRA_OPTIONS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+
+  if(${ARGUMENTS_TARGET_NAME} STREQUAL "")
+    message(FATAL_ERROR "target_enable_cppcheck failed: invalid ARGUMENTS_TARGET_NAME")
+  endif()
+  #
+  if("${ARGUMENTS_CPPCHECK_FULL_CMD}" STREQUAL "")
+    message(FATAL_ERROR "target_enable_cppcheck failed: invalid ARGUMENTS_TARGET_NAMECPPCHECK_FULL_CMD")
+  endif()
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_CPPCHECK_FULL_CMD=${ARGUMENTS_CPPCHECK_FULL_CMD}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_HTML_REPORT=${ARGUMENTS_HTML_REPORT}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  get_all_compile_definitions(collected_defines ${ARGUMENTS_TARGET_NAME})
+  #
+  get_all_include_directories(collected_includes ${ARGUMENTS_TARGET_NAME})
+  #
+  get_target_property(TARGET_SOURCES
+    ${ARGUMENTS_TARGET_NAME} SOURCES
+  )
+  #
+  set(CPPCHECK_FULL_CMD
+    ${ARGUMENTS_CPPCHECK_FULL_CMD}
+    # NOTE: generator expression, expands during build time
+    # if the ${ITEM} is non-empty, than append it
+    $<$<BOOL:${collected_defines}>:-D$<JOIN:${collected_defines}, -D>>
+    # NOTE: generator expression, expands during build time
+    # if the ${ITEM} is non-empty, than append it
+    $<$<BOOL:${collected_includes}>:-I$<JOIN:${collected_includes}, -I>>
+    ${ARGUMENTS_EXTRA_OPTIONS}
+    ${TARGET_SOURCES}
+  )
+
+  if(${ARGUMENTS_HTML_REPORT})
+    # to use `cppcheck-htmlreport` from cmake subfolder
+    list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+    #
+    find_program(CPPCHECK_HTMLREPORT cppcheck-htmlreport)
+    if(NOT CPPCHECK_HTMLREPORT)
+      message(FATAL_ERROR "unable to find cppcheck-htmlreport")
+    endif(NOT CPPCHECK_HTMLREPORT)
+    #
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "CPPCHECK_HTMLREPORT=${CPPCHECK_HTMLREPORT}")
+    endif(ARGUMENTS_VERBOSE)
+    #
+    # NOTE: must be ending argument,
+    # uses `2>` to re-route console output
+    set(CPPCHECK_FULL_CMD
+      ${CPPCHECK_FULL_CMD}
+      --xml
+      --xml-version=2
+      2> ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_cppcheck_report.xml
+    )
+    set(HTMLREPORT_FULL_CMD
+      ${CPPCHECK_HTMLREPORT}
+      --file=${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_cppcheck_report.xml
+      --report-dir=${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+      --source-dir=
+    )
+  else()
+    set(HTMLREPORT_FULL_CMD
+      ${CMAKE_COMMAND}
+      -E
+      echo
+      "html report disabled"
+    )
+  endif(${ARGUMENTS_HTML_REPORT})
+  #
+  # USAGE:
+  # cmake -E time cmake --build . --target TARGET_NAME_run_cppcheck
+  add_custom_target(${ARGUMENTS_TARGET_NAME}_run_cppcheck
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_cppcheck_report.xml
+    # create report dir
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      make_directory
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report/index.html
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${CPPCHECK_FULL_CMD}"
+    # Run cppcheck static analysis
+    COMMAND
+      "${CPPCHECK_FULL_CMD}"
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${HTMLREPORT_FULL_CMD}"
+    # Generate html output
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      time
+      "${HTMLREPORT_FULL_CMD}"
+    VERBATIM
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND_EXPAND_LISTS
+    #USES_TERMINAL
+    # Set work directory for target
+    WORKING_DIRECTORY
+      ${CMAKE_BINARY_DIR}
+    # Echo what is being done
+    COMMENT "running cppcheck"
+  )
+  # run cppcheck on each build of target
+  add_dependencies(
+    ${ARGUMENTS_TARGET_NAME}
+    ${ARGUMENTS_TARGET_NAME}_run_cppcheck
+  )
+endfunction(target_enable_cppcheck)
+
+# @see https://github.com/cyyever/cmake/blob/master/static_code_analysis.cmake
+# @see https://gitlab.cern.ch/Caribou/peary/blob/master/cmake/clang-cpp-checks.cmake
+# @see https://github.com/doevelopper/cfs-third-parties/blob/master/src/main/resources/cmake/macros/CPPCheck.cmake
+# @see https://habr.com/ru/post/210256/
+function(cppcheck_enabler)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    VERBOSE
+  )
+  set(oneValueArgs
+    IS_ENABLED
+    HTML_REPORT
+  )
+  set(multiValueArgs
+    # completely changes options to provided options
+    OVERRIDE_OPTIONS
+    # adds options to default options
+    EXTRA_OPTIONS
+    CHECK_TARGETS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  #
+  # default options
+  #
+  # Set cppcheck supressions file.
+  # This file must contain enough suppressions to result in no cppcheck warnings
+  # see for example usage https://gitlab.kitware.com/vtk/vtk/blob/master/CMake/VTKcppcheckSuppressions.txt
+  #
+  # EXAMPLE FILE CONTENTS:
+  #
+  # // system libs
+  # *:*/usr/include/*
+  # *:/usr/local/*
+  #
+  # // Gives too many false positives.
+  # unmatchedSuppression
+  #
+  # // False positives
+  # syntaxError:*my_types.hpp
+  # syntaxError:*my_conf.hpp
+  set(CPPCHECK_SUPRESSIONS
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cppcheck.cfg
+  )
+  # set supressions file only if it exists
+  if(EXISTS "${CPPCHECK_SUPRESSIONS}")
+    set(CPPCHECK_DEFAULT_SUPRESSIONS_ARG
+      --suppressions-list=${CPPCHECK_SUPRESSIONS}
+    )
+    message(STATUS
+      "found cppcheck config file: ${CPPCHECK_SUPRESSIONS}"
+    )
+  else()
+    message(WARNING
+      "unable to find cppcheck config file: ${CPPCHECK_SUPRESSIONS}"
+    )
+  endif()
+  # Set message template
+  set(CPPCHECK_TEMPLATE
+    "[{file}:{line}] ({severity}) {message} ({id}) ({callstack})"
+  )
+  # Set cppcheck cache directory
+  set(CPPCHECK_BUILD_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/cppcheck_cache
+  )
+  #
+  set(CPPCHECK_OPTIONS
+    #--enable=warning,performance,portability,information,missingInclude
+    #--enable=all
+    # more info in console
+    --verbose
+    # less info in console
+    #--quiet
+    # require well formed path for headers
+    # NOTE: The normal code analysis is disabled by check-config.
+    #--check-config
+    # check all #ifdef
+    #--force
+    # see CMAKE_EXPORT_COMPILE_COMMANDS
+    #--project=${CMAKE_BINARY_DIR}/compile_commands.json
+    # Enable inline suppressions.
+    # Use them by placing comments in the form:
+    # // cppcheck-suppress memleak
+    # before the line to suppress.
+    --inline-suppr
+    --platform=native
+    --cppcheck-build-dir=${CPPCHECK_BUILD_DIR}
+    --template="${CPPCHECK_TEMPLATE}"
+    ${CPPCHECK_DEFAULT_SUPRESSIONS_ARG}
+    --report-progress
+    #--language=c++ #
+    --library=std.cfg
+    --library=posix.cfg
+    --library=qt.cfg
+    --library=boost.cfg
+    #--error-exitcode=1
+  )
+  if(ARGUMENTS_OVERRIDE_OPTIONS)
+    set(CPPCHECK_OPTIONS ${ARGUMENTS_OVERRIDE_OPTIONS})
+  else()
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "cppcheck: no OVERRIDE_OPTIONS provided")
+    endif(ARGUMENTS_VERBOSE)
+    # skip, use defaults
+  endif()
+  #
+  list(APPEND CPPCHECK_OPTIONS ${ARGUMENTS_EXTRA_OPTIONS})
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  if(${ARGUMENTS_IS_ENABLED})
+    # to use `cppcheck` from conan
+    list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
+
+    # Check if cppcheck is installed with find_program.
+    find_program(CPPCHECK_PROGRAM cppcheck)
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "CPPCHECK_PROGRAM=${CPPCHECK_PROGRAM}")
+    endif(ARGUMENTS_VERBOSE)
+
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "ARGUMENTS_HTML_REPORT=${ARGUMENTS_HTML_REPORT}")
+    endif(ARGUMENTS_VERBOSE)
+    if(${ARGUMENTS_HTML_REPORT})
+      list(APPEND CPPCHECK_OPTIONS
+        --xml
+        --xml-version=2
+      )
+    endif(${ARGUMENTS_HTML_REPORT})
+
+    if(CPPCHECK_PROGRAM)
+      # Create cppcheck cache directory
+      file(MAKE_DIRECTORY ${CPPCHECK_BUILD_DIR})
+
+      # Set cppcheck program + options.
+      list(APPEND CPPCHECK_RUNNABLE
+        ${CPPCHECK_PROGRAM}
+      )
+      if(ARGUMENTS_VERBOSE)
+        message(STATUS "CPPCHECK_RUNNABLE=${CPPCHECK_RUNNABLE}")
+      endif(ARGUMENTS_VERBOSE)
+
+      if(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "cppcheck: ARGUMENTS_CHECK_TARGETS=${ARGUMENTS_CHECK_TARGETS}")
+        endif(ARGUMENTS_VERBOSE)
+        foreach(TARGET_NAME ${ARGUMENTS_CHECK_TARGETS})
+          if(ARGUMENTS_VERBOSE)
+            message(STATUS "enabled cppcheck for target ${TARGET_NAME}")
+          endif(ARGUMENTS_VERBOSE)
+          target_enable_cppcheck(
+            TARGET_NAME ${LIB_NAME}
+            CPPCHECK_FULL_CMD ${CPPCHECK_RUNNABLE}
+            HTML_REPORT ${ARGUMENTS_HTML_REPORT}
+            EXTRA_OPTIONS ${CPPCHECK_OPTIONS}
+          )
+        endforeach()
+      elseif(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "cppcheck: no CHECK_TARGETS provided")
+        endif(ARGUMENTS_VERBOSE)
+      endif(ARGUMENTS_CHECK_TARGETS)
+    elseif(CPPCHECK_PROGRAM)
+      message(WARNING "Program 'cppcheck' not found, unable to run 'cppcheck'.")
+    endif(CPPCHECK_PROGRAM)
+  elseif() # ARGUMENTS_IS_ENABLED
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "cppcheck disabled")
+    endif(ARGUMENTS_VERBOSE)
+  endif() # ARGUMENTS_IS_ENABLED
+endfunction(cppcheck_enabler)
+
+find_package(basis REQUIRED)
+if(${basis_HEADER_DIR} STREQUAL "")
+  message(FATAL_ERROR "unable to find basis_HEADER_DIR")
+endif()
+#
+set(cling_includes
+  ${CONAN_CLING_CONAN_ROOT}/include
+)
+message(STATUS "cling_includes=${cling_includes}")
+set(clang_includes
+  ${CONAN_CLING_CONAN_ROOT}/lib/clang/5.0.0/include
+)
+message(STATUS "clang_includes=${clang_includes}")
+set(corrade_includes
+  ${CONAN_CORRADE_ROOT}/include
+)
+message(STATUS "corrade_includes=${corrade_includes}")
+set(entt_includes
+  ${CONAN_ENTT_ROOT}/include
+)
+message(STATUS "entt_includes=${entt_includes}")
+
+# cppcheck is not compiler
+# and can not define platform-specific defines
+# We must do it manually
+set(cppcheck_linux_defines
+  # Compiler detection
+  -D__GNUC__=100
+  # Compiler detection
+  -DCOMPILER_GCC=1
+  -D__WCHAR_MAX__=0x7fffffff
+  -D__GNUC_MINOR__=100
+  -D__GNUC_PATCHLEVEL__=100
+  -D__STDC__=1
+  -D__i386__=1
+  # Processor architecture detection
+  -D__x86_64__=1
+  -D__WORDSIZE=64
+  # see https://fossies.org/linux/cppcheck/cfg/avr.cfg
+  "-D__CONCATenate(left, right)=left ## right"
+  "-D__CONCAT(left, right)=__CONCATenate(left, right)"
+  "-DUINT32_C(value)=__CONCAT(value, UL)"
+  "-DSB_IS(SB_FEATURE)=((defined SB_IS_##SB_FEATURE) && SB_IS_##SB_FEATURE)"
+  -DSB_IS_ARCH_X64=1
+  -DSB_IS_ARCH_X86=1
+  -DSB_IS_ARCH_ARM=1
+  -DSB_IS_32_BIT=1
+  -DSB_HAS_1_CORE=1
+  -DSTARBOARD_CONFIGURATION_INCLUDE="starboard/linux/x64x11/configuration_public.h"
+  -DSTARBOARD_ATOMIC_INCLUDE="starboard/linux/x64x11/atomic_public.h"
+  -DSTARBOARD_THREAD_TYPES_INCLUDE="starboard/linux/x64x11/thread_types_public.h"
+  -Dlinux=1
+  -D__linux__=1
+  -DULONG_MAX=18446744073709551615U
+)
+
+# USAGE:
+# cmake -E time cmake --build . --target flextool_run_cppcheck
+cppcheck_enabler(
+  IS_ENABLED
+    ${ENABLE_CPPCHECK}
+  CHECK_TARGETS
+    ${LIB_NAME}
+  EXTRA_OPTIONS
+    #-j6 # thread count
+    --language=c++
+    # inconclusive = more checks
+    # NOTE: There are false positives with this option.
+    --inconclusive
+    --enable=all
+    # Give path to ignore. Give several -i parameters to ignore several paths.
+    -igenerated
+    #--enable=warning,performance,portability,information,missingInclude
+    --std=c++20
+    # include
+    -I${basis_HEADER_DIR}
+    # ignore
+    -i${basis_HEADER_DIR}
+    # include
+    -I${cling_includes}
+    # ignore
+    -i${cling_includes}
+    # include
+    -I${clang_includes}
+    # ignore
+    -i${clang_includes}
+    # include
+    -I${corrade_includes}
+    # ignore
+    -i${corrade_includes}
+    # include
+    -I${entt_includes}
+    ${cppcheck_linux_defines}
+    # undef
+    -USTARBOARD
+    # undef
+    -UCOBALT
+    # less info in console
+    #--quiet
+    # missingIncludeSystem:
+    # Cppcheck does not need standard library headers
+    # to get proper results.
+    #--suppress=missingIncludeSystem
+    # preprocessorErrorDirective:
+    # support for
+    # __has_include(<boost/filesystem.hpp>)
+    #--suppress=preprocessorErrorDirective
+  HTML_REPORT TRUE
+  VERBOSE
+)

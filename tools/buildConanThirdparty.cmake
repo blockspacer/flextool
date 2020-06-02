@@ -556,3 +556,14 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers" # target to build
   ALWAYS_BUILD)
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer"
+      "https://github.com/bincrafters/conan-cppcheck_installer.git"
+      "-b;testing/1.90")
+endif()
+conan_build_target_if(
+  "conan-cppcheck_installer" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer" # target to build
+  ALWAYS_BUILD)
