@@ -603,7 +603,9 @@ function(target_enable_cppcheck)
       ${CPPCHECK_HTMLREPORT}
       --file=${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_cppcheck_report.xml
       --report-dir=${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+      # directory with explored source
       --source-dir=
+      --title=${ARGUMENTS_TARGET_NAME}
     )
   else()
     set(HTMLREPORT_FULL_CMD
@@ -915,20 +917,24 @@ set(cppcheck_linux_defines
   -D__x86_64__=1
   -D__WORDSIZE=64
   # see https://fossies.org/linux/cppcheck/cfg/avr.cfg
-  "-D__CONCATenate(left, right)=left ## right"
-  "-D__CONCAT(left, right)=__CONCATenate(left, right)"
-  "-DUINT32_C(value)=__CONCAT(value, UL)"
-  "-DSB_IS(SB_FEATURE)=((defined SB_IS_##SB_FEATURE) && SB_IS_##SB_FEATURE)"
+  #"-D__CONCATenate(left, right)=left ## right"
+  #"-D__CONCAT(left, right)=__CONCATenate(left, right)"
+  #"-DUINT32_C(value)=__CONCAT(value, UL)"
+  #"-DSB_IS(SB_FEATURE)=((defined SB_IS_##SB_FEATURE) && SB_IS_##SB_FEATURE)"
   -DSB_IS_ARCH_X64=1
   -DSB_IS_ARCH_X86=1
   -DSB_IS_ARCH_ARM=1
   -DSB_IS_32_BIT=1
   -DSB_HAS_1_CORE=1
-  -DSTARBOARD_CONFIGURATION_INCLUDE="starboard/linux/x64x11/configuration_public.h"
-  -DSTARBOARD_ATOMIC_INCLUDE="starboard/linux/x64x11/atomic_public.h"
-  -DSTARBOARD_THREAD_TYPES_INCLUDE="starboard/linux/x64x11/thread_types_public.h"
+  #-DSTARBOARD_CONFIGURATION_INCLUDE="starboard/linux/x64x11/configuration_public.h"
+  #-DSTARBOARD_ATOMIC_INCLUDE="starboard/linux/x64x11/atomic_public.h"
+  #-DSTARBOARD_THREAD_TYPES_INCLUDE="starboard/linux/x64x11/thread_types_public.h"
   -Dlinux=1
   -D__linux__=1
+  # chromium/base support
+  -DOS_POSIX=1
+  # chromium/base support
+  -DOS_LINUX=1
   -DULONG_MAX=18446744073709551615U
 )
 
@@ -940,34 +946,40 @@ cppcheck_enabler(
   CHECK_TARGETS
     ${LIB_NAME}
   EXTRA_OPTIONS
+    # check all #ifdef
+    #--force
     #-j6 # thread count
     --language=c++
     # inconclusive = more checks
     # NOTE: There are false positives with this option.
     --inconclusive
     --enable=all
+    #--enable=warning,performance,portability,information,missingInclude
     # Give path to ignore. Give several -i parameters to ignore several paths.
     -igenerated
-    #--enable=warning,performance,portability,information,missingInclude
     --std=c++20
     # include
     -I${basis_HEADER_DIR}
     # ignore
     -i${basis_HEADER_DIR}
     # include
-    -I${cling_includes}
+    #-I${cling_includes}
     # ignore
-    -i${cling_includes}
+    #-i${cling_includes}
     # include
-    -I${clang_includes}
+    #-I${clang_includes}
     # ignore
-    -i${clang_includes}
+    #-i${clang_includes}
     # include
     -I${corrade_includes}
     # ignore
     -i${corrade_includes}
+    # corrade support
+    -DDOXYGEN_GENERATING_OUTPUT=1
     # include
     -I${entt_includes}
+    -DNDEBUG
+    --max-configs=100
     ${cppcheck_linux_defines}
     # undef
     -USTARBOARD
