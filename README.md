@@ -546,6 +546,77 @@ cmake -E time cmake --build . \
   --target flex_meta_demo_run_all_tests
 ```
 
+## For contibutors: cppcheck
+
+Install cppcheck via conan:
+
+```bash
+cd /tmp
+
+git clone -b testing/1.90 https://github.com/bincrafters/conan-cppcheck_installer.git
+
+cd conan-cppcheck_installer
+
+# NOTE: change `build_type=Debug` to `build_type=Release` in production
+# NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
+CONAN_REVISIONS_ENABLED=1 \
+CONAN_VERBOSE_TRACEBACK=1 \
+CONAN_PRINT_RUN_COMMANDS=1 \
+CONAN_LOGGING_LEVEL=10 \
+GIT_SSL_NO_VERIFY=true \
+    cmake -E time \
+      conan create . conan/stable \
+      -s build_type=Release
+```
+
+Run cppcheck via cmake:
+
+```bash
+cd ~/flextool
+
+cmake -E time cmake --build . --target flextool_run_cppcheck
+```
+
+Open 'flextool_report/index.html' to see the results.
+
+## For contibutors: valgrind
+
+Install valgrind:
+
+```bash
+sudo apt install valgrind  # Ubuntu, Debian, etc.
+# OR
+sudo yum install valgrind  # RHEL, CentOS, Fedora, etc.
+```
+
+Run valgrind via cmake:
+
+```bash
+cmake -E time cmake --build . --target flextool_run_valgrind
+```
+
+NOTE: compile program with a debug flag to run under valgrind
+
+See for details https://stackoverflow.com/a/44989219
+
+## For contibutors: valgrind
+
+Install clang-tidy:
+
+```bash
+sudo apt-get install clang-tidy  # Ubuntu, Debian, etc.
+# OR
+sudo yum install clang-tidy  # RHEL, CentOS, Fedora, etc.
+```
+
+Run clang-tidy via cmake:
+
+```bash
+cmake -E time cmake --build . --target flextool_run_clang_tidy
+```
+
+## For contibutors: clang-tidy
+
 ## LICENSE for open source components
 
 All the open source components are used under their associated open source licences.

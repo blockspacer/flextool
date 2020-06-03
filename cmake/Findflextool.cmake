@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH ${CURRENT_CMAKE_DIR})
 find_package(chromium_base REQUIRED)
 # see https://doc.magnum.graphics/corrade/corrade-cmake.html#corrade-cmake-subproject
 find_package(Corrade REQUIRED PluginManager)
-find_package(Cling)
+find_package(Cling QUIET)
 
 list(REMOVE_AT CMAKE_MODULE_PATH -1)
 

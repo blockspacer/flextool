@@ -13,6 +13,12 @@ set( ${PROJECT_NAME}_PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "${P
 #set_cmake_module_paths( ${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR};${${ROOT_PROJECT_NAME}_CMAKE_MODULE_PATH}" ) # from Utils.cmake
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR};${${ROOT_PROJECT_NAME}_CMAKE_MODULE_PATH}")
 
+# Run ALL tests with verbose output
+# Usage: cmake --build build --target run_all_tests
+add_custom_target(${ROOT_PROJECT_NAME}_run_all_tests
+    DEPENDS ${ROOT_PROJECT_LIB}
+)
+
 if (ENABLE_CODE_COVERAGE)
   set( CATCH2_TEST_ARGS -r junit -o unit_test_result.xml )
 else()
@@ -35,8 +41,10 @@ list(APPEND TESTS_3DPARTY_LIBS
     CONAN_PKG::FakeIt
     CONAN_PKG::catch2
     ${ROOT_PROJECT_NAME}-catch2-root # so FakeIt will be able to see 'catch.hpp'
-    ${USED_3DPARTY_LIBS}
     ${ROOT_PROJECT_NAME}-test-includes
+    ${base_LIB}
+    ${basis_LIB}
+    ${build_util_LIB}
 )
 
 include( testRunner ) # start tests as CMake targets
@@ -121,6 +129,60 @@ macro(tests_add_executable target source_list TEST_ARGS TEST_LIB)
     COMMAND ${target} ${TEST_ARGS})
 
   add_test_command_targets( ${target} )
+
+  # USAGE:
+  # cmake -E time cmake --build . --target TARGET_NAME_run_valgrind
+  valgrind_enabler(
+    IS_ENABLED
+      ${ENABLE_VALGRIND}
+    STANDALONE_TARGET
+      ${target}
+    EXTRA_OPTIONS # see https://valgrind.org/docs/manual/manual-core.html
+      # When enabled, Valgrind will trace into sub-processes
+      # initiated via the exec system call.
+      # This is necessary for multi-process programs.
+      --trace-children=yes
+      # --leak-check=full:
+      # each individual leak will be shown in detail
+      --leak-check=full
+      # --show-leak-kinds=all:
+      # Show all of "definite, indirect, possible, reachable"
+      # leak kinds in the "full" report.
+      --show-leak-kinds=all
+      # --track-origins=yes:
+      # Favor useful output over speed.
+      # This tracks the origins of uninitialized values,
+      # which could be very useful for memory errors.
+      # Consider turning off if Valgrind is unacceptably slow.
+      --track-origins=yes
+      # --verbose:
+      # Can tell you about unusual behavior of your program.
+      # Repeat for more verbosity.
+      --verbose
+      --show-reachable=yes
+      # When enabled, Valgrind stops reporting errors
+      # after 10,000,000 in total, or 1,000 different ones,
+      # have been seen.
+      --error-limit=yes
+      # is option is particularly useful with C++ programs,
+      # as it prints out the suppressions with mangled names,
+      # as required.
+      --gen-suppressions=all
+      # Write to a file.
+      # Useful when output exceeds terminal space.
+      --log-file=${CMAKE_CURRENT_BINARY_DIR}/${target}_valgrind_raw.log
+      # executable
+      $<TARGET_FILE:${target}>
+      # arguments of executable
+      ${TEST_ARGS}
+    VERBOSE
+    REQUIRED
+  )
+  if(ENABLE_VALGRIND AND ENABLE_VALGRIND_TESTS)
+    add_dependencies(${ROOT_PROJECT_NAME}_run_all_tests
+      ${target}_run_valgrind
+    )
+  endif(ENABLE_VALGRIND AND ENABLE_VALGRIND_TESTS)
 
   if(AUTORUN_TESTS)
     add_test_autostarter( ${target} )
@@ -228,13 +290,10 @@ add_custom_command( TARGET ${ROOT_PROJECT_NAME}-gmock POST_BUILD
 
 enable_testing()
 
-# Run ALL tests with verbose output
-# Usage: cmake --build build --target run_all_tests
-add_custom_target(${ROOT_PROJECT_NAME}_run_all_tests
-    DEPENDS ${ROOT_PROJECT_LIB} ${ALL_TESTS_LIST_VERBOSE}
-)
 foreach(target IN LISTS ALL_TESTS_LIST_VERBOSE)
-  add_dependencies(${ROOT_PROJECT_NAME}_run_all_tests ${target})
+  add_dependencies(${ROOT_PROJECT_NAME}_run_all_tests
+    ${target}
+  )
 endforeach()
 
 option(ENABLE_CODE_COVERAGE "ENABLE CODE COVERAGE" OFF)
@@ -265,18 +324,6 @@ if (ENABLE_CODE_COVERAGE)
   message("added make code coverage for ${PROJECT_NAME}_coverage")
 else()
   message(WARNING "code coverage off")
-endif()
-
-option(ENABLE_VALGRIND_TESTS "ENABLE CODE COVERAGE" OFF)
-if (ENABLE_VALGRIND_TESTS)
-  find_program( CMAKE_MEMORYCHECK_COMMAND valgrind )
-  set( CMAKE_MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full" )
-  #set( MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/valgrind_suppress.txt" )
-
-  get_property(check_all_dir TARGET check_all PROPERTY RUNTIME_OUTPUT_DIRECTORY)
-  add_memcheck_test( memcheck_all_tests "${check_all_dir}/check_all" )
-else()
-  message(WARNING "valgrind tests off")
 endif()
 
 #find_package(Sanitizers)
