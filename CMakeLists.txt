@@ -20,6 +20,16 @@ option(ENABLE_VALGRIND "Enable valgrind" OFF)
 
 option(ENABLE_CLANG_TIDY "Enable clang-tidy" OFF)
 
+option(ENABLE_IWYU "Enable include-what-you-use" OFF)
+
+option(ENABLE_CPPCLEAN "Enable cppclean" OFF)
+
+# Things that can catch OCLINT
+# http://oclint-docs.readthedocs.io/en/stable/rules/index.html
+# OCLINT command-line manual
+# https://oclint-docs.readthedocs.io/en/stable/manual/oclint.html
+option(ENABLE_OCLINT "Enable oclint" OFF)
+
 # TODO: __do_global_dtors_aux, base::debug::CollectStackTrace
 option(ENABLE_VALGRIND_TESTS "Enable valgrind for unit tests" OFF)
 
@@ -413,7 +423,27 @@ if(ENABLE_CLANG_FROM_CONAN)
 endif(ENABLE_CLANG_FROM_CONAN)
 
 target_compile_options(${LIB_NAME} PRIVATE
-  $<$<CXX_COMPILER_ID:GNU>:-Wall>)
+  $<$<CXX_COMPILER_ID:MSVC>:
+    /W3 # Set warning level
+  >
+  $<$<CXX_COMPILER_ID:GNU>:
+    -Wformat=2
+    -Wall
+    -W
+    -Wpedantic
+    # https://github.com/google/sanitizers/wiki/AddressSanitizer#using-addresssanitizer
+    -fno-omit-frame-pointer
+  >
+  $<$<CXX_COMPILER_ID:Clang>:
+    -Wformat=2
+    -Wall
+    -W
+    -Wpedantic
+    -Wdeprecated-register
+    # https://github.com/google/sanitizers/wiki/AddressSanitizer#using-addresssanitizer
+    -fno-omit-frame-pointer
+  >
+)
 
 target_compile_definitions(${LIB_NAME} PRIVATE
   ${flextool_PRIVATE_DEFINES}
@@ -570,6 +600,164 @@ function(get_all_compile_definitions RESULT_VARIABLE_NAME TARGET)
   set(${RESULT_VARIABLE_NAME} ${RESULT} PARENT_SCOPE)
 endfunction()
 
+# prepends file path and line number to string
+# EXAMPLE:
+# FROM_HERE("invalid ...")
+# message("${FROM_HERE}")
+macro(FROM_HERE _MSG)
+  set(FROM_HERE "${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}: ${_MSG}")
+endmacro(FROM_HERE)
+
+# EXAMPLE:
+# message_if(ARGUMENTS_VERBOSE STATUS
+#   "CPPCHECK_HTMLREPORT=${CPPCHECK_HTMLREPORT}"
+# )
+macro(message_if _CONDITION _MSG_TYPE _MSG)
+  if(${_CONDITION})
+    message(${_MSG_TYPE} "${_MSG}")
+  endif(${_CONDITION})
+endmacro(message_if)
+
+# EXAMPLE:
+# find_program_helper("cppcheck-htmlreport"
+#   PATHS
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#     # to use `cppcheck-htmlreport` from cmake subfolder
+#     ${CMAKE_SOURCE_DIR}/cmake
+#     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
+#   REQUIRED
+#   OUT_VAR CPPCHECK_HTMLREPORT
+#   VERBOSE TRUE
+#   TEXT "not found"
+# )
+# NOTE: TEXT must be last argument
+function(find_program_helper)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    CHECK_NOT_EMPTY # check: must be not empty
+    REQUIRED
+  )
+  set(oneValueArgs
+    VERBOSE
+    OUT_VAR
+  )
+  set(multiValueArgs
+    TEXT # text for displayed message
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  if(${ARGUMENTS_VERBOSE})
+    message(STATUS "validate: ARGUMENTS_UNPARSED_ARGUMENTS=${ARGUMENTS_UNPARSED_ARGUMENTS}")
+  endif(${ARGUMENTS_VERBOSE})
+
+  # default
+  set(TEXT
+    "unable to find ${ARGUMENTS_UNPARSED_ARGUMENTS}"
+  )
+  if(ARGUMENTS_TEXT)
+    set(TEXT
+      ${ARGUMENTS_TEXT}
+    )
+  endif(ARGUMENTS_TEXT)
+
+  if("${ARGUMENTS_UNPARSED_ARGUMENTS}" STREQUAL "")
+    message(FATAL_ERROR "ARGUMENTS_UNPARSED_ARGUMENTS must be not empty")
+  endif()
+
+  # NOTE: cmake cached result of previous find_program,
+  # so added `${ARGUMENTS_OUT_VAR}_` before FOUND_PROGRAM
+  # to avoid storing result of find_program into cache
+  find_program(${ARGUMENTS_OUT_VAR}_FOUND_PROGRAM ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  if(ARGUMENTS_REQUIRED AND NOT ${ARGUMENTS_OUT_VAR}_FOUND_PROGRAM)
+    message(FATAL_ERROR ${TEXT})
+  endif(ARGUMENTS_REQUIRED AND NOT ${ARGUMENTS_OUT_VAR}_FOUND_PROGRAM)
+  if(${ARGUMENTS_VERBOSE})
+    message(STATUS "ARGUMENTS_UNPARSED_ARGUMENTS=${ARGUMENTS_UNPARSED_ARGUMENTS}")
+    message(STATUS "${ARGUMENTS_OUT_VAR}_FOUND_PROGRAM=${${ARGUMENTS_OUT_VAR}_FOUND_PROGRAM}")
+  endif(${ARGUMENTS_VERBOSE})
+
+  set(${ARGUMENTS_OUT_VAR} ${${ARGUMENTS_OUT_VAR}_FOUND_PROGRAM} PARENT_SCOPE)
+endfunction(find_program_helper)
+
+# USAGE:
+# validate(
+#   ${MY_VAR}
+#   TYPE FATAL_ERROR
+#   CHECK_NOT_EMPTY
+#   TEXT "${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}:"
+#        "invalid MY_VAR"
+#   VERBOSE TRUE
+# )
+# NOTE: TEXT must be after ${MY_VAR}
+function(validate)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    CHECK_NOT_EMPTY # check: must be not empty
+  )
+  set(oneValueArgs
+    TYPE # may be FATAL_ERROR, STATUS, etc.
+    VERBOSE
+  )
+  set(multiValueArgs
+    TEXT # text for displayed message
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  if(${ARGUMENTS_VERBOSE})
+    message(STATUS "validate: ARGUMENTS_UNPARSED_ARGUMENTS=${ARGUMENTS_UNPARSED_ARGUMENTS}")
+  endif(${ARGUMENTS_VERBOSE})
+
+  # default
+  set(TEXT
+    "check failed: invalid ${ARGUMENTS_UNPARSED_ARGUMENTS}"
+  )
+  if(ARGUMENTS_TEXT)
+    set(TEXT
+      ${ARGUMENTS_TEXT}
+    )
+  endif(ARGUMENTS_TEXT)
+
+  # default
+  set(TYPE
+    FATAL_ERROR
+  )
+  if(ARGUMENTS_TYPE)
+    set(TYPE
+      ${ARGUMENTS_TYPE}
+    )
+  endif(ARGUMENTS_TYPE)
+
+  # check: must be not empty
+  if(ARGUMENTS_CHECK_NOT_EMPTY)
+    if("${ARGUMENTS_UNPARSED_ARGUMENTS}" STREQUAL "")
+      message(${TYPE} ${TEXT})
+    endif()
+  else()
+    message(FATAL_ERROR
+      "you must provide at least one validation TYPE"
+    )
+  endif()
+endfunction()
+
 # EXAMPLE (joins defines by -D):
 # get_all_compile_definitions(DEFINES_VARIABLE_NAME, TARGET_NAME)
 # join_with_separator(DEFINES_VARIABLE_NAME, DEFINES_RESULT, "-D")
@@ -632,39 +820,29 @@ function(add_cppcheck_target)
   #
   set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
 
-  if(${ARGUMENTS_TARGET_NAME} STREQUAL "")
-    message(FATAL_ERROR "add_cppcheck_target failed: invalid ARGUMENTS_TARGET_NAME")
-  endif()
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY
+    ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
   #
-  if("${ARGUMENTS_CPPCHECK_FULL_CMD}" STREQUAL "")
-    message(FATAL_ERROR "add_cppcheck_target failed: invalid ARGUMENTS_CPPCHECK_FULL_CMD")
-  endif()
-  if(ARGUMENTS_VERBOSE)
-    message(STATUS "ARGUMENTS_CPPCHECK_FULL_CMD=${ARGUMENTS_CPPCHECK_FULL_CMD}")
-  endif(ARGUMENTS_VERBOSE)
-  #
-  if(ARGUMENTS_VERBOSE)
-    message(STATUS "ARGUMENTS_HTML_REPORT=${ARGUMENTS_HTML_REPORT}")
-  endif(ARGUMENTS_VERBOSE)
+  FROM_HERE("invalid ARGUMENTS_CPPCHECK_FULL_CMD")
+  validate(CHECK_NOT_EMPTY
+    ${ARGUMENTS_CPPCHECK_FULL_CMD}
+    TEXT "${FROM_HERE}"
+  )
+  message_if(ARGUMENTS_VERBOSE STATUS
+    "ARGUMENTS_CPPCHECK_FULL_CMD=${ARGUMENTS_CPPCHECK_FULL_CMD}"
+  )
   #
   set(CPPCHECK_FULL_CMD
     ${ARGUMENTS_CPPCHECK_FULL_CMD}
     ${ARGUMENTS_EXTRA_OPTIONS}
   )
-
-  if(${ARGUMENTS_HTML_REPORT})
-    # to use `cppcheck-htmlreport` from cmake subfolder
-    list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-    list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_SOURCE_DIR}/cmake)
-    #
-    find_program(CPPCHECK_HTMLREPORT cppcheck-htmlreport)
-    if(NOT CPPCHECK_HTMLREPORT)
-      message(FATAL_ERROR "unable to find cppcheck-htmlreport")
-    endif(NOT CPPCHECK_HTMLREPORT)
-    #
-    if(ARGUMENTS_VERBOSE)
-      message(STATUS "CPPCHECK_HTMLREPORT=${CPPCHECK_HTMLREPORT}")
-    endif(ARGUMENTS_VERBOSE)
+  if(NOT ${ARGUMENTS_HTML_REPORT} STREQUAL "")
+    message_if(ARGUMENTS_VERBOSE STATUS
+      "ARGUMENTS_HTML_REPORT=${ARGUMENTS_HTML_REPORT}"
+    )
     #
     # NOTE: must be ending argument,
     # uses `2>` to re-route console output
@@ -675,27 +853,27 @@ function(add_cppcheck_target)
       2> ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_cppcheck_report.xml
     )
     set(HTMLREPORT_FULL_CMD
-      ${CPPCHECK_HTMLREPORT}
+      ${ARGUMENTS_HTML_REPORT}
       --file=${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_cppcheck_report.xml
       --report-dir=${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
       # directory with explored source
       --source-dir=
       --title=${ARGUMENTS_TARGET_NAME}
     )
-  else()
+  else() # ARGUMENTS_HTML_REPORT
     set(HTMLREPORT_FULL_CMD
       ${CMAKE_COMMAND}
       -E
       echo
       "html report disabled"
     )
-  endif(${ARGUMENTS_HTML_REPORT})
+  endif() # ARGUMENTS_HTML_REPORT
   #
   # USAGE:
   # cmake -E time cmake --build . --target TARGET_NAME_run_cppcheck
-  if(ARGUMENTS_VERBOSE)
-    message(STATUS "added new target: ${ARGUMENTS_TARGET_NAME}_run_cppcheck")
-  endif(ARGUMENTS_VERBOSE)
+  message_if(ARGUMENTS_VERBOSE STATUS
+    "ARGUMENTS_TARGET_NAME=${ARGUMENTS_TARGET_NAME}"
+  )
   add_custom_target(${ARGUMENTS_TARGET_NAME}_run_cppcheck
     # remove old report
     COMMAND
@@ -774,6 +952,15 @@ endfunction(add_cppcheck_target)
 # cmake -E time cmake --build . --target TARGET_NAME_run_cppcheck
 # EXAMPLE:
 # cppcheck_enabler(
+#   PATHS
+#     # to use cppcheck_installer from conan
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#     # to use `cppcheck-htmlreport` from cmake subfolder
+#     ${CMAKE_SOURCE_DIR}/cmake
+#     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
 #   IS_ENABLED
 #     ${ENABLE_CPPCHECK}
 #   CHECK_TARGETS
@@ -904,33 +1091,42 @@ function(cppcheck_enabler)
   if(ARGUMENTS_OVERRIDE_OPTIONS)
     set(CPPCHECK_OPTIONS ${ARGUMENTS_OVERRIDE_OPTIONS})
   else()
-    if(ARGUMENTS_VERBOSE)
-      message(STATUS "cppcheck: no OVERRIDE_OPTIONS provided")
-    endif(ARGUMENTS_VERBOSE)
+    message_if(ARGUMENTS_VERBOSE STATUS
+      "cppcheck: no OVERRIDE_OPTIONS provided"
+    )
     # skip, use defaults
   endif()
   #
   list(APPEND CPPCHECK_OPTIONS ${ARGUMENTS_EXTRA_OPTIONS})
-  if(ARGUMENTS_VERBOSE)
-    message(STATUS "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}")
-  endif(ARGUMENTS_VERBOSE)
+  message_if(ARGUMENTS_VERBOSE STATUS
+    "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}"
+  )
   #
   if(${ARGUMENTS_IS_ENABLED})
+    message_if(ARGUMENTS_VERBOSE STATUS
+      "cppcheck enabled"
+    )
+
     # to use `cppcheck` from conan
     list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
 
-    # Check if cppcheck is installed with find_program.
-    find_program(CPPCHECK_PROGRAM cppcheck)
-    if(ARGUMENTS_VERBOSE)
-      message(STATUS "CPPCHECK_PROGRAM=${CPPCHECK_PROGRAM}")
-    endif(ARGUMENTS_VERBOSE)
-    if(ARGUMENTS_REQUIRED AND NOT CPPCHECK_PROGRAM)
-      message(FATAL_ERROR "unable to find cppcheck")
-    endif(ARGUMENTS_REQUIRED AND NOT CPPCHECK_PROGRAM)
+    # use cppcheck_installer from conan
+    find_program_helper(cppcheck
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR CPPCHECK_PROGRAM
+      VERBOSE TRUE
+    )
 
-    if(ARGUMENTS_VERBOSE)
-      message(STATUS "ARGUMENTS_HTML_REPORT=${ARGUMENTS_HTML_REPORT}")
-    endif(ARGUMENTS_VERBOSE)
+    message_if(ARGUMENTS_VERBOSE STATUS
+      "ARGUMENTS_HTML_REPORT=${ARGUMENTS_HTML_REPORT}"
+    )
+
     if(${ARGUMENTS_HTML_REPORT})
       list(APPEND CPPCHECK_OPTIONS
         --xml
@@ -946,19 +1142,41 @@ function(cppcheck_enabler)
       list(APPEND CPPCHECK_RUNNABLE
         ${CPPCHECK_PROGRAM}
       )
-      if(ARGUMENTS_VERBOSE)
-        message(STATUS "CPPCHECK_RUNNABLE=${CPPCHECK_RUNNABLE}")
-      endif(ARGUMENTS_VERBOSE)
+
+      message_if(ARGUMENTS_VERBOSE STATUS
+        "CPPCHECK_RUNNABLE=${CPPCHECK_RUNNABLE}"
+      )
+
+      if(${ARGUMENTS_HTML_REPORT})
+        # to use `cppcheck-htmlreport` from cmake subfolder
+        list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+        list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_SOURCE_DIR}/cmake)
+        #
+        find_program_helper("cppcheck-htmlreport"
+          PATHS
+            #${CONAN_BIN_DIRS}
+            #${CONAN_BIN_DIRS_LLVM_TOOLS}
+            ## to use `cppcheck-htmlreport` from cmake subfolder
+            #${CMAKE_SOURCE_DIR}/cmake
+            #${CMAKE_CURRENT_SOURCE_DIR}/cmake
+            ${ARGUMENTS_UNPARSED_ARGUMENTS}
+          NO_SYSTEM_ENVIRONMENT_PATH
+          NO_CMAKE_SYSTEM_PATH
+          REQUIRED
+          OUT_VAR CPPCHECK_HTMLREPORT
+          VERBOSE TRUE
+        )
+      else()
+        set(CPPCHECK_HTMLREPORT "")
+      endif(${ARGUMENTS_HTML_REPORT})
 
       # create separate target for cppcheck
       if(ARGUMENTS_STANDALONE_TARGET)
-        set(CPPCHECK_FULL_CMD
-          ${CPPCHECK_RUNNABLE}
-        )
         add_cppcheck_target(
           TARGET_NAME ${ARGUMENTS_STANDALONE_TARGET}
-          CPPCHECK_FULL_CMD ${CPPCHECK_FULL_CMD}
-          HTML_REPORT ${ARGUMENTS_HTML_REPORT}
+          CPPCHECK_FULL_CMD
+            ${CPPCHECK_RUNNABLE}
+          HTML_REPORT ${CPPCHECK_HTMLREPORT}
           EXTRA_OPTIONS ${CPPCHECK_OPTIONS}
         )
       endif(ARGUMENTS_STANDALONE_TARGET)
@@ -985,19 +1203,17 @@ function(cppcheck_enabler)
             ${TARGET_NAME}
           )
           #
-          set(CPPCHECK_FULL_CMD
-            ${CPPCHECK_RUNNABLE}
-            # NOTE: generator expression, expands during build time
-            # if the ${ITEM} is non-empty, than append it
-            $<$<BOOL:${collected_defines}>:-D$<JOIN:${collected_defines}, -D>>
-            # NOTE: generator expression, expands during build time
-            # if the ${ITEM} is non-empty, than append it
-            $<$<BOOL:${collected_includes}>:-I$<JOIN:${collected_includes}, -I>>
-            ${TARGET_SOURCES}
-          )
           add_cppcheck_target(
             TARGET_NAME ${LIB_NAME}
-            CPPCHECK_FULL_CMD ${CPPCHECK_FULL_CMD}
+            CPPCHECK_FULL_CMD
+              ${CPPCHECK_RUNNABLE}
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              $<$<BOOL:${collected_defines}>:-D$<JOIN:${collected_defines}, -D>>
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              $<$<BOOL:${collected_includes}>:-I$<JOIN:${collected_includes}, -I>>
+              ${TARGET_SOURCES}
             HTML_REPORT ${ARGUMENTS_HTML_REPORT}
             EXTRA_OPTIONS ${CPPCHECK_OPTIONS}
           )
@@ -1007,15 +1223,15 @@ function(cppcheck_enabler)
             ${LIB_NAME}_run_cppcheck
           )
         endforeach()
-      elseif(ARGUMENTS_CHECK_TARGETS)
+      else(ARGUMENTS_CHECK_TARGETS)
         if(ARGUMENTS_VERBOSE)
           message(STATUS "cppcheck: no CHECK_TARGETS provided")
         endif(ARGUMENTS_VERBOSE)
       endif(ARGUMENTS_CHECK_TARGETS)
-    elseif(CPPCHECK_PROGRAM)
+    else(CPPCHECK_PROGRAM)
       message(WARNING "Program 'cppcheck' not found, unable to run 'cppcheck'.")
     endif(CPPCHECK_PROGRAM)
-  elseif() # ARGUMENTS_IS_ENABLED
+  else() # ARGUMENTS_IS_ENABLED
     if(ARGUMENTS_VERBOSE)
       message(STATUS "cppcheck disabled")
     endif(ARGUMENTS_VERBOSE)
@@ -1023,9 +1239,10 @@ function(cppcheck_enabler)
 endfunction(cppcheck_enabler)
 
 find_package(basis REQUIRED)
-if(${basis_HEADER_DIR} STREQUAL "")
-  message(FATAL_ERROR "unable to find basis_HEADER_DIR")
-endif()
+FROM_HERE("invalid basis_HEADER_DIR")
+validate(CHECK_NOT_EMPTY ${basis_HEADER_DIR}
+  TEXT "${FROM_HERE}"
+)
 #
 set(cling_includes
   ${CONAN_CLING_CONAN_ROOT}/include
@@ -1107,13 +1324,15 @@ function(add_valgrind_target)
   #
   set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
 
-  if(${ARGUMENTS_TARGET_NAME} STREQUAL "")
-    message(FATAL_ERROR "add_valgrind_target failed: invalid ARGUMENTS_TARGET_NAME")
-  endif()
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
   #
-  if("${ARGUMENTS_MEMORYCHECK_FULL_CMD}" STREQUAL "")
-    message(FATAL_ERROR "add_valgrind_target failed: invalid ARGUMENTS_MEMORYCHECK_FULL_CMD")
-  endif()
+  FROM_HERE("invalid ARGUMENTS_MEMORYCHECK_FULL_CMD")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_MEMORYCHECK_FULL_CMD}
+    TEXT "${FROM_HERE}"
+  )
   if(ARGUMENTS_VERBOSE)
     message(STATUS "ARGUMENTS_MEMORYCHECK_FULL_CMD=${ARGUMENTS_MEMORYCHECK_FULL_CMD}")
   endif(ARGUMENTS_VERBOSE)
@@ -1290,19 +1509,22 @@ function(valgrind_enabler)
   endif(ARGUMENTS_VERBOSE)
   #
   if(${ARGUMENTS_IS_ENABLED})
+    message(STATUS "valgrind enabled")
+
     # to use `valgrind` from conan
     list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
 
-    # Check if valgrind is installed with find_program.
-    find_program(CMAKE_MEMORYCHECK_COMMAND
-      valgrind
+    find_program_helper(valgrind
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR CMAKE_MEMORYCHECK_COMMAND
+      VERBOSE TRUE
     )
-    if(ARGUMENTS_REQUIRED AND NOT CMAKE_MEMORYCHECK_COMMAND)
-      message(FATAL_ERROR "unable to find valgrind")
-    endif(ARGUMENTS_REQUIRED AND NOT CMAKE_MEMORYCHECK_COMMAND)
-    if(ARGUMENTS_VERBOSE)
-      message(STATUS "CMAKE_MEMORYCHECK_COMMAND=${CMAKE_MEMORYCHECK_COMMAND}")
-    endif(ARGUMENTS_VERBOSE)
 
     if(CMAKE_MEMORYCHECK_COMMAND)
       # Set valgrind program + options.
@@ -1322,10 +1544,10 @@ function(valgrind_enabler)
         )
       endif(ARGUMENTS_STANDALONE_TARGET)
 
-    elseif(CMAKE_MEMORYCHECK_COMMAND)
+    else(CMAKE_MEMORYCHECK_COMMAND)
       message(WARNING "Program 'valgrind' not found, unable to run 'valgrind'.")
     endif(CMAKE_MEMORYCHECK_COMMAND)
-  elseif() # ARGUMENTS_IS_ENABLED
+  else() # ARGUMENTS_IS_ENABLED
     if(ARGUMENTS_VERBOSE)
       message(STATUS "valgrind disabled")
     endif(ARGUMENTS_VERBOSE)
@@ -1335,6 +1557,15 @@ endfunction(valgrind_enabler)
 # USAGE:
 # cmake -E time cmake --build . --target TARGET_NAME_run_cppcheck
 cppcheck_enabler(
+  PATHS
+    # to use cppcheck_installer from conan
+    ${CONAN_BIN_DIRS}
+    ${CONAN_BIN_DIRS_LLVM_TOOLS}
+    # to use `cppcheck-htmlreport` from cmake subfolder
+    ${CMAKE_SOURCE_DIR}/cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+  NO_SYSTEM_ENVIRONMENT_PATH
+  NO_CMAKE_SYSTEM_PATH
   IS_ENABLED
     ${ENABLE_CPPCHECK}
   CHECK_TARGETS
@@ -1418,13 +1649,16 @@ function(add_clang_tidy_target)
   #
   set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
 
-  if(${ARGUMENTS_TARGET_NAME} STREQUAL "")
-    message(FATAL_ERROR "add_clang_tidy_target failed: invalid ARGUMENTS_TARGET_NAME")
-  endif()
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
+
   #
-  if("${ARGUMENTS_CLANG_TIDY_FULL_CMD}" STREQUAL "")
-    message(FATAL_ERROR "add_clang_tidy_target failed: invalid ARGUMENTS_CLANG_TIDY_FULL_CMD")
-  endif()
+  FROM_HERE("invalid ARGUMENTS_CLANG_TIDY_FULL_CMD")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_CLANG_TIDY_FULL_CMD}
+    TEXT ${FROM_HERE}
+  )
   if(ARGUMENTS_VERBOSE)
     message(STATUS "ARGUMENTS_CLANG_TIDY_FULL_CMD=${ARGUMENTS_CLANG_TIDY_FULL_CMD}")
   endif(ARGUMENTS_VERBOSE)
@@ -1517,6 +1751,11 @@ endfunction(add_clang_tidy_target)
 # cmake -E time cmake --build . --target TARGET_NAME_run_clang_tidy
 # EXAMPLE:
 # clang_tidy_enabler(
+#   PATHS
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
 #   IS_ENABLED
 #     ${ENABLE_CLANG_TIDY}
 #   CHECK_TARGETS
@@ -1616,17 +1855,22 @@ function(clang_tidy_enabler)
   endif(ARGUMENTS_VERBOSE)
   #
   if(${ARGUMENTS_IS_ENABLED})
+    message(STATUS "clang-tidy enabled")
+
     # to use `clang_tidy` from conan
     list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
 
-    # Check if clang_tidy is installed with find_program.
-    find_program(CLANG_TIDY_PROGRAM clang-tidy)
-    if(ARGUMENTS_REQUIRED AND NOT CLANG_TIDY_PROGRAM)
-      message(FATAL_ERROR "unable to find clang-tidy")
-    endif(ARGUMENTS_REQUIRED AND NOT CLANG_TIDY_PROGRAM)
-    if(ARGUMENTS_VERBOSE)
-      message(STATUS "CLANG_TIDY_PROGRAM=${CLANG_TIDY_PROGRAM}")
-    endif(ARGUMENTS_VERBOSE)
+    find_program_helper(clang-tidy
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR CLANG_TIDY_PROGRAM
+      VERBOSE TRUE
+    )
 
     if(CLANG_TIDY_PROGRAM)
       # Create clang_tidy cache directory
@@ -1642,12 +1886,10 @@ function(clang_tidy_enabler)
 
       # create separate target for clang_tidy
       if(ARGUMENTS_STANDALONE_TARGET)
-        set(CLANG_TIDY_FULL_CMD
-          ${CLANG_TIDY_RUNNABLE}
-        )
         add_clang_tidy_target(
           TARGET_NAME ${ARGUMENTS_STANDALONE_TARGET}
-          CLANG_TIDY_FULL_CMD ${CLANG_TIDY_FULL_CMD}
+          CLANG_TIDY_FULL_CMD
+            ${CLANG_TIDY_RUNNABLE}
           EXTRA_OPTIONS ${CLANG_TIDY_OPTIONS}
         )
       endif(ARGUMENTS_STANDALONE_TARGET)
@@ -1674,22 +1916,20 @@ function(clang_tidy_enabler)
             ${TARGET_NAME}
           )
           #
-          set(CLANG_TIDY_FULL_CMD
-            ${CLANG_TIDY_RUNNABLE}
-            # NOTE: generator expression, expands during build time
-            # if the ${ITEM} is non-empty, than append it
-            $<$<BOOL:${collected_defines}>:-extra-arg=-D$<JOIN:${collected_defines}, -extra-arg=-D>>
-            # NOTE: generator expression, expands during build time
-            # if the ${ITEM} is non-empty, than append it
-            # To suppress compiler diagnostic messages
-            # from third-party headers just use -isystem
-            # instead of -I to include those headers.
-            $<$<BOOL:${collected_includes}>:-extra-arg=-isystem$<JOIN:${collected_includes}, -extra-arg=-I>>
-            ${TARGET_SOURCES}
-          )
           add_clang_tidy_target(
             TARGET_NAME ${LIB_NAME}
-            CLANG_TIDY_FULL_CMD ${CLANG_TIDY_FULL_CMD}
+            CLANG_TIDY_FULL_CMD
+              ${CLANG_TIDY_RUNNABLE}
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              $<$<BOOL:${collected_defines}>:-extra-arg=-D$<JOIN:${collected_defines}, -extra-arg=-D>>
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              # To suppress compiler diagnostic messages
+              # from third-party headers just use -isystem
+              # instead of -I to include those headers.
+              $<$<BOOL:${collected_includes}>:-extra-arg=-isystem$<JOIN:${collected_includes}, -extra-arg=-isystem>>
+              ${TARGET_SOURCES}
             EXTRA_OPTIONS ${CLANG_TIDY_OPTIONS}
           )
           # run valgrind on each build of target
@@ -1698,15 +1938,15 @@ function(clang_tidy_enabler)
             ${LIB_NAME}_run_clang_tidy
           )
         endforeach()
-      elseif(ARGUMENTS_CHECK_TARGETS)
+      else(ARGUMENTS_CHECK_TARGETS)
         if(ARGUMENTS_VERBOSE)
           message(STATUS "clang_tidy: no CHECK_TARGETS provided")
         endif(ARGUMENTS_VERBOSE)
       endif(ARGUMENTS_CHECK_TARGETS)
-    elseif(CLANG_TIDY_PROGRAM)
+    else(CLANG_TIDY_PROGRAM)
       message(WARNING "Program 'clang_tidy' not found, unable to run 'clang_tidy'.")
     endif(CLANG_TIDY_PROGRAM)
-  elseif() # ARGUMENTS_IS_ENABLED
+  else() # ARGUMENTS_IS_ENABLED
     if(ARGUMENTS_VERBOSE)
       message(STATUS "clang_tidy disabled")
     endif(ARGUMENTS_VERBOSE)
@@ -1716,6 +1956,11 @@ endfunction(clang_tidy_enabler)
 # USAGE:
 # cmake -E time cmake --build . --target TARGET_NAME_clang_tidy
 clang_tidy_enabler(
+  PATHS
+    ${CONAN_BIN_DIRS}
+    ${CONAN_BIN_DIRS_LLVM_TOOLS}
+  NO_SYSTEM_ENVIRONMENT_PATH
+  NO_CMAKE_SYSTEM_PATH
   IS_ENABLED
     ${ENABLE_CLANG_TIDY}
   CHECK_TARGETS
@@ -1751,6 +1996,763 @@ clang_tidy_enabler(
     #-header-filter=flextool/*
     -header-filter=${CMAKE_CURRENT_SOURCE_DIR}
     -warnings-as-errors=cppcoreguidelines-avoid-goto
+  VERBOSE
+  REQUIRED
+)
+
+## ---------------------------- cppclean -------------------------------- ##
+
+function(add_cppclean_target)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    # empty
+  )
+  set(oneValueArgs
+    TARGET_NAME
+  )
+  set(multiValueArgs
+    CPPCLEAN_FULL_CMD
+    # adds options to default options
+    EXTRA_OPTIONS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
+
+  #
+  FROM_HERE("invalid ARGUMENTS_CPPCLEAN_FULL_CMD")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_CPPCLEAN_FULL_CMD}
+    TEXT ${FROM_HERE}
+  )
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_CPPCLEAN_FULL_CMD=${ARGUMENTS_CPPCLEAN_FULL_CMD}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  set(CPPCLEAN_FULL_CMD
+    ${ARGUMENTS_CPPCLEAN_FULL_CMD}
+    ${ARGUMENTS_EXTRA_OPTIONS}
+  )
+  #
+  # USAGE:
+  # cmake -E time cmake --build . --target TARGET_NAME_run_cppclean
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "added new target: ${ARGUMENTS_TARGET_NAME}_run_cppclean")
+  endif(ARGUMENTS_VERBOSE)
+  add_custom_target(${ARGUMENTS_TARGET_NAME}_run_cppclean
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_cppclean_report.xml
+    # create report dir
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      make_directory
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report/index.html
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${CPPCLEAN_FULL_CMD}"
+    # Run cppclean static analysis
+    COMMAND
+      "${CPPCLEAN_FULL_CMD}"
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${HTMLREPORT_FULL_CMD}"
+    # Generate html output
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      time
+      "${HTMLREPORT_FULL_CMD}"
+    VERBATIM
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND_EXPAND_LISTS
+    #USES_TERMINAL
+    # Set work directory for target
+    WORKING_DIRECTORY
+      ${CMAKE_BINARY_DIR}
+    # Echo what is being done
+    COMMENT "running cppclean"
+  )
+endfunction(add_cppclean_target)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_run_cppclean
+# EXAMPLE:
+# cppclean_enabler(
+#   PATHS
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
+#   IS_ENABLED
+#     ${ENABLE_CPPCLEAN}
+#   CHECK_TARGETS
+#     ${LIB_NAME}
+#   EXTRA_OPTIONS
+#    --include-path=allergies
+#    allergies/allergies.h
+#    allergies/allergies.cpp
+#   VERBOSE
+# )
+function(cppclean_enabler)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    VERBOSE
+    REQUIRED
+  )
+  set(oneValueArgs
+    IS_ENABLED
+    STANDALONE_TARGET
+  )
+  set(multiValueArgs
+    # completely changes options to provided options
+    OVERRIDE_OPTIONS
+    # adds options to default options
+    EXTRA_OPTIONS
+    # Will collect include dirs, defines and source files
+    # from cmake targets
+    # NOTE: Why not compile_commands.json?
+    # - cmake can not generate that file on per-target basis
+    # or into custom out dir
+    # NOTE: Why not CMAKE_CXX_CPPCLEAN?
+    # - we want to run custom cppclean target without
+    # need to build whole poject per each check
+    CHECK_TARGETS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  #
+  # default options
+  #
+  # TODO
+  #set(CPPCLEAN_SUPRESSIONS
+  #  ${PROJECT_SOURCE_DIR}/cmake/cppclean.cfg
+  #)
+  ## set supressions file only if it exists
+  #if(EXISTS "${CPPCLEAN_SUPRESSIONS}")
+  #  set(CPPCLEAN_DEFAULT_SUPRESSIONS_ARG
+  #    --suppressions-list=${CPPCLEAN_SUPRESSIONS}
+  #  )
+  #  message(STATUS
+  #    "found cppclean config file: ${CPPCLEAN_SUPRESSIONS}"
+  #  )
+  #else()
+  #  message(WARNING
+  #    "unable to find cppclean config file: ${CPPCLEAN_SUPRESSIONS}"
+  #  )
+  #endif()
+  # Set message template
+  # TODO
+  #set(CPPCLEAN_TEMPLATE
+  #  "[{file}:{line}] ({severity}) {message} ({id}) ({callstack})"
+  #)
+  # Set cppclean cache directory
+  set(CPPCLEAN_BUILD_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/cppclean_cache
+  )
+  #
+  set(CPPCLEAN_OPTIONS
+    # more info in console
+    #--verbose
+  )
+  if(ARGUMENTS_OVERRIDE_OPTIONS)
+    set(CPPCLEAN_OPTIONS ${ARGUMENTS_OVERRIDE_OPTIONS})
+  else()
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "cppclean: no OVERRIDE_OPTIONS provided")
+    endif(ARGUMENTS_VERBOSE)
+    # skip, use defaults
+  endif()
+  #
+  list(APPEND CPPCLEAN_OPTIONS ${ARGUMENTS_EXTRA_OPTIONS})
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  if(${ARGUMENTS_IS_ENABLED})
+    message(STATUS "cppclean enabled")
+
+    # to use `cppclean` from conan
+    list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
+
+    find_program_helper(cppclean
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR CPPCLEAN_PROGRAM
+      VERBOSE TRUE
+    )
+
+    if(CPPCLEAN_PROGRAM)
+      # Create cppclean cache directory
+      file(MAKE_DIRECTORY ${CPPCLEAN_BUILD_DIR})
+
+      # Set cppclean program + options.
+      list(APPEND CPPCLEAN_RUNNABLE
+        ${CPPCLEAN_PROGRAM}
+      )
+      if(ARGUMENTS_VERBOSE)
+        message(STATUS "CPPCLEAN_RUNNABLE=${CPPCLEAN_RUNNABLE}")
+      endif(ARGUMENTS_VERBOSE)
+
+      # create separate target for cppclean
+      if(ARGUMENTS_STANDALONE_TARGET)
+        add_cppclean_target(
+          TARGET_NAME ${ARGUMENTS_STANDALONE_TARGET}
+          CPPCLEAN_FULL_CMD
+            ${CPPCLEAN_RUNNABLE}
+          EXTRA_OPTIONS ${CPPCLEAN_OPTIONS}
+        )
+      endif(ARGUMENTS_STANDALONE_TARGET)
+
+      # collect headers and defines from existing target
+      if(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "cppclean: ARGUMENTS_CHECK_TARGETS=${ARGUMENTS_CHECK_TARGETS}")
+        endif(ARGUMENTS_VERBOSE)
+        foreach(TARGET_NAME ${ARGUMENTS_CHECK_TARGETS})
+          if(ARGUMENTS_VERBOSE)
+            message(STATUS "enabled cppclean for target ${TARGET_NAME}")
+          endif(ARGUMENTS_VERBOSE)
+          #
+          get_all_compile_definitions(collected_defines
+            ${TARGET_NAME}
+          )
+          #
+          get_all_include_directories(collected_includes
+            ${TARGET_NAME}
+          )
+          #
+          get_target_sources(TARGET_SOURCES
+            ${TARGET_NAME}
+          )
+          #
+          add_cppclean_target(
+            TARGET_NAME ${LIB_NAME}
+            CPPCLEAN_FULL_CMD
+              ${CPPCLEAN_RUNNABLE}
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              #$<$<BOOL:${collected_defines}>:-D$<JOIN:${collected_defines}, -D>>
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              # To suppress compiler diagnostic messages
+              # from third-party headers just use -isystem
+              # instead of -I to include those headers.
+              #$<$<BOOL:${collected_includes}>:--include-path-system $<JOIN:${collected_includes}, --include-path-system >>
+              $<$<BOOL:${collected_includes}>:--include-path $<JOIN:${collected_includes}, --include-path >>
+              ${TARGET_SOURCES}
+            EXTRA_OPTIONS ${CPPCLEAN_OPTIONS}
+          )
+          # run valgrind on each build of target
+          add_dependencies(
+            ${LIB_NAME}
+            ${LIB_NAME}_run_cppclean
+          )
+        endforeach()
+      else(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "cppclean: no CHECK_TARGETS provided")
+        endif(ARGUMENTS_VERBOSE)
+      endif(ARGUMENTS_CHECK_TARGETS)
+    else(CPPCLEAN_PROGRAM)
+      message(WARNING "Program 'cppclean' not found, unable to run 'cppclean'.")
+    endif(CPPCLEAN_PROGRAM)
+  else() # ARGUMENTS_IS_ENABLED
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "cppclean disabled")
+    endif(ARGUMENTS_VERBOSE)
+  endif() # ARGUMENTS_IS_ENABLED
+endfunction(cppclean_enabler)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_cppclean
+cppclean_enabler(
+  PATHS
+    ${CONAN_BIN_DIRS}
+    ${CONAN_BIN_DIRS_LLVM_TOOLS}
+  #NO_SYSTEM_ENVIRONMENT_PATH
+  #NO_CMAKE_SYSTEM_PATH
+  IS_ENABLED
+    ${ENABLE_CPPCLEAN}
+  CHECK_TARGETS
+    ${LIB_NAME}
+  EXTRA_OPTIONS
+    --include-path ${CMAKE_CURRENT_SOURCE_DIR}/include
+    #--include-path-non-system ${CMAKE_CURRENT_SOURCE_DIR}/include
+    --verbose
+    --exclude "*generated*"
+    #-extra-arg=-std=c++17
+    #-extra-arg=-Qunused-arguments
+    #-extra-arg=-DBOOST_SYSTEM_NO_DEPRECATED
+    #-extra-arg=-DBOOST_ERROR_CODE_HEADER_ONLY
+  VERBOSE
+  REQUIRED
+)
+
+## ---------------------------- oclint -------------------------------- ##
+
+
+function(add_oclint_target)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    # empty
+  )
+  set(oneValueArgs
+    TARGET_NAME
+  )
+  set(multiValueArgs
+    OCLINT_FULL_CMD
+    # adds options to default options
+    EXTRA_OPTIONS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
+
+  #
+  FROM_HERE("invalid ARGUMENTS_OCLINT_FULL_CMD")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_OCLINT_FULL_CMD}
+    TEXT ${FROM_HERE}
+  )
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_OCLINT_FULL_CMD=${ARGUMENTS_OCLINT_FULL_CMD}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  set(OCLINT_FULL_CMD
+    ${ARGUMENTS_OCLINT_FULL_CMD}
+    ${ARGUMENTS_EXTRA_OPTIONS}
+  )
+  #
+  # USAGE:
+  # cmake -E time cmake --build . --target TARGET_NAME_run_oclint
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "added new target: ${ARGUMENTS_TARGET_NAME}_run_oclint")
+  endif(ARGUMENTS_VERBOSE)
+  add_custom_target(${ARGUMENTS_TARGET_NAME}_run_oclint
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_oclint_report.xml
+    # create report dir
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      make_directory
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report/index.html
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${OCLINT_FULL_CMD}"
+    # Run oclint static analysis
+    COMMAND
+      "${OCLINT_FULL_CMD}"
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${HTMLREPORT_FULL_CMD}"
+    # Generate html output
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      time
+      "${HTMLREPORT_FULL_CMD}"
+    VERBATIM
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND_EXPAND_LISTS
+    #USES_TERMINAL
+    # Set work directory for target
+    WORKING_DIRECTORY
+      ${CMAKE_BINARY_DIR}
+    # Echo what is being done
+    COMMENT "running oclint"
+  )
+endfunction(add_oclint_target)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_run_oclint
+# EXAMPLE:
+# oclint_enabler(
+#   PATHS
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
+#   IS_ENABLED
+#     ${ENABLE_OCLINT}
+#   CHECK_TARGETS
+#     ${LIB_NAME}
+#   EXTRA_OPTIONS
+#     # OCLINT command-line manual
+#     # https://oclint-docs.readthedocs.io/en/stable/manual/oclint.html
+#     -extra-arg=-std=c++17
+#     -extra-arg=-Qunused-arguments
+#     # To suppress compiler diagnostic messages
+#     # from third-party headers just use -isystem
+#     # instead of -I to include those headers.
+#     #-extra-arg=-nostdinc
+#     #-extra-arg=-nostdinc++
+#     -extra-arg=-DBOOST_SYSTEM_NO_DEPRECATED
+#     -extra-arg=-DBOOST_ERROR_CODE_HEADER_ONLY
+#     # Enable Clang Static Analyzer,
+#     # and integrate results into OCLint report
+#     -enable-clang-static-analyzer
+#     # Compile every source, and analyze across global contexts
+#     # (depends on number of source files,
+#     # could results in high memory load)
+#     # -enable-global-analysis
+#     # Write output to <path>
+#     -o=${CMAKE_CURRENT_BINARY_DIR}
+#     # Build path is used to read a compile command database.
+#     -p=${CMAKE_CURRENT_BINARY_DIR}
+#     # Add directory to rule loading path
+#     -R=${CMAKE_CURRENT_SOURCE_DIR}
+#     # Disable the anonymous analytics
+#     -no-analytics
+#     #-rc=<parameter>=<value>       - Override the default behavior of rules
+#     #-report-type=<name>           - Change output report type
+#     #-rule=<rule name>             - Explicitly pick rules
+# )
+function(oclint_enabler)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    VERBOSE
+    REQUIRED
+  )
+  set(oneValueArgs
+    IS_ENABLED
+    STANDALONE_TARGET
+  )
+  set(multiValueArgs
+    # completely changes options to provided options
+    OVERRIDE_OPTIONS
+    # adds options to default options
+    EXTRA_OPTIONS
+    # Will collect include dirs, defines and source files
+    # from cmake targets
+    # NOTE: Why not compile_commands.json?
+    # - cmake can not generate that file on per-target basis
+    # or into custom out dir
+    # NOTE: Why not CMAKE_CXX_OCLINT?
+    # - we want to run custom oclint target without
+    # need to build whole poject per each check
+    CHECK_TARGETS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  #
+  # default options
+  #
+  # TODO
+  #set(OCLINT_SUPRESSIONS
+  #  ${PROJECT_SOURCE_DIR}/cmake/oclint.cfg
+  #)
+  ## set supressions file only if it exists
+  #if(EXISTS "${OCLINT_SUPRESSIONS}")
+  #  set(OCLINT_DEFAULT_SUPRESSIONS_ARG
+  #    --suppressions-list=${OCLINT_SUPRESSIONS}
+  #  )
+  #  message(STATUS
+  #    "found oclint config file: ${OCLINT_SUPRESSIONS}"
+  #  )
+  #else()
+  #  message(WARNING
+  #    "unable to find oclint config file: ${OCLINT_SUPRESSIONS}"
+  #  )
+  #endif()
+  # Set message template
+  # TODO
+  #set(OcLINT_TEMPLATE
+  #  "[{file}:{line}] ({severity}) {message} ({id}) ({callstack})"
+  #)
+  # Set oclint cache directory
+  set(OCLINT_BUILD_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/oclint_cache
+  )
+  #
+  set(OCLINT_OPTIONS
+    # more info in console
+    #--verbose
+  )
+  if(ARGUMENTS_OVERRIDE_OPTIONS)
+    set(OCLINT_OPTIONS ${ARGUMENTS_OVERRIDE_OPTIONS})
+  else()
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "oclint: no OVERRIDE_OPTIONS provided")
+    endif(ARGUMENTS_VERBOSE)
+    # skip, use defaults
+  endif()
+  #
+  list(APPEND OCLINT_OPTIONS ${ARGUMENTS_EXTRA_OPTIONS})
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  if(${ARGUMENTS_IS_ENABLED})
+    message(STATUS "oclint enabled")
+
+    # to use `oclint` from conan
+    list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
+
+    find_program_helper(oclint
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR OCLINT_PROGRAM
+      VERBOSE TRUE
+    )
+
+    if(OCLINT_PROGRAM)
+      # Create oclint cache directory
+      file(MAKE_DIRECTORY ${OCLINT_BUILD_DIR})
+
+      # Set oclint program + options.
+      list(APPEND OCLINT_RUNNABLE
+        ${OCLINT_PROGRAM}
+      )
+      if(ARGUMENTS_VERBOSE)
+        message(STATUS "OCLINT_RUNNABLE=${OCLINT_RUNNABLE}")
+      endif(ARGUMENTS_VERBOSE)
+
+      # create separate target for oclint
+      if(ARGUMENTS_STANDALONE_TARGET)
+        add_oclint_target(
+          TARGET_NAME ${ARGUMENTS_STANDALONE_TARGET}
+          OCLINT_FULL_CMD
+            ${OCLINT_RUNNABLE}
+          EXTRA_OPTIONS ${OCLINT_OPTIONS}
+        )
+      endif(ARGUMENTS_STANDALONE_TARGET)
+
+      # collect headers and defines from existing target
+      if(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "oclint: ARGUMENTS_CHECK_TARGETS=${ARGUMENTS_CHECK_TARGETS}")
+        endif(ARGUMENTS_VERBOSE)
+        foreach(TARGET_NAME ${ARGUMENTS_CHECK_TARGETS})
+          if(ARGUMENTS_VERBOSE)
+            message(STATUS "enabled oclint for target ${TARGET_NAME}")
+          endif(ARGUMENTS_VERBOSE)
+          #
+          get_all_compile_definitions(collected_defines
+            ${TARGET_NAME}
+          )
+          #
+          get_all_include_directories(collected_includes
+            ${TARGET_NAME}
+          )
+          #
+          get_target_sources(TARGET_SOURCES
+            ${TARGET_NAME}
+          )
+          #
+          add_oclint_target(
+            TARGET_NAME ${LIB_NAME}
+            OCLINT_FULL_CMD
+              ${OCLINT_RUNNABLE}
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              $<$<BOOL:${collected_defines}>:-extra-arg=-D$<JOIN:${collected_defines}, -extra-arg=-D>>
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              # To suppress compiler diagnostic messages
+              # from third-party headers just use -isystem
+              # instead of -I to include those headers.
+              # $<$<BOOL:${collected_includes}>:-extra-arg=-isystem$<JOIN:${collected_includes}, -extra-arg=-isystem>>
+              $<$<BOOL:${collected_includes}>:-extra-arg=-I$<JOIN:${collected_includes}, -extra-arg=-I>>
+              ${TARGET_SOURCES}
+            EXTRA_OPTIONS ${OCLINT_OPTIONS}
+          )
+          # run valgrind on each build of target
+          add_dependencies(
+            ${LIB_NAME}
+            ${LIB_NAME}_run_oclint
+          )
+        endforeach()
+      else(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "oclint: no CHECK_TARGETS provided")
+        endif(ARGUMENTS_VERBOSE)
+      endif(ARGUMENTS_CHECK_TARGETS)
+    else(OCLINT_PROGRAM)
+      message(WARNING "Program 'oclint' not found, unable to run 'oclint'.")
+    endif(OCLINT_PROGRAM)
+  else() # ARGUMENTS_IS_ENABLED
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "oclint disabled")
+    endif(ARGUMENTS_VERBOSE)
+  endif() # ARGUMENTS_IS_ENABLED
+endfunction(oclint_enabler)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_oclint
+oclint_enabler(
+  PATHS
+    ${CONAN_BIN_DIRS}
+    ${CONAN_BIN_DIRS_LLVM_TOOLS}
+  #NO_SYSTEM_ENVIRONMENT_PATH
+  #NO_CMAKE_SYSTEM_PATH
+  IS_ENABLED
+    ${ENABLE_OCLINT}
+  CHECK_TARGETS
+    ${LIB_NAME}
+  EXTRA_OPTIONS
+    # OCLINT command-line manual
+    # https://oclint-docs.readthedocs.io/en/stable/manual/oclint.html
+    -extra-arg=-std=c++17
+    -extra-arg=-Qunused-arguments
+    # To suppress compiler diagnostic messages
+    # from third-party headers just use -isystem
+    # instead of -I to include those headers.
+    #-extra-arg=-nostdinc
+    #-extra-arg=-nostdinc++
+    -extra-arg=-DBOOST_SYSTEM_NO_DEPRECATED
+    -extra-arg=-DBOOST_ERROR_CODE_HEADER_ONLY
+    # Enable Clang Static Analyzer,
+    # and integrate results into OCLint report
+    -enable-clang-static-analyzer
+    # Compile every source, and analyze across global contexts
+    # (depends on number of source files,
+    # could results in high memory load)
+    # -enable-global-analysis
+    # Write output to <path>
+    -o=${CMAKE_CURRENT_BINARY_DIR}/report.html
+    -report-type html
+    # Build path is used to read a compile command database.
+    #-p=${CMAKE_CURRENT_BINARY_DIR}
+    # Add directory to rule loading path
+    #-R=${CMAKE_CURRENT_SOURCE_DIR}
+    # Disable the anonymous analytics
+    -no-analytics
+    #-rc=<parameter>=<value>       - Override the default behavior of rules
+    #-report-type=<name>           - Change output report type
+    #-rule=<rule name>             - Explicitly pick rules
+    # -e exclude_this_folder*
+    #-max-priority-2=15 -max-priority-3=30
+    #-rc CYCLOMATIC_COMPLEXITY=4 -rc LONG_CLASS=200 -rc LONG_LINE=120
+    #-rc LONG_METHOD=10 -rc NPATH_COMPLEXITY=20 -rc NESTED_BLOCK_DEPTH=3
+    #-rc TOO_MANY_PARAMETERS=5 -rc LONG_VARIABLE_NAME=30
+    # disable compiler errors and compiler warnings in my report
+    #-extra-arg=-Wno-everything
   VERBOSE
   REQUIRED
 )

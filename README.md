@@ -574,6 +574,7 @@ Run cppcheck via cmake:
 ```bash
 cd ~/flextool
 
+# cd local_build
 cmake -E time cmake --build . --target flextool_run_cppcheck
 ```
 
@@ -594,6 +595,9 @@ sudo yum install valgrind  # RHEL, CentOS, Fedora, etc.
 Run valgrind via cmake:
 
 ```bash
+cd ~/flextool
+
+# cd local_build
 cmake -E time cmake --build . --target flextool_run_valgrind
 ```
 
@@ -618,6 +622,9 @@ sudo yum install clang-tidy  # RHEL, CentOS, Fedora, etc.
 Run clang-tidy via cmake:
 
 ```bash
+cd ~/flextool
+
+# cd local_build
 cmake -E time cmake --build . --target flextool_run_clang_tidy
 ```
 
@@ -729,6 +736,51 @@ scan-build \
 ```
 
 Open resulting `scanbuildout/...../index.html` file
+
+## For contibutors: cppclean
+
+See for details [https://github.com/myint/cppclean](https://github.com/myint/cppclean)
+
+Installation:
+
+```bash
+pip install --index-url=https://pypi.python.org/simple/ --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade cppclean
+```
+
+Usage:
+
+```bash
+cd ~/flextool
+
+# cd local_build
+cmake -E time cmake --build . --target flextool_run_cppclean
+```
+
+NOTE: cppclean requires file encoding to be: `UTF-8 without BOM` (ascii)
+
+
+## For contibutors: oclint
+
+Installation:
+
+```bash
+wget --no-check-certificate https://github.com/oclint/oclint/releases/download/v0.13/oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
+# mirror 1: https://github.strcpy.cn/oclint/oclint/releases/download/v0.13/oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
+# mirror 2: http://archives.oclint.org/releases/0.8/oclint-0.8.1-x86_64-linux-3.13.0-35-generic.tar.gz
+tar -xzvf oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
+rm -rf oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
+export OCLINT_HOME=`pwd`/oclint-0.13
+export PATH=$OCLINT_HOME/bin:$PATH
+```
+
+Usage:
+
+```bash
+cd ~/flextool
+
+# cd local_build
+cmake -E time cmake --build . --target flextool_run_oclint
+```
 
 ## LICENSE for open source components
 
