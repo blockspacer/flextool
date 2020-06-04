@@ -3,7 +3,7 @@
 
 int main(int argc, char* argv[])
 {
-  DCHECK(argc > 0);
+  DCHECK(argc > 1);
 
   /// \note scoped environment must be destroyed at app exit
   flextool::ScopedAppEnvironment env;

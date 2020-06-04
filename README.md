@@ -581,6 +581,8 @@ Open 'flextool_report/index.html' to see the results.
 
 ## For contibutors: valgrind
 
+See for details https://heeris.id.au/2016/valgrind-gdb/
+
 Install valgrind:
 
 ```bash
@@ -597,9 +599,13 @@ cmake -E time cmake --build . --target flextool_run_valgrind
 
 NOTE: compile program with a debug flag to run under valgrind
 
+NOTE: use `valgrind --tool=helgrind` to detect potential deadlocks and data races
+
+NOTE: use `valgrind --tool=massif --massif-out-file=massif_file --stacks=true` to measure size of heap. See also https://kde.org/applications/development/org.kde.massif-visualizer
+
 See for details https://stackoverflow.com/a/44989219
 
-## For contibutors: valgrind
+## For contibutors: clang-tidy
 
 Install clang-tidy:
 
@@ -615,7 +621,114 @@ Run clang-tidy via cmake:
 cmake -E time cmake --build . --target flextool_run_clang_tidy
 ```
 
-## For contibutors: clang-tidy
+## For contibutors: scan-build
+
+See for details [https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md](https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md) and [https://clang-analyzer.llvm.org/scan-build.html](https://clang-analyzer.llvm.org/scan-build.html)
+
+The program ccc-analyzer acts like a fake compiler, forwarding its command line arguments over to the compiler to perform regular compilation and clang to perform static analysis.
+
+Running configure typically generates makefiles that have hardwired paths to the compiler, and by running configure through scan-build that path is set to ccc-analyzer.
+
+```bash
+# must exist
+ccc-analyzer -v
+
+# must exist
+c++-analyzer -v
+
+# must exist
+scan-build -v
+
+CONAN_REVISIONS_ENABLED=1 \
+CONAN_VERBOSE_TRACEBACK=1 \
+CONAN_PRINT_RUN_COMMANDS=1 \
+CONAN_LOGGING_LEVEL=10 \
+GIT_SSL_NO_VERIFY=true \
+  cmake -E time \
+    conan install . \
+    --install-folder local_build \
+    -s build_type=Debug -s cling_conan:build_type=Release \
+    --profile clang \
+        -o flextool:enable_clang_from_conan=False \
+        -e flextool:enable_tests=True
+
+CONAN_REVISIONS_ENABLED=1 \
+CONAN_VERBOSE_TRACEBACK=1 \
+CONAN_PRINT_RUN_COMMANDS=1 \
+CONAN_LOGGING_LEVEL=10 \
+GIT_SSL_NO_VERIFY=true \
+  cmake -E time \
+    conan source . --source-folder local_build
+
+cd local_build
+
+export CXX=clang++-6.0
+export CC=clang-6.0
+
+# NOTE: change `build_type=Debug` to `build_type=Release` in production
+build_type=Debug
+
+# remove old CMakeCache
+(rm CMakeCache.txt || true)
+
+# NOTE: changed CMAKE_C_COMPILER to ccc-analyzer (!!!)
+# configure via cmake
+# NOTE: -DLOCAL_BUILD=TRUE
+scan-build \
+  --use-cc=clang-6.0 \
+  --use-c++=clang++-6.0 \
+  -o ./scanbuildout/ \
+  cmake .. \
+  -DCMAKE_C_COMPILER=ccc-analyzer \
+  -DCMAKE_CXX_COMPILER=c++-analyzer \
+  -DLOCAL_BUILD=TRUE \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -Dflexlib_BUILD_SHARED_LIBS=FALSE \
+  -Dflex_reflect_plugin_BUILD_SHARED_LIBS=TRUE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=${build_type}
+
+# remove old build artifacts
+(make clean || true)
+rm -rf bin
+
+# NOTE: requires project configured in debug build
+# disable other static analyzers
+# run from build directory
+scan-build \
+  -maxloop 8 \
+  -enable-checker alpha.security.taint.TaintPropagation \
+  -enable-checker alpha.core.BoolAssignment \
+  -enable-checker alpha.core.CastSize \
+  -enable-checker alpha.core.DynamicTypeChecker \
+  -enable-checker alpha.core.FixedAddr \
+  -enable-checker alpha.core.IdenticalExpr \
+  -enable-checker alpha.core.PointerArithm \
+  -enable-checker alpha.core.PointerSub \
+  -enable-checker alpha.core.SizeofPtr \
+  -enable-checker alpha.core.TestAfterDivZero \
+  -enable-checker alpha.deadcode.UnreachableCode \
+  -enable-checker alpha.security.ArrayBoundV2 \
+  -enable-checker alpha.security.MallocOverflow \
+  -enable-checker alpha.security.ReturnPtrRange \
+  -enable-checker alpha.unix.PthreadLock \
+  -enable-checker alpha.unix.Stream \
+  -enable-checker alpha.unix.cstring.BufferOverlap \
+  -enable-checker alpha.unix.cstring.NotNullTerminated \
+  -enable-checker alpha.unix.cstring.OutOfBounds \
+  -enable-checker nullability.NullableDereferenced \
+  -enable-checker optin.performance.Padding \
+  -enable-checker security.insecureAPI.rand \
+  -enable-checker security.insecureAPI.strcpy \
+  --use-cc=clang-6.0 \
+  --use-c++=clang++-6.0 \
+  -o ./scanbuildout/ \
+  make \
+  -j8
+```
+
+Open resulting `scanbuildout/...../index.html` file
 
 ## LICENSE for open source components
 
