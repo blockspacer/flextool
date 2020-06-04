@@ -1,4 +1,4 @@
-﻿#include "flextool/clang_tool.hpp" // IWYU pragma: associated
+#include "flextool/clang_tool.hpp" // IWYU pragma: associated
 
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>

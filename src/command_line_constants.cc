@@ -1,4 +1,4 @@
-﻿#include "flextool/command_line_constants.hpp" // IWYU pragma: associated
+#include "flextool/command_line_constants.hpp" // IWYU pragma: associated
 
 namespace po = boost::program_options;
 

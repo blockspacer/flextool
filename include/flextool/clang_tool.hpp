@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "flexlib/ToolPlugin.hpp"
 #include "flexlib/parser_constants.hpp"

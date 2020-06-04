@@ -1,4 +1,4 @@
-﻿#include "flextool/path_provider.hpp" // IWYU pragma: associated
+#include "flextool/path_provider.hpp" // IWYU pragma: associated
 
 #include <base/files/file_util.h>
 #include <base/path_service.h>

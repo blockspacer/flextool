@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "boost_command_line.hpp"
 #include "app_cmd_options.hpp"

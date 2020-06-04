@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <base/macros.h>
 #include <base/sequenced_task_runner.h>

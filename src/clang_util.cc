@@ -1,4 +1,4 @@
-﻿#include "flextool/clang_util.hpp" // IWYU pragma: associated
+#include "flextool/clang_util.hpp" // IWYU pragma: associated
 
 #include <base/files/file_util.h>
 #include <base/path_service.h>

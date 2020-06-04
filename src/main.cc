@@ -1,4 +1,4 @@
-﻿#include "flextool/app_environment.hpp"
+#include "flextool/app_environment.hpp"
 #include "flextool/clang_tool.hpp"
 
 int main(int argc, char* argv[])

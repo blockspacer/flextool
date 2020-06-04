@@ -1,4 +1,4 @@
-﻿#include "flextool/app_environment.hpp" // IWYU pragma: associated
+#include "flextool/app_environment.hpp" // IWYU pragma: associated
 
 #include "flextool/version.hpp"
 #include "flextool/path_provider.hpp"

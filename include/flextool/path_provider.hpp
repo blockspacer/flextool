@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <base/macros.h>
 #include <base/files/file_path.h>

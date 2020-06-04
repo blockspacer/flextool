@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "flextool/command_line_constants.hpp"
 #include "flextool/boost_command_line.hpp"

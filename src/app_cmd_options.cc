@@ -146,6 +146,7 @@ std::vector<base::FilePath>
 {
   return toFilePaths(boostCmdOptions.pathsToExtraPluginFiles);
 }
+
 std::string AppCmdOptions::tracingCategories()
 {
   return boostCmdOptions.tracing_categories_arg
