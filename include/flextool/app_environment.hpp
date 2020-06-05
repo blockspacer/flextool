@@ -9,30 +9,28 @@
 #include <base/files/file_path.h>
 #include <base/at_exit.h>
 #include <base/message_loop/message_loop.h>
-#include <basis/i18n.hpp>
+#include <base/memory/scoped_refptr.h>
 
 #include <basis/scoped_log_run_time.hpp>
 
-#include "flexlib/ToolPlugin.hpp"
-#include "flexlib/parser_constants.hpp"
-#include "flexlib/utils.hpp"
-#include "flexlib/funcParser.hpp"
-#include "flexlib/clangUtils.hpp"
-#include "flexlib/clangPipeline.hpp"
 #include "flexlib/annotation_parser.hpp"
-#include "flexlib/annotation_match_handler.hpp"
-#include "flexlib/matchers/annotation_matcher.hpp"
-#include "flexlib/options/ctp/options.hpp"
-#if defined(CLING_IS_ON)
-#include "flexlib/ClingInterpreterModule.hpp"
-#endif // CLING_IS_ON
-
-#include <entt/entity/registry.hpp>
-#include <entt/signal/dispatcher.hpp>
-#include <entt/entt.hpp>
 
 #include <vector>
 #include <string>
+
+namespace base { class SingleThreadTaskRunner; }
+
+namespace clang_utils { class AnnotationMatchOptions; }
+
+namespace clang_utils { class SourceTransformPipeline; }
+
+namespace cling_utils { class ClingInterpreter; }
+
+namespace entt { class dispatcher; }
+
+namespace flexlib { class AnnotationMatchHandler; }
+
+namespace i18n { class I18n; }
 
 namespace flextool {
 

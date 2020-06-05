@@ -442,6 +442,8 @@ target_compile_options(${LIB_NAME} PRIVATE
     -Wdeprecated-register
     # https://github.com/google/sanitizers/wiki/AddressSanitizer#using-addresssanitizer
     -fno-omit-frame-pointer
+    # disable warning: designated initializers are a C99 feature
+    -Wno-c99-extensions
   >
 )
 
@@ -868,6 +870,9 @@ function(add_cppcheck_target)
       "html report disabled"
     )
   endif() # ARGUMENTS_HTML_REPORT
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "cppcheck: HTMLREPORT_FULL_CMD=${HTMLREPORT_FULL_CMD}")
+  endif(ARGUMENTS_VERBOSE)
   #
   # USAGE:
   # cmake -E time cmake --build . --target TARGET_NAME_run_cppcheck
@@ -982,6 +987,8 @@ function(cppcheck_enabler)
   set(options
     VERBOSE
     REQUIRED
+    # will run check when target will be built
+    CHECK_TARGETS_DEPEND
   )
   set(oneValueArgs
     IS_ENABLED
@@ -1170,6 +1177,10 @@ function(cppcheck_enabler)
         set(CPPCHECK_HTMLREPORT "")
       endif(${ARGUMENTS_HTML_REPORT})
 
+      if(ARGUMENTS_VERBOSE)
+        message(STATUS "cppcheck: CPPCHECK_HTMLREPORT=${CPPCHECK_HTMLREPORT}")
+      endif(ARGUMENTS_VERBOSE)
+
       # create separate target for cppcheck
       if(ARGUMENTS_STANDALONE_TARGET)
         add_cppcheck_target(
@@ -1204,7 +1215,7 @@ function(cppcheck_enabler)
           )
           #
           add_cppcheck_target(
-            TARGET_NAME ${LIB_NAME}
+            TARGET_NAME ${TARGET_NAME}
             CPPCHECK_FULL_CMD
               ${CPPCHECK_RUNNABLE}
               # NOTE: generator expression, expands during build time
@@ -1214,14 +1225,16 @@ function(cppcheck_enabler)
               # if the ${ITEM} is non-empty, than append it
               $<$<BOOL:${collected_includes}>:-I$<JOIN:${collected_includes}, -I>>
               ${TARGET_SOURCES}
-            HTML_REPORT ${ARGUMENTS_HTML_REPORT}
+            HTML_REPORT ${CPPCHECK_HTMLREPORT}
             EXTRA_OPTIONS ${CPPCHECK_OPTIONS}
           )
-          # run valgrind on each build of target
-          add_dependencies(
-            ${LIB_NAME}
-            ${LIB_NAME}_run_cppcheck
-          )
+          if(CHECK_TARGETS_DEPEND)
+            # run valgrind on each build of target
+            add_dependencies(
+              ${TARGET_NAME}
+              ${TARGET_NAME}_run_cppcheck
+            )
+          endif(CHECK_TARGETS_DEPEND)
         endforeach()
       else(ARGUMENTS_CHECK_TARGETS)
         if(ARGUMENTS_VERBOSE)
@@ -1561,7 +1574,7 @@ cppcheck_enabler(
     # to use cppcheck_installer from conan
     ${CONAN_BIN_DIRS}
     ${CONAN_BIN_DIRS_LLVM_TOOLS}
-    # to use `cppcheck-htmlreport` from cmake subfolder
+    # to use from cmake subfolder
     ${CMAKE_SOURCE_DIR}/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
   NO_SYSTEM_ENVIRONMENT_PATH
@@ -1718,21 +1731,6 @@ function(add_clang_tidy_target)
     # Run clang_tidy static analysis
     COMMAND
       "${CLANG_TIDY_FULL_CMD}"
-    # print command that will be executed
-    # NOTE: uses COMMAND_EXPAND_LISTS
-    # to support generator expressions
-    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
-    COMMAND
-      "${CMAKE_COMMAND}"
-      -E
-      echo
-      "executing command: ${HTMLREPORT_FULL_CMD}"
-    # Generate html output
-    COMMAND
-      ${CMAKE_COMMAND}
-      -E
-      time
-      "${HTMLREPORT_FULL_CMD}"
     VERBATIM
     # NOTE: uses COMMAND_EXPAND_LISTS
     # to support generator expressions
@@ -1762,6 +1760,8 @@ endfunction(add_clang_tidy_target)
 #     ${LIB_NAME}
 #   EXTRA_OPTIONS
 #    # see clang-tidy --list-checks -checks='*' | grep "modernize"
+#    # see list of clang-tidy checks:
+#    # https://clang.llvm.org/extra/clang-tidy/checks/list.html
 #    -checks=*
 #    -extra-arg=-std=c++17
 #    -extra-arg=-Qunused-arguments
@@ -1776,6 +1776,8 @@ function(clang_tidy_enabler)
   set(options
     VERBOSE
     REQUIRED
+    # will run check when target will be built
+    CHECK_TARGETS_DEPEND
   )
   set(oneValueArgs
     IS_ENABLED
@@ -1917,7 +1919,7 @@ function(clang_tidy_enabler)
           )
           #
           add_clang_tidy_target(
-            TARGET_NAME ${LIB_NAME}
+            TARGET_NAME ${TARGET_NAME}
             CLANG_TIDY_FULL_CMD
               ${CLANG_TIDY_RUNNABLE}
               # NOTE: generator expression, expands during build time
@@ -1932,11 +1934,13 @@ function(clang_tidy_enabler)
               ${TARGET_SOURCES}
             EXTRA_OPTIONS ${CLANG_TIDY_OPTIONS}
           )
-          # run valgrind on each build of target
-          add_dependencies(
-            ${LIB_NAME}
-            ${LIB_NAME}_run_clang_tidy
-          )
+          if(CHECK_TARGETS_DEPEND)
+            # run clang-tidy on each build of target
+            add_dependencies(
+              ${TARGET_NAME}
+              ${TARGET_NAME}_run_clang_tidy
+            )
+          endif(CHECK_TARGETS_DEPEND)
         endforeach()
       else(ARGUMENTS_CHECK_TARGETS)
         if(ARGUMENTS_VERBOSE)
@@ -1966,9 +1970,71 @@ clang_tidy_enabler(
   CHECK_TARGETS
     ${LIB_NAME}
   EXTRA_OPTIONS
+    # TODO: use file .clang-tidy, similar to
+    # https://github.com/mapbox/protozero/blob/ed6ba50979acf97b9c5300ae88a20d8b8b6c2fc4/.clang-tidy
+    # https://fuchsia.googlesource.com/fuchsia/+/f7851796155f50b57d5ebd26a43ef49f5d5bdee4/.clang-tidy
+    #
     # see clang-tidy --list-checks -checks='*' | grep "modernize"
-    #-checks="*,-modernize*,-*readability*,-hicpp-braces*,-cppcoreguidelines*,-misc-non-private-member-variables-in-classes,-hicpp-no-malloc,-*uppercase-literal-suffix*,-llvm-include-order,-bugprone-narrowing-conversions,-performance-type-promotion-in-math-fn,-hicpp-signed-bitwise"
-    -checks=*
+    # see list of clang-tidy checks:
+    # https://clang.llvm.org/extra/clang-tidy/checks/list.html
+    #
+    #  Disabled checks:
+    #
+    #  bugprone-signed-char-misuse
+    #    Lots of warnings in varint.hpp otherwise.
+    #
+    #  cert-dcl21-cpp
+    #    It is unclear whether this is still a good recommendation in modern C++.
+    #
+    #  cert-err58-cpp
+    #    Due to the Catch2 test framework.
+    #
+    #  cert-err60-cpp
+    #    Reports std::runtime_error as broken which we can't do anything about.
+    #
+    #  cppcoreguidelines-avoid-c-arrays
+    #  hicpp-avoid-c-arrays
+    #  modernize-avoid-c-arrays
+    #    Makes sense for some array, but especially for char arrays using
+    #    std::array isn't a good solution.
+    #
+    #  cppcoreguidelines-avoid-magic-numbers
+    #  readability-magic-numbers
+    #    Good idea, but it goes too far to force this everywhere.
+    #
+    #  cppcoreguidelines-macro-usage
+    #    There are cases where macros are simply needed.
+    #
+    #  cppcoreguidelines-pro-bounds-array-to-pointer-decay
+    #    Limited use and many false positives including for all asserts.
+    #
+    #  cppcoreguidelines-pro-bounds-pointer-arithmetic
+    #    This is a low-level library, it needs to do pointer arithmetic.
+    #
+    #  cppcoreguidelines-pro-type-reinterpret-cast
+    #    This is a low-level library, it needs to do reinterpret-casts.
+    #
+    #  fuchsia-*
+    #    Much too strict.
+    #
+    #  google-runtime-references
+    #    This is just a matter of preference, and we can't change the interfaces
+    #    now anyways.
+    #
+    #  hicpp-no-array-decay
+    #    Limited use and many false positives including for all asserts.
+    #
+    #  modernize-use-trailing-return-type
+    #    We are not quite that modern.
+    #    We do not want to rewrite code like so:
+    #    int main(int argc, char* argv[])
+    #    ~~~~
+    #    auto                            -> int
+    #
+    #  readability-implicit-bool-conversion
+    #    Not necessarily more readable.
+    #
+    -checks=*,-bugprone-signed-char-misuse,-cert-dcl21-cpp,-cert-err58-cpp,-cert-err60-cpp,-cppcoreguidelines-avoid-c-arrays,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-macro-usage,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-type-reinterpret-cast,-fuchsia-*,-google-runtime-references,-hicpp-avoid-c-arrays,-hicpp-no-array-decay,-hicpp-vararg,-modernize-avoid-c-arrays,-modernize-use-trailing-return-type,-readability-implicit-bool-conversion,-readability-magic-numbers
     #-config="{CheckOptions: [ {key: readability-identifier-naming.ClassCase, value: CamelCase} ]}"
     -extra-arg=-std=c++17
     -extra-arg=-Qunused-arguments
@@ -2095,21 +2161,6 @@ function(add_cppclean_target)
     # Run cppclean static analysis
     COMMAND
       "${CPPCLEAN_FULL_CMD}"
-    # print command that will be executed
-    # NOTE: uses COMMAND_EXPAND_LISTS
-    # to support generator expressions
-    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
-    COMMAND
-      "${CMAKE_COMMAND}"
-      -E
-      echo
-      "executing command: ${HTMLREPORT_FULL_CMD}"
-    # Generate html output
-    COMMAND
-      ${CMAKE_COMMAND}
-      -E
-      time
-      "${HTMLREPORT_FULL_CMD}"
     VERBATIM
     # NOTE: uses COMMAND_EXPAND_LISTS
     # to support generator expressions
@@ -2148,6 +2199,8 @@ function(cppclean_enabler)
   set(options
     VERBOSE
     REQUIRED
+    # will run check when target will be built
+    CHECK_TARGETS_DEPEND
   )
   set(oneValueArgs
     IS_ENABLED
@@ -2289,7 +2342,7 @@ function(cppclean_enabler)
           )
           #
           add_cppclean_target(
-            TARGET_NAME ${LIB_NAME}
+            TARGET_NAME ${TARGET_NAME}
             CPPCLEAN_FULL_CMD
               ${CPPCLEAN_RUNNABLE}
               # NOTE: generator expression, expands during build time
@@ -2305,11 +2358,13 @@ function(cppclean_enabler)
               ${TARGET_SOURCES}
             EXTRA_OPTIONS ${CPPCLEAN_OPTIONS}
           )
-          # run valgrind on each build of target
-          add_dependencies(
-            ${LIB_NAME}
-            ${LIB_NAME}_run_cppclean
-          )
+          if(CHECK_TARGETS_DEPEND)
+            # run cppclean on each build of target
+            add_dependencies(
+              ${TARGET_NAME}
+              ${TARGET_NAME}_run_cppclean
+            )
+          endif(CHECK_TARGETS_DEPEND)
         endforeach()
       else(ARGUMENTS_CHECK_TARGETS)
         if(ARGUMENTS_VERBOSE)
@@ -2352,7 +2407,6 @@ cppclean_enabler(
 )
 
 ## ---------------------------- oclint -------------------------------- ##
-
 
 function(add_oclint_target)
   # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
@@ -2447,21 +2501,6 @@ function(add_oclint_target)
     # Run oclint static analysis
     COMMAND
       "${OCLINT_FULL_CMD}"
-    # print command that will be executed
-    # NOTE: uses COMMAND_EXPAND_LISTS
-    # to support generator expressions
-    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
-    COMMAND
-      "${CMAKE_COMMAND}"
-      -E
-      echo
-      "executing command: ${HTMLREPORT_FULL_CMD}"
-    # Generate html output
-    COMMAND
-      ${CMAKE_COMMAND}
-      -E
-      time
-      "${HTMLREPORT_FULL_CMD}"
     VERBATIM
     # NOTE: uses COMMAND_EXPAND_LISTS
     # to support generator expressions
@@ -2525,6 +2564,8 @@ function(oclint_enabler)
   set(options
     VERBOSE
     REQUIRED
+    # will run check when target will be built
+    CHECK_TARGETS_DEPEND
   )
   set(oneValueArgs
     IS_ENABLED
@@ -2666,7 +2707,7 @@ function(oclint_enabler)
           )
           #
           add_oclint_target(
-            TARGET_NAME ${LIB_NAME}
+            TARGET_NAME ${TARGET_NAME}
             OCLINT_FULL_CMD
               ${OCLINT_RUNNABLE}
               # NOTE: generator expression, expands during build time
@@ -2682,11 +2723,13 @@ function(oclint_enabler)
               ${TARGET_SOURCES}
             EXTRA_OPTIONS ${OCLINT_OPTIONS}
           )
-          # run valgrind on each build of target
-          add_dependencies(
-            ${LIB_NAME}
-            ${LIB_NAME}_run_oclint
-          )
+          if(CHECK_TARGETS_DEPEND)
+            # run oclint on each build of target
+            add_dependencies(
+              ${TARGET_NAME}
+              ${TARGET_NAME}_run_oclint
+            )
+          endif(CHECK_TARGETS_DEPEND)
         endforeach()
       else(ARGUMENTS_CHECK_TARGETS)
         if(ARGUMENTS_VERBOSE)
@@ -2751,9 +2794,9 @@ oclint_enabler(
     #-report-type=<name>           - Change output report type
     #-rule=<rule name>             - Explicitly pick rules
     # ignore system headers
-    -e /usr/*
+    #-e /usr/*
     # ignore third-party lib
-    -e corrade/*
+    #-e corrade/*
     # disable compiler errors and compiler warnings in my report
     #-extra-arg=-Wno-everything
     -stats
@@ -2805,6 +2848,369 @@ oclint_enabler(
     # Number of parameters of a method
     # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
     -rc TOO_MANY_PARAMETERS=10
+  VERBOSE
+  REQUIRED
+)
+
+## ---------------------------- iwyu -------------------------------- ##
+
+# IWYU detects superfluous includes and when the include can be replaced with a forward declaration.
+# It can be obtained using "apt-get install iwyu" or from "github.com/include-what-you-use".
+# make sure it can find Clang built-in headers (stdarg.h and friends.)
+# see https://stackoverflow.com/a/30951493/10904212
+function(add_iwyu_target)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    # empty
+  )
+  set(oneValueArgs
+    TARGET_NAME
+  )
+  set(multiValueArgs
+    IWYU_FULL_CMD
+    # adds options to default options
+    EXTRA_OPTIONS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
+
+  #
+  FROM_HERE("invalid ARGUMENTS_IWYU_FULL_CMD")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_IWYU_FULL_CMD}
+    TEXT ${FROM_HERE}
+  )
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_IWYU_FULL_CMD=${ARGUMENTS_IWYU_FULL_CMD}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  set(IWYU_FULL_CMD
+    ${ARGUMENTS_IWYU_FULL_CMD}
+    ${ARGUMENTS_EXTRA_OPTIONS}
+  )
+  #
+  # USAGE:
+  # cmake -E time cmake --build . --target TARGET_NAME_run_iwyu
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "added new target: ${ARGUMENTS_TARGET_NAME}_run_iwyu")
+  endif(ARGUMENTS_VERBOSE)
+  add_custom_target(${ARGUMENTS_TARGET_NAME}_run_iwyu
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_iwyu_report.xml
+    # create report dir
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      make_directory
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report/index.html
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${IWYU_FULL_CMD}"
+    # Run iwyu static analysis
+    COMMAND
+      "${IWYU_FULL_CMD}"
+    VERBATIM
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND_EXPAND_LISTS
+    #USES_TERMINAL
+    # Set work directory for target
+    WORKING_DIRECTORY
+      ${CMAKE_BINARY_DIR}
+    # Echo what is being done
+    COMMENT "running iwyu"
+  )
+endfunction(add_iwyu_target)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_run_iwyu
+# EXAMPLE:
+# iwyu_enabler(
+#   PATHS
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
+#   IS_ENABLED
+#     ${ENABLE_IWYU}
+#   CHECK_TARGETS
+#     ${LIB_NAME}
+#   EXTRA_OPTIONS
+#     # TODO
+# )
+function(iwyu_enabler)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    VERBOSE
+    REQUIRED
+    # will run check when target will be built
+    CHECK_TARGETS_DEPEND
+  )
+  set(oneValueArgs
+    IS_ENABLED
+    STANDALONE_TARGET
+  )
+  set(multiValueArgs
+    # completely changes options to provided options
+    OVERRIDE_OPTIONS
+    # adds options to default options
+    EXTRA_OPTIONS
+    # Will use set CXX_INCLUDE_WHAT_YOU_USE property
+    # for all provided targets
+    CHECK_TARGETS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  #
+  # default options
+  #
+  # TODO
+  #set(IWYU_SUPRESSIONS
+  #  ${PROJECT_SOURCE_DIR}/cmake/iwyu.cfg
+  #)
+  ## set supressions file only if it exists
+  #if(EXISTS "${IWYU_SUPRESSIONS}")
+  #  set(IWYU_DEFAULT_SUPRESSIONS_ARG
+  #    --suppressions-list=${IWYU_SUPRESSIONS}
+  #  )
+  #  message(STATUS
+  #    "found iwyu config file: ${IWYU_SUPRESSIONS}"
+  #  )
+  #else()
+  #  message(WARNING
+  #    "unable to find iwyu config file: ${IWYU_SUPRESSIONS}"
+  #  )
+  #endif()
+  # Set iwyu cache directory
+  set(IWYU_BUILD_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/iwyu_cache
+  )
+  #
+  set(IWYU_OPTIONS
+    # more info in console
+    #--verbose
+  )
+  if(ARGUMENTS_OVERRIDE_OPTIONS)
+    set(IWYU_OPTIONS ${ARGUMENTS_OVERRIDE_OPTIONS})
+  else()
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "iwyu: no OVERRIDE_OPTIONS provided")
+    endif(ARGUMENTS_VERBOSE)
+    # skip, use defaults
+  endif()
+  #
+  list(APPEND IWYU_OPTIONS ${ARGUMENTS_EXTRA_OPTIONS})
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  if(${ARGUMENTS_IS_ENABLED})
+    message(STATUS "iwyu enabled")
+
+    # to use `iwyu` from conan
+    list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
+
+    find_program_helper(include-what-you-use
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR IWYU_PROGRAM
+      VERBOSE TRUE
+    )
+
+    if(IWYU_PROGRAM)
+      # Create iwyu cache directory
+      file(MAKE_DIRECTORY ${IWYU_BUILD_DIR})
+
+      # Set iwyu program + options.
+      list(APPEND IWYU_RUNNABLE
+        ${IWYU_PROGRAM}
+      )
+      if(ARGUMENTS_VERBOSE)
+        message(STATUS "IWYU_RUNNABLE=${IWYU_RUNNABLE}")
+      endif(ARGUMENTS_VERBOSE)
+
+      # create separate target for iwyu
+      if(ARGUMENTS_STANDALONE_TARGET)
+        add_iwyu_target(
+          TARGET_NAME ${ARGUMENTS_STANDALONE_TARGET}
+          IWYU_FULL_CMD
+            ${IWYU_RUNNABLE}
+          EXTRA_OPTIONS ${IWYU_OPTIONS}
+        )
+      endif(ARGUMENTS_STANDALONE_TARGET)
+
+      # collect headers and defines from existing target
+      if(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "iwyu: ARGUMENTS_CHECK_TARGETS=${ARGUMENTS_CHECK_TARGETS}")
+        endif(ARGUMENTS_VERBOSE)
+        foreach(TARGET_NAME ${ARGUMENTS_CHECK_TARGETS})
+          if(ARGUMENTS_VERBOSE)
+            message(STATUS "enabled iwyu for target ${TARGET_NAME}")
+          endif(ARGUMENTS_VERBOSE)
+          #
+          #get_all_compile_definitions(collected_defines
+          #  ${TARGET_NAME}
+          #)
+          ##
+          #get_all_include_directories(collected_includes
+          #  ${TARGET_NAME}
+          #)
+          ##
+          #get_target_sources(TARGET_SOURCES
+          #  ${TARGET_NAME}
+          #)
+          #
+          #add_iwyu_target(
+          #  TARGET_NAME ${TARGET_NAME}
+          #  IWYU_FULL_CMD
+          #    ${IWYU_RUNNABLE}
+          #    # NOTE: generator expression, expands during build time
+          #    # if the ${ITEM} is non-empty, than append it
+          #    $<$<BOOL:${collected_defines}>:-D$<JOIN:${collected_defines}, -D>>
+          #    # NOTE: generator expression, expands during build time
+          #    # if the ${ITEM} is non-empty, than append it
+          #    # To suppress compiler diagnostic messages
+          #    # from third-party headers just use -isystem
+          #    # instead of -I to include those headers.
+          #    # $<$<BOOL:${collected_includes}>:-extra-arg=-isystem$<JOIN:${collected_includes}, -extra-arg=-isystem>>
+          #    $<$<BOOL:${collected_includes}>:-I$<JOIN:${collected_includes}, -I>>
+          #    #$<$<BOOL:${TARGET_SOURCES}>:--check_also=$<JOIN:${TARGET_SOURCES}, --check_also=>>
+          #    ${TARGET_SOURCES}
+          #  EXTRA_OPTIONS ${IWYU_OPTIONS}
+          #)
+          #if(CHECK_TARGETS_DEPEND)
+          #  # run iwyu on each build of target
+          #  add_dependencies(
+          #    ${TARGET_NAME}
+          #    ${TARGET_NAME}_run_iwyu
+          #  )
+          #endif(CHECK_TARGETS_DEPEND)
+
+          #separate_arguments(IWYU_OPTIONS)
+
+          set_property(TARGET ${TARGET_NAME}
+            PROPERTY
+              CXX_INCLUDE_WHAT_YOU_USE
+                ${IWYU_RUNNABLE} ${IWYU_OPTIONS}
+          )
+        endforeach()
+      else(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "iwyu: no CHECK_TARGETS provided")
+        endif(ARGUMENTS_VERBOSE)
+      endif(ARGUMENTS_CHECK_TARGETS)
+    else(IWYU_PROGRAM)
+      message(WARNING "Program 'iwyu' not found, unable to run 'iwyu'.")
+    endif(IWYU_PROGRAM)
+  else() # ARGUMENTS_IS_ENABLED
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "iwyu disabled")
+    endif(ARGUMENTS_VERBOSE)
+  endif() # ARGUMENTS_IS_ENABLED
+endfunction(iwyu_enabler)
+
+# include-what-you-use mappings file
+# Mappings file format:
+#   { include: [ '@"mutt/.*"', private, '"mutt/mutt.h"', public ] },
+#   { include: [ '@"conn/.*"', private, '"conn/conn.h"', public ] },
+set(IWYU_IMP "${CMAKE_CURRENT_SOURCE_DIR}/cmake/iwyu/iwyu.imp")
+if(NOT EXISTS ${IWYU_IMP})
+  message(FATAL_ERROR "Unable to find file: ${IWYU_IMP}")
+endif(NOT EXISTS ${IWYU_IMP})
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_iwyu
+iwyu_enabler(
+  PATHS
+    ${CONAN_BIN_DIRS}
+    ${CONAN_BIN_DIRS_LLVM_TOOLS}
+  NO_SYSTEM_ENVIRONMENT_PATH
+  NO_CMAKE_SYSTEM_PATH
+  IS_ENABLED
+    ${ENABLE_IWYU}
+  CHECK_TARGETS
+    ${LIB_NAME}
+  EXTRA_OPTIONS
+    # -Xiwyu --transitive_includes_only
+    # pch_in_code: The file has an important header first
+    # -Xiwyu --pch_in_code
+    # no_comments: Don’t add notes to the output
+    -Xiwyu --no_comments
+    # mapping_file: lookup file
+    -Xiwyu --mapping_file=${IWYU_IMP}
+    -Xiwyu --max_line_length=120
+    # see https://github.com/include-what-you-use/include-what-you-use/issues/760
+    -Wno-unknown-warning-option
+    # when sorting includes, place quoted ones first.
+    -Xiwyu --quoted_includes_first
+    # suggests the more concise syntax introduced in C++17
+    -Xiwyu --cxx17ns
+    # max_line_length: maximum line length for includes.
+    # Note that this only affects comments and alignment thereof,
+    # the maximum line length can still be exceeded
+    # with long file names (default: 80).
+    -Xiwyu --max_line_length=180
+    #-Xiwyu --check_also=${CMAKE_CURRENT_SOURCE_DIR}/src/*
+    #-Xiwyu --check_also=${CMAKE_CURRENT_SOURCE_DIR}/src/*/*
+    #-Xiwyu --check_also=${CMAKE_CURRENT_SOURCE_DIR}/src/*/*/*
+    #-Xiwyu --check_also=${CMAKE_CURRENT_SOURCE_DIR}/src/*/*/*/*
   VERBOSE
   REQUIRED
 )

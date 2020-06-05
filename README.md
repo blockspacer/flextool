@@ -68,10 +68,13 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
     cmake -E time \
       conan create . conan/stable \
-      -s build_type=Debug -s cling_conan:build_type=Release \
+      -s build_type=Debug \
+      -s cling_conan:build_type=Release \
+      -s llvm_tools:build_type=Release \
       --profile clang \
           -o flextool:enable_clang_from_conan=False \
-          -e flextool:enable_tests=True
+          -e flextool:enable_tests=True \
+          -e flextool:enable_llvm_tools=True
 ```
 
 ## Standing on the Shoulders of Giants
@@ -102,10 +105,13 @@ GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
     --install-folder local_build \
-    -s build_type=Debug -s cling_conan:build_type=Release \
+    -s build_type=Debug \
+    -s cling_conan:build_type=Release \
+    -s llvm_tools:build_type=Release \
     --profile clang \
         -o flextool:enable_clang_from_conan=False \
-        -e flextool:enable_tests=True
+        -e flextool:enable_tests=True \
+        -e flextool:enable_llvm_tools=True
 
 CONAN_REVISIONS_ENABLED=1 \
 CONAN_VERBOSE_TRACEBACK=1 \
@@ -227,13 +233,16 @@ cat CMakeLists.txt
 # combines options from all projects
 conan workspace install \
   ../conanws.yml --profile=clang \
-  -s build_type=Debug -s cling_conan:build_type=Release \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
     -o openssl:shared=True \
     -e basis:enable_tests=True \
     -o chromium_base:use_alloc_shim=True \
     -o chromium_tcmalloc:use_alloc_shim=True \
     -o flextool:enable_clang_from_conan=False \
     -e flextool:enable_tests=True \
+    -e flextool:enable_llvm_tools=True \
     -o flexlib:shared=False \
     -o flexlib:enable_clang_from_conan=False \
     -e flexlib:enable_tests=True
@@ -249,13 +258,9 @@ export CC=clang-6.0
 build_type=Debug
 
 # configure via cmake
-# NOTE: -DLOCAL_BUILD=TRUE
 cmake -E time cmake . \
-  -DLOCAL_BUILD=TRUE \
   -DENABLE_TESTS=TRUE \
   -DBUILD_SHARED_LIBS=FALSE \
-  -Dflexlib_BUILD_SHARED_LIBS=FALSE \
-  -Dflex_reflect_plugin_BUILD_SHARED_LIBS=TRUE \
   -DCONAN_AUTO_INSTALL=OFF \
   -DCMAKE_BUILD_TYPE=${build_type}
 
@@ -436,13 +441,16 @@ add plugins options to `conan workspace install`:
 # combines options from all projects
 conan workspace install \
   ../conanws.yml --profile=clang \
-  -s build_type=Debug -s cling_conan:build_type=Release \
+  -s build_type=Debug \
+    -s cling_conan:build_type=Release \
+    -s llvm_tools:build_type=Release \
     -e basis:enable_tests=True \
     -o openssl:shared=True \
     -o chromium_base:use_alloc_shim=True \
     -o chromium_tcmalloc:use_alloc_shim=True \
     -o flextool:enable_clang_from_conan=False \
     -e flextool:enable_tests=True \
+    -e flextool:enable_llvm_tools=True \
     -o flexlib:shared=False \
     -o flexlib:enable_clang_from_conan=False \
     -e flexlib:enable_tests=True \
@@ -478,13 +486,9 @@ export CC=clang-6.0
 build_type=Debug
 
 # configure via cmake
-# NOTE: -DLOCAL_BUILD=TRUE
 cmake -E time cmake . \
-  -DLOCAL_BUILD=TRUE \
   -DENABLE_TESTS=TRUE \
   -DBUILD_SHARED_LIBS=FALSE \
-  -Dflexlib_BUILD_SHARED_LIBS=FALSE \
-  -Dflex_reflect_plugin_BUILD_SHARED_LIBS=TRUE \
   -DCONAN_AUTO_INSTALL=OFF \
   -DCMAKE_BUILD_TYPE=${build_type}
 
@@ -548,6 +552,8 @@ cmake -E time cmake --build . \
 
 ## For contibutors: cppcheck
 
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
+
 Install cppcheck via conan:
 
 ```bash
@@ -574,13 +580,25 @@ Run cppcheck via cmake:
 ```bash
 cd ~/flextool
 
-# cd local_build
+# see section about `conan editable mode`
+cd local_build
+
+# NOTE: -DENABLE_CPPCHECK=ON
+cmake .. \
+  -DENABLE_CPPCHECK=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
 cmake -E time cmake --build . --target flextool_run_cppcheck
 ```
 
 Open 'flextool_report/index.html' to see the results.
 
 ## For contibutors: valgrind
+
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
 See for details https://heeris.id.au/2016/valgrind-gdb/
 
@@ -597,7 +615,18 @@ Run valgrind via cmake:
 ```bash
 cd ~/flextool
 
-# cd local_build
+# see section about `conan editable mode`
+cd local_build
+
+# NOTE: -DENABLE_VALGRIND=ON
+cmake .. \
+  -DENABLE_VALGRIND=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
+# TODO: add valgrind target
 cmake -E time cmake --build . --target flextool_run_valgrind
 ```
 
@@ -610,6 +639,8 @@ NOTE: use `valgrind --tool=massif --massif-out-file=massif_file --stacks=true` t
 See for details https://stackoverflow.com/a/44989219
 
 ## For contibutors: clang-tidy
+
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
 Install clang-tidy:
 
@@ -624,11 +655,23 @@ Run clang-tidy via cmake:
 ```bash
 cd ~/flextool
 
-# cd local_build
+# see section about `conan editable mode`
+cd local_build
+
+# NOTE: -DENABLE_CLANG_TIDY=ON
+cmake .. \
+  -DENABLE_CLANG_TIDY=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
 cmake -E time cmake --build . --target flextool_run_clang_tidy
 ```
 
 ## For contibutors: scan-build
+
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
 See for details [https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md](https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md) and [https://clang-analyzer.llvm.org/scan-build.html](https://clang-analyzer.llvm.org/scan-build.html)
 
@@ -654,10 +697,13 @@ GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
     --install-folder local_build \
-    -s build_type=Debug -s cling_conan:build_type=Release \
+    -s build_type=Debug \
+    -s cling_conan:build_type=Release \
+    -s llvm_tools:build_type=Release \
     --profile clang \
         -o flextool:enable_clang_from_conan=False \
-        -e flextool:enable_tests=True
+        -e flextool:enable_tests=True \
+        -e flextool:enable_llvm_tools=True
 
 CONAN_REVISIONS_ENABLED=1 \
 CONAN_VERBOSE_TRACEBACK=1 \
@@ -667,6 +713,7 @@ GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan source . --source-folder local_build
 
+# see section about `conan editable mode`
 cd local_build
 
 export CXX=clang++-6.0
@@ -680,7 +727,6 @@ build_type=Debug
 
 # NOTE: changed CMAKE_C_COMPILER to ccc-analyzer (!!!)
 # configure via cmake
-# NOTE: -DLOCAL_BUILD=TRUE
 scan-build \
   --use-cc=clang-6.0 \
   --use-c++=clang++-6.0 \
@@ -688,11 +734,8 @@ scan-build \
   cmake .. \
   -DCMAKE_C_COMPILER=ccc-analyzer \
   -DCMAKE_CXX_COMPILER=c++-analyzer \
-  -DLOCAL_BUILD=TRUE \
   -DENABLE_TESTS=FALSE \
   -DBUILD_SHARED_LIBS=FALSE \
-  -Dflexlib_BUILD_SHARED_LIBS=FALSE \
-  -Dflex_reflect_plugin_BUILD_SHARED_LIBS=TRUE \
   -DCONAN_AUTO_INSTALL=OFF \
   -DCMAKE_BUILD_TYPE=${build_type}
 
@@ -739,6 +782,8 @@ Open resulting `scanbuildout/...../index.html` file
 
 ## For contibutors: cppclean
 
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
+
 See for details [https://github.com/myint/cppclean](https://github.com/myint/cppclean)
 
 Installation:
@@ -752,14 +797,71 @@ Usage:
 ```bash
 cd ~/flextool
 
-# cd local_build
+# see section about `conan editable mode`
+cd local_build
+
+# NOTE: -DENABLE_CPPCLEAN=ON
+cmake .. \
+  -DENABLE_CPPCLEAN=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
 cmake -E time cmake --build . --target flextool_run_cppclean
 ```
 
 NOTE: cppclean requires file encoding to be: `UTF-8 without BOM` (ascii)
 
 
+## For contibutors: IWYU
+
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
+
+include-what-you-use (IWYU) is a project intended to optimise includes.
+
+It will calculate the required headers and add and remove includes as appropriate.
+
+See for details [https://include-what-you-use.org/](https://include-what-you-use.org/)
+
+Usage:
+
+```bash
+cd ~/flextool
+
+# see section about `conan editable mode`
+cd local_build
+
+# remove old CMakeCache
+(rm CMakeCache.txt || true)
+
+# NOTE: -DENABLE_IWYU=ON
+cmake .. \
+  -DENABLE_IWYU=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
+# remove old build artifacts
+rm -rf flextool
+rm -rf bin
+find . -iname '*.o' -exec rm {} \;
+find . -iname '*.a' -exec rm {} \;
+find . -iname '*.dll' -exec rm {} \;
+find . -iname '*.lib' -exec rm {} \;
+
+# no custom target, uses CXX_INCLUDE_WHAT_YOU_USE
+cmake -E time cmake --build .
+```
+
+CODESTYLE: use `// IWYU pragma: associated` in C++ source files.
+
+NOTE: Read about IWYU Pragmas [https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md)
+
 ## For contibutors: oclint
+
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
 See for details: https://oclint-docs.readthedocs.io/en/stable/devel/codingstandards.html
 
@@ -782,7 +884,17 @@ Usage:
 ```bash
 cd ~/flextool
 
-# cd local_build
+# see section about `conan editable mode`
+cd local_build
+
+# NOTE: -DENABLE_OCLINT=ON
+cmake .. \
+  -DENABLE_OCLINT=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
 cmake -E time cmake --build . --target flextool_run_oclint
 
 # `report.html` must exist

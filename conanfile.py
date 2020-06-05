@@ -125,10 +125,23 @@ class flextoolConan(conan_build_helper.CMakePackage):
     def _build_dir(self):
         return "."
 
+    def _is_llvm_tools_enabled(self):
+      return self._environ_option("ENABLE_LLVM_TOOLS", default = 'true')
+
+    def configure(self):
+        lower_build_type = str(self.settings.build_type).lower()
+        if lower_build_type != "debug" and self._is_llvm_tools_enabled():
+            raise ConanInvalidConfiguration("llvm_tools is compatible only with Debug builds")
+        if lower_build_type != "release" and not self._is_llvm_tools_enabled():
+            self.output.warn('enable llvm_tools for Debug builds')
+
     def build_requirements(self):
         self.build_requires("cmake_platform_detection/master@conan/stable")
         self.build_requires("cmake_build_options/master@conan/stable")
         self.build_requires("cppcheck_installer/1.90@conan/stable")
+        # provides clang-tidy, clang-format, IWYU, scan-build, etc.
+        if self._is_llvm_tools_enabled():
+          self.build_requires("llvm_tools/master@conan/stable")
 
     def requirements(self):
         if self._is_tests_enabled():
