@@ -22,11 +22,14 @@ namespace fs = std::experimental::filesystem;
 
 namespace {
 
+/// \todo code repeat
 template<class T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+std::ostream& operator<<(
+  std::ostream& stream, const std::vector<T>& data)
 {
-    copy(v.begin(), v.end(), std::ostream_iterator<T>(os, " "));
-    return os;
+  std::copy(data.begin(), data.end(),
+    std::ostream_iterator<T>(stream, " "));
+  return stream;
 }
 
 static const char kExtraClangFlag[] = "-extra-arg";
@@ -124,6 +127,7 @@ const char kClangArgPrefix[] = "-";
 // extern
 const char kClingArgPrefix[] = "-";
 
+/// \todo long method
 /**
  * Clang provides some options out-of-the-box:
  *
@@ -308,6 +312,7 @@ base::Optional<std::string> clangArgToClingArg(
   return combined_for_cling;
 }
 
+/// \todo long method
 bool populateClangArguments(
   const base::FilePath& clangBuildPath
   , std::vector<std::string>& args_storage
@@ -316,11 +321,11 @@ bool populateClangArguments(
 ){
   {
     /// \note must be before all custom arguments
-    const bool ok = add_default_clang_args(
+    const bool add_ok = add_default_clang_args(
       clangBuildPath
       , args_storage);
     DCHECK(!args_storage.empty());
-    if(!ok) {
+    if(!add_ok) {
       return false;
     }
   }
@@ -568,9 +573,11 @@ void FileSaveHandler::saveFile(
 
   // this will output to screen
   if (shouldPrintConsole) {
-    clang::SourceManager &sm = rewriter.getSourceMgr();
+    clang::SourceManager &sourceManager
+      = rewriter.getSourceMgr();
     rewriter.getEditBuffer(
-          sm.getMainFileID()).write(llvm::outs());
+      sourceManager.getMainFileID())
+        .write(llvm::outs());
   }
 }
 

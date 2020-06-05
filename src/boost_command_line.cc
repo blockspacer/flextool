@@ -4,11 +4,14 @@ namespace po = boost::program_options;
 
 namespace {
 
+/// \todo code repeat
 template<class T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+std::ostream& operator<<(
+  std::ostream& stream, const std::vector<T>& data)
 {
-    copy(v.begin(), v.end(), std::ostream_iterator<T>(os, " "));
-    return os;
+  std::copy(data.begin(), data.end(),
+    std::ostream_iterator<T>(stream, " "));
+  return stream;
 }
 
 } // namespace

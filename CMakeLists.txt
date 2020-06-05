@@ -2703,6 +2703,10 @@ function(oclint_enabler)
   endif() # ARGUMENTS_IS_ENABLED
 endfunction(oclint_enabler)
 
+# fixes oclint: error: violations exceed threshold
+# see https://stackoverflow.com/a/30151220
+set(oclintMaxPriority 15000)
+
 # USAGE:
 # cmake -E time cmake --build . --target TARGET_NAME_oclint
 oclint_enabler(
@@ -2746,13 +2750,61 @@ oclint_enabler(
     #-rc=<parameter>=<value>       - Override the default behavior of rules
     #-report-type=<name>           - Change output report type
     #-rule=<rule name>             - Explicitly pick rules
-    # -e exclude_this_folder*
-    #-max-priority-2=15 -max-priority-3=30
-    #-rc CYCLOMATIC_COMPLEXITY=4 -rc LONG_CLASS=200 -rc LONG_LINE=120
-    #-rc LONG_METHOD=10 -rc NPATH_COMPLEXITY=20 -rc NESTED_BLOCK_DEPTH=3
-    #-rc TOO_MANY_PARAMETERS=5 -rc LONG_VARIABLE_NAME=30
+    # ignore system headers
+    -e /usr/*
+    # ignore third-party lib
+    -e corrade/*
     # disable compiler errors and compiler warnings in my report
     #-extra-arg=-Wno-everything
+    -stats
+    -max-priority-1=${oclintMaxPriority}
+    -max-priority-2=${oclintMaxPriority}
+    -max-priority-3=${oclintMaxPriority}
+    # see list of rules at
+    # https://oclint-docs.readthedocs.io/en/stable/rules/
+    #-disable-rule GotoStatement
+    # Cyclomatic complexity of a method
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc CYCLOMATIC_COMPLEXITY=15
+    # Number of lines for a C class or Objective-C interface, category, protocol, and implementation
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc LONG_CLASS=500
+    # limit num. of characters in line
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc LONG_LINE=500
+    # Number of lines for a method or function
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc LONG_METHOD=50
+    # limit num. of characters in varibale name
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc LONG_VARIABLE_NAME=100
+    # Number of lines for the if block that would prefer an early exists
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc MAXIMUM_IF_LENGTH=15
+    # Count of case statements in a switch statement
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc MINIMUM_CASES_IN_SWITCH=3
+    # NPath complexity of a method
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc NPATH_COMPLEXITY=20
+    # Number of non-commenting source statements of a method
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc NCSS_METHOD=30
+    # Depth of a block or compound statement
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc NESTED_BLOCK_DEPTH=6
+    # Number of characters for a variable name
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc SHORT_VARIABLE_NAME=3
+    # Number of fields of a class
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc TOO_MANY_FIELDS=50
+    # Number of methods of a class
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc TOO_MANY_METHODS=50
+    # Number of parameters of a method
+    # see http://docs.oclint.org/en/stable/howto/thresholds.html#available-thresholds
+    -rc TOO_MANY_PARAMETERS=10
   VERBOSE
   REQUIRED
 )

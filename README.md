@@ -761,16 +761,20 @@ NOTE: cppclean requires file encoding to be: `UTF-8 without BOM` (ascii)
 
 ## For contibutors: oclint
 
+See for details: https://oclint-docs.readthedocs.io/en/stable/devel/codingstandards.html
+
 Installation:
 
 ```bash
-wget --no-check-certificate https://github.com/oclint/oclint/releases/download/v0.13/oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
-# mirror 1: https://github.strcpy.cn/oclint/oclint/releases/download/v0.13/oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
+cd ~
+wget --no-check-certificate https://github.com/oclint/oclint/releases/download/v0.13.1/oclint-0.13.1-x86_64-linux-4.4.0-112-generic.tar.gz
+# mirror 1: http://github.strcpy.cn/oclint/oclint/releases/download/v0.13.1/oclint-0.13.1-x86_64-linux-4.4.0-112-generic.tar.gz
 # mirror 2: http://archives.oclint.org/releases/0.8/oclint-0.8.1-x86_64-linux-3.13.0-35-generic.tar.gz
-tar -xzvf oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
-rm -rf oclint-0.13-x86_64-linux-4.4.0-93-generic.tar.gz
-export OCLINT_HOME=`pwd`/oclint-0.13
+tar -xzvf oclint-0.13.1-x86_64-linux-4.4.0-112-generic.tar.gz
+rm -rf oclint-0.13.1-x86_64-linux-4.4.0-112-generic.tar.gz
+export OCLINT_HOME=~/oclint-0.13.1
 export PATH=$OCLINT_HOME/bin:$PATH
+oclint -version
 ```
 
 Usage:
@@ -780,7 +784,18 @@ cd ~/flextool
 
 # cd local_build
 cmake -E time cmake --build . --target flextool_run_oclint
+
+# `report.html` must exist
+# find $PWD -name report.html
 ```
+
+Open report.html
+
+See oclint tutorial: [http://docs.oclint.org/en/stable/intro/tutorial.html](http://docs.oclint.org/en/stable/intro/tutorial.html)
+
+See list of oclint rules at [https://oclint-docs.readthedocs.io/en/stable/rules/](https://oclint-docs.readthedocs.io/en/stable/rules/)
+
+NOTE: you can suppress oclint warnings [http://docs.oclint.org/en/stable/howto/suppress.html#oclint-comment](http://docs.oclint.org/en/stable/howto/suppress.html#oclint-comment)
 
 ## LICENSE for open source components
 

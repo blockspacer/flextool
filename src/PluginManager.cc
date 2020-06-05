@@ -51,6 +51,7 @@ void PluginManager::connect_plugins_to_dispatcher(
   }
 }
 
+/// \todo long method
 void PluginManager::startup(const Events::Startup& event)
 {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
@@ -122,7 +123,8 @@ void PluginManager::startup(const Events::Startup& event)
    * @partialsupport Not available on platforms without
    *      @ref CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT "dynamic plugin support".
    */
-  manager_->setPluginDirectory(event.pathToDirWithPlugins.value());
+  manager_->setPluginDirectory(
+    event.pathToDirWithPlugins.value());
 
   VLOG(9)
     << "Using plugin directory: "
@@ -168,7 +170,9 @@ void PluginManager::startup(const Events::Startup& event)
 
   // append path to plugins that
   // must be loaded independently of configuration file
-  for(const base::FilePath& pluginPath: event.pathsToExtraPluginFiles) {
+  for(const base::FilePath& pluginPath
+    : event.pathsToExtraPluginFiles)
+  {
     VLOG(9)
       << "added plugin: "
       << pluginPath;
@@ -331,7 +335,7 @@ void PluginManager::startup(const Events::Startup& event)
   is_initialized_ = true;
 }
 
-void PluginManager::shutdown(const Events::Shutdown& event)
+void PluginManager::shutdown(const Events::Shutdown&)
 {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 

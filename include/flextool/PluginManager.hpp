@@ -1,5 +1,10 @@
 #pragma once
 
+// 'plugin::ToolPlugin' must be complete type
+// or may cause undefined behavior with
+// Corrade/Containers/Pointer
+#include "flexlib/ToolPlugin.hpp"
+
 #include <entt/entt.hpp>
 #include <entt/entity/registry.hpp>
 #include <entt/entity/helper.hpp>
@@ -11,12 +16,6 @@
 
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/Containers/Pointer.h>
-
-namespace plugin {
-
-class ToolPlugin;
-
-} // namespace plugin
 
 /// \todo hide impl details
 //namespace Corrade {

@@ -36,6 +36,7 @@ namespace fs = std::experimental::filesystem;
 
 namespace flextool {
 
+/// \todo long method
 void ClangTool::run(
   const std::vector<std::string>& args
   , scoped_refptr<clang_utils::AnnotationMatchOptions>

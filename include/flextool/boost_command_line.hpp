@@ -99,10 +99,10 @@ public:
           , ","
           , base::TRIM_WHITESPACE
           , base::SPLIT_WANT_NONEMPTY);
-    boost::program_options::variables_map::const_iterator it;
+    boost::program_options::variables_map::const_iterator optIter;
     for(const base::StringPiece& part: key_split) {
-      it = vm_.find(part.as_string());
-      if(it != vm_.end()) {
+      optIter = vm_.find(part.as_string());
+      if(optIter != vm_.end()) {
         DVLOG(9)
           << "Found associated command-line argument: "
           << part
@@ -118,15 +118,15 @@ public:
       }
     }
 
-    CHECK(it != vm_.end())
+    CHECK(optIter != vm_.end())
       << "Unable to find any of command-line arguments: "
       << key;
 
-    CHECK(vm_.count((*it).first))
+    CHECK(vm_.count((*optIter).first))
       << "Unable to count any of command-line arguments: "
       << key;
 
-    return (*it).second.as<T>();
+    return (*optIter).second.as<T>();
   }
 
 private:
