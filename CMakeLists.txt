@@ -131,7 +131,7 @@ if (CONAN_AUTO_INSTALL)
   endif()
   # No --build=missing cause llvm requires long build
   conan_auto_install(
-    CONAN_OPTIONS "--profile=${CONAN_PROFILE} -s build_type=${conan_build_type} -s cling_conan:build_type=Release -o openssl:shared=True"
+    CONAN_OPTIONS "--profile=${CONAN_PROFILE} -s build_type=${conan_build_type} -s cling_conan:build_type=Release -s llvm_tools:build_type=Release -o openssl:shared=True"
     #FORCE
   )
 endif()
