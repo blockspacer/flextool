@@ -1,24 +1,24 @@
 #pragma once
 
 #include "flexlib/ToolPlugin.hpp"
-#include "flexlib/parser_constants.hpp"
-#include "flexlib/utils.hpp"
-#include "flexlib/funcParser.hpp"
-#include "flexlib/clangUtils.hpp"
-#include "flexlib/clangPipeline.hpp"
-#include "flexlib/annotation_parser.hpp"
 #include "flexlib/annotation_match_handler.hpp"
+#include "flexlib/annotation_parser.hpp"
+#include "flexlib/clangPipeline.hpp"
+#include "flexlib/clangUtils.hpp"
+#include "flexlib/funcParser.hpp"
 #include "flexlib/matchers/annotation_matcher.hpp"
 #include "flexlib/options/ctp/options.hpp"
+#include "flexlib/parser_constants.hpp"
+#include "flexlib/utils.hpp"
 #if defined(CLING_IS_ON)
 #include "flexlib/ClingInterpreterModule.hpp"
 #endif // CLING_IS_ON
 
-#include <base/macros.h>
 #include <base/files/file_path.h>
+#include <base/macros.h>
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace flextool {
 

@@ -16,15 +16,15 @@
 #include "flextool/boost_command_line.hpp"
 #include "flextool/clang_util.hpp"
 #include "flextool/command_line_constants.hpp"
-#include "flextool/version.hpp"
 #include "flextool/path_provider.hpp"
+#include "flextool/version.hpp"
 
+#include <basis/cmd_util.hpp>
+#include <basis/i18n.hpp>
 #include <basis/icu_util.hpp>
 #include <basis/log_util.hpp>
 #include <basis/thread_pool_util.hpp>
-#include <basis/cmd_util.hpp>
 #include <basis/tracing_util.hpp>
-#include <basis/i18n.hpp>
 
 #include <base/base_paths.h>
 #include <base/bind.h>
@@ -54,12 +54,12 @@
 #include <base/trace_event/trace_event.h>
 #include <base/trace_event/trace_log.h>
 
+#include <algorithm>
 #include <functional>
 #include <iterator>
 #include <locale>
 #include <sstream>
 #include <string.h>
-#include <algorithm>
 
 // __has_include is currently supported by GCC and Clang. However GCC 4.9 may have issues and
 // returns 1 for 'defined( __has_include )', while '__has_include' is actually not supported:

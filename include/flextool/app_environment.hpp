@@ -1,22 +1,22 @@
 #pragma once
 
-#include "boost_command_line.hpp"
-#include "app_cmd_options.hpp"
 #include "PluginManager.hpp"
+#include "app_cmd_options.hpp"
+#include "boost_command_line.hpp"
 #include "clang_util.hpp"
 
-#include <base/macros.h>
-#include <base/files/file_path.h>
 #include <base/at_exit.h>
-#include <base/message_loop/message_loop.h>
+#include <base/files/file_path.h>
+#include <base/macros.h>
 #include <base/memory/scoped_refptr.h>
+#include <base/message_loop/message_loop.h>
 
 #include <basis/scoped_log_run_time.hpp>
 
 #include "flexlib/annotation_parser.hpp"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace base { class SingleThreadTaskRunner; }
 

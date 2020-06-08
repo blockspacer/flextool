@@ -1,25 +1,24 @@
 #pragma once
 
-#include "flextool/command_line_constants.hpp"
 #include "flextool/boost_command_line.hpp"
+#include "flextool/command_line_constants.hpp"
 
-#include <base/macros.h>
-#include <base/sequenced_task_runner.h>
-#include <base/trace_event/trace_event.h>
+#include <base/bind.h>
 #include <base/files/file_path.h>
 #include <base/files/file_util.h>
-#include <base/stl_util.h>
-#include <base/bind.h>
+#include <base/macros.h>
 #include <base/path_service.h>
+#include <base/sequenced_task_runner.h>
+#include <base/stl_util.h>
+#include <base/trace_event/trace_event.h>
 
-#include <boost/program_options.hpp>
 #include <boost/optional.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <boost/program_options.hpp>
 #include <boost/utility/in_place_factory.hpp>
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace cmd {
 

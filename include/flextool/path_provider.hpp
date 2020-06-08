@@ -1,10 +1,10 @@
 #pragma once
 
-#include <base/macros.h>
 #include <base/files/file_path.h>
+#include <base/macros.h>
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace flextool {
 

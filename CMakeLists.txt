@@ -1312,6 +1312,8 @@ set(cppcheck_linux_defines
   -DULONG_MAX=18446744073709551615U
 )
 
+## ---------------------------- valgrind -------------------------------- ##
+
 # see https://valgrind.org/docs/manual/QuickStart.html
 function(add_valgrind_target)
   # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
@@ -1637,6 +1639,8 @@ cppcheck_enabler(
   VERBOSE
   REQUIRED
 )
+
+## ---------------------------- clang_tidy -------------------------------- ##
 
 function(add_clang_tidy_target)
   # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
@@ -3214,6 +3218,353 @@ iwyu_enabler(
   VERBOSE
   REQUIRED
 )
+
+## ---------------------------- clang-format -------------------------------- ##
+
+function(add_clang_format_target)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    # empty
+  )
+  set(oneValueArgs
+    TARGET_NAME
+  )
+  set(multiValueArgs
+    CLANG_FORMAT_FULL_CMD
+    # adds options to default options
+    EXTRA_OPTIONS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
+
+  #
+  FROM_HERE("invalid ARGUMENTS_CLANG_FORMAT_FULL_CMD")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_CLANG_FORMAT_FULL_CMD}
+    TEXT ${FROM_HERE}
+  )
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_CLANG_FORMAT_FULL_CMD=${ARGUMENTS_CLANG_FORMAT_FULL_CMD}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  set(CLANG_FORMAT_FULL_CMD
+    ${ARGUMENTS_CLANG_FORMAT_FULL_CMD}
+    ${ARGUMENTS_EXTRA_OPTIONS}
+  )
+  #
+  # USAGE:
+  # cmake -E time cmake --build . --target TARGET_NAME_run_clang_format
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "added new target: ${ARGUMENTS_TARGET_NAME}_run_clang_format")
+  endif(ARGUMENTS_VERBOSE)
+  add_custom_target(${ARGUMENTS_TARGET_NAME}_run_clang_format
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_clang_format_report.xml
+    # create report dir
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      make_directory
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report/index.html
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${CLANG_FORMAT_FULL_CMD}"
+    # Run clang_format static analysis
+    COMMAND
+      "${CLANG_FORMAT_FULL_CMD}"
+    VERBATIM
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND_EXPAND_LISTS
+    #USES_TERMINAL
+    # Set work directory for target
+    WORKING_DIRECTORY
+      ${CMAKE_BINARY_DIR}
+    # Echo what is being done
+    COMMENT "running clang_format"
+  )
+endfunction(add_clang_format_target)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_run_clang_format
+# EXAMPLE:
+# clang_format_enabler(
+#   PATHS
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
+#   IS_ENABLED
+#     ${ENABLE_CLANG_FORMAT}
+#   CHECK_TARGETS
+#     ${LIB_NAME}
+#   EXTRA_OPTIONS
+#    # ...
+#   VERBOSE
+# )
+function(clang_format_enabler)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    VERBOSE
+    REQUIRED
+    # will run check when target will be built
+    CHECK_TARGETS_DEPEND
+  )
+  set(oneValueArgs
+    IS_ENABLED
+    STANDALONE_TARGET
+  )
+  set(multiValueArgs
+    # completely changes options to provided options
+    OVERRIDE_OPTIONS
+    # adds options to default options
+    EXTRA_OPTIONS
+    # Will collect include dirs, defines and source files
+    # from cmake targets
+    # NOTE: Why not compile_commands.json?
+    # - cmake can not generate that file on per-target basis
+    # or into custom out dir
+    # NOTE: Why not CMAKE_CXX_CLANG_FORMAT?
+    # - we want to run custom clang_format target without
+    # need to build whole poject per each check
+    CHECK_TARGETS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  #
+  # default options
+  #
+  # TODO
+  #set(CLANG_FORMAT_SUPRESSIONS
+  #  ${PROJECT_SOURCE_DIR}/cmake/clang_format.cfg
+  #)
+  ## set supressions file only if it exists
+  #if(EXISTS "${CLANG_FORMAT_SUPRESSIONS}")
+  #  set(CLANG_FORMAT_DEFAULT_SUPRESSIONS_ARG
+  #    --suppressions-list=${CLANG_FORMAT_SUPRESSIONS}
+  #  )
+  #  message(STATUS
+  #    "found clang_format config file: ${CLANG_FORMAT_SUPRESSIONS}"
+  #  )
+  #else()
+  #  message(WARNING
+  #    "unable to find clang_format config file: ${CLANG_FORMAT_SUPRESSIONS}"
+  #  )
+  #endif()
+  # Set message template
+  # TODO
+  #set(CLANG_FORMAT_TEMPLATE
+  #  "[{file}:{line}] ({severity}) {message} ({id}) ({callstack})"
+  #)
+  # Set clang_format cache directory
+  set(CLANG_FORMAT_BUILD_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/clang_format_cache
+  )
+  #
+  set(CLANG_FORMAT_OPTIONS
+    # more info in console
+    #--verbose
+  )
+  if(ARGUMENTS_OVERRIDE_OPTIONS)
+    set(CLANG_FORMAT_OPTIONS ${ARGUMENTS_OVERRIDE_OPTIONS})
+  else()
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "clang_format: no OVERRIDE_OPTIONS provided")
+    endif(ARGUMENTS_VERBOSE)
+    # skip, use defaults
+  endif()
+  #
+  list(APPEND CLANG_FORMAT_OPTIONS ${ARGUMENTS_EXTRA_OPTIONS})
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  if(${ARGUMENTS_IS_ENABLED})
+    message(STATUS "clang-format enabled")
+
+    # to use `clang_format` from conan
+    list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
+
+    find_program_helper(clang-format
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR CLANG_FORMAT_PROGRAM
+      VERBOSE TRUE
+    )
+
+    if(CLANG_FORMAT_PROGRAM)
+      # Create clang_format cache directory
+      file(MAKE_DIRECTORY ${CLANG_FORMAT_BUILD_DIR})
+
+      # Set clang_format program + options.
+      list(APPEND CLANG_FORMAT_RUNNABLE
+        ${CLANG_FORMAT_PROGRAM}
+      )
+      if(ARGUMENTS_VERBOSE)
+        message(STATUS "CLANG_FORMAT_RUNNABLE=${CLANG_FORMAT_RUNNABLE}")
+      endif(ARGUMENTS_VERBOSE)
+
+      # create separate target for clang_format
+      if(ARGUMENTS_STANDALONE_TARGET)
+        add_clang_format_target(
+          TARGET_NAME ${ARGUMENTS_STANDALONE_TARGET}
+          CLANG_FORMAT_FULL_CMD
+            ${CLANG_FORMAT_RUNNABLE}
+          EXTRA_OPTIONS ${CLANG_FORMAT_OPTIONS}
+        )
+      endif(ARGUMENTS_STANDALONE_TARGET)
+
+      # collect headers and defines from existing target
+      if(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "clang_format: ARGUMENTS_CHECK_TARGETS=${ARGUMENTS_CHECK_TARGETS}")
+        endif(ARGUMENTS_VERBOSE)
+        foreach(TARGET_NAME ${ARGUMENTS_CHECK_TARGETS})
+          if(ARGUMENTS_VERBOSE)
+            message(STATUS "enabled clang_format for target ${TARGET_NAME}")
+          endif(ARGUMENTS_VERBOSE)
+          #
+          get_all_compile_definitions(collected_defines
+            ${TARGET_NAME}
+          )
+          #
+          get_all_include_directories(collected_includes
+            ${TARGET_NAME}
+          )
+          #
+          get_target_sources(TARGET_SOURCES
+            ${TARGET_NAME}
+          )
+          #
+          add_clang_format_target(
+            TARGET_NAME ${TARGET_NAME}
+            CLANG_FORMAT_FULL_CMD
+              ${CLANG_FORMAT_RUNNABLE}
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              #$<$<BOOL:${collected_defines}>:-extra-arg=-D$<JOIN:${collected_defines}, -extra-arg=-D>>
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              # To suppress compiler diagnostic messages
+              # from third-party headers just use -isystem
+              # instead of -I to include those headers.
+              #$<$<BOOL:${collected_includes}>:-extra-arg=-isystem$<JOIN:${collected_includes}, -extra-arg=-isystem>>
+              ${TARGET_SOURCES}
+            EXTRA_OPTIONS ${CLANG_FORMAT_OPTIONS}
+          )
+          if(CHECK_TARGETS_DEPEND)
+            # run clang-format on each build of target
+            add_dependencies(
+              ${TARGET_NAME}
+              ${TARGET_NAME}_run_clang_format
+            )
+          endif(CHECK_TARGETS_DEPEND)
+        endforeach()
+      else(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "clang_format: no CHECK_TARGETS provided")
+        endif(ARGUMENTS_VERBOSE)
+      endif(ARGUMENTS_CHECK_TARGETS)
+    else(CLANG_FORMAT_PROGRAM)
+      message(WARNING "Program 'clang_format' not found, unable to run 'clang_format'.")
+    endif(CLANG_FORMAT_PROGRAM)
+  else() # ARGUMENTS_IS_ENABLED
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "clang_format disabled")
+    endif(ARGUMENTS_VERBOSE)
+  endif() # ARGUMENTS_IS_ENABLED
+endfunction(clang_format_enabler)
+
+set(EXTRA_CLANG_FORMAT_FILES
+  # place here files what need to be to be formatted
+)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_clang_format
+clang_format_enabler(
+  PATHS
+    ${CONAN_BIN_DIRS}
+    ${CONAN_BIN_DIRS_LLVM_TOOLS}
+  NO_SYSTEM_ENVIRONMENT_PATH
+  NO_CMAKE_SYSTEM_PATH
+  IS_ENABLED
+    ${ENABLE_CLANG_FORMAT}
+  CHECK_TARGETS
+    ${LIB_NAME}
+  EXTRA_OPTIONS
+    # ferror-limit:
+    # Used only with --dry-run or -n
+    --ferror-limit=9999
+    # Use -style=file to load style configuration from
+    # .clang-format file located in one of the parent
+    # directories of the source file (or current
+    # directory for stdin).
+    -style=file
+    #  The -i option indicates to apply the formatting options
+    # to the files in-place, rather than spitting out
+    # the formatted version of the files to the command line.
+    -i
+  VERBOSE
+  REQUIRED
+)
+
+## ---------------------------- tests -------------------------------- ##
 
 if(ENABLE_TESTS)
   add_subdirectory( tests )

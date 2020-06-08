@@ -2,6 +2,8 @@
 
 #include "flexlib/ToolPlugin.hpp"
 
+#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/Pointer.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/Utility/Arguments.h>
@@ -10,15 +12,13 @@
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
-#include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/Pointer.h>
 
+#include <base/files/file.h>
+#include <base/files/file_enumerator.h>
+#include <base/files/file_path.h>
+#include <base/files/file_util.h>
 #include <base/logging.h>
 #include <base/trace_event/trace_event.h>
-#include <base/files/file.h>
-#include <base/files/file_path.h>
-#include <base/files/file_enumerator.h>
-#include <base/files/file_util.h>
 
 #ifdef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
 #error "no CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT for that platform"

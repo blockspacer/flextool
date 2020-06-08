@@ -1,18 +1,16 @@
 #include "flextool/clang_tool.hpp" // IWYU pragma: associated
 
-#include <clang/Tooling/CommonOptionsParser.h>
-#include <clang/Tooling/Tooling.h>
-#include <clang/Rewrite/Core/Rewriter.h>
-#include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/ASTMatchers/ASTMatchersMacros.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Frontend/ASTConsumers.h>
-#include <clang/Frontend/FrontendActions.h>
 #include <clang/Basic/SourceManager.h>
-#include <clang/Tooling/Tooling.h>
+#include <clang/Frontend/ASTConsumers.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/FrontendActions.h>
 #include <clang/Rewrite/Core/Rewriter.h>
+#include <clang/Tooling/CommonOptionsParser.h>
+#include <clang/Tooling/Tooling.h>
 
 #include <base/files/file_util.h>
 #include <base/path_service.h>

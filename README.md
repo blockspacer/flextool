@@ -813,7 +813,6 @@ cmake -E time cmake --build . --target flextool_run_cppclean
 
 NOTE: cppclean requires file encoding to be: `UTF-8 without BOM` (ascii)
 
-
 ## For contibutors: IWYU
 
 Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
@@ -908,6 +907,46 @@ See oclint tutorial: [http://docs.oclint.org/en/stable/intro/tutorial.html](http
 See list of oclint rules at [https://oclint-docs.readthedocs.io/en/stable/rules/](https://oclint-docs.readthedocs.io/en/stable/rules/)
 
 NOTE: you can suppress oclint warnings [http://docs.oclint.org/en/stable/howto/suppress.html#oclint-comment](http://docs.oclint.org/en/stable/howto/suppress.html#oclint-comment)
+
+## For contibutors: clang-format
+
+See for details [https://clang.llvm.org/docs/ClangFormat.html](https://clang.llvm.org/docs/ClangFormat.html)
+
+Usage:
+
+```bash
+cd ~/flextool
+
+# see section about `conan editable mode`
+cd local_build
+
+# remove old CMakeCache
+(rm CMakeCache.txt || true)
+
+# NOTE: -DENABLE_IWYU=ON
+cmake .. \
+  -DENABLE_CLANG_FORMAT=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
+# remove old build artifacts
+rm -rf flextool
+rm -rf bin
+find . -iname '*.o' -exec rm {} \;
+find . -iname '*.a' -exec rm {} \;
+find . -iname '*.dll' -exec rm {} \;
+find . -iname '*.lib' -exec rm {} \;
+
+cmake -E time cmake --build . --target flextool_run_clang_format
+```
+
+We use `.clang-format` file. See for details [https://clang.llvm.org/docs/ClangFormatStyleOptions.html](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)
+
+NOTE: we use `DisableFormat`, so clang-format will change only include order based on `SortIncludes`.
+
+Unfortunately, `clang-format` is not configurable enough, so it can be used only to sort includes. See https://stackoverflow.com/a/32191189
 
 ## LICENSE for open source components
 
