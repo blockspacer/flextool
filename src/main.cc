@@ -13,7 +13,8 @@ int main(int argc, char* argv[])
     if(!envCreated) {
       LOG(ERROR)
         << "Unable to create application environment";
-      return EXIT_FAILURE;
+      return
+        EXIT_FAILURE;
     }
   }
 
@@ -28,10 +29,11 @@ int main(int argc, char* argv[])
     DCHECK(env.annotationMatchOptions->endSourceFileAction);
 
     tool.run(
-      env.args_storage // command-line arguments
-      , env.annotationMatchOptions // custom settings
-    );
+      env.args_storage   // command-line arguments
+      , env.annotationMatchOptions   // custom settings
+      );
   }
 
-  return EXIT_SUCCESS;
+  return
+    EXIT_SUCCESS;
 }

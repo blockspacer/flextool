@@ -24,6 +24,9 @@ namespace flextool {
 
 class ClangTool {
 public:
+  using AnnotationMatchOptionsPtr
+    = scoped_refptr<clang_utils::AnnotationMatchOptions>;
+
   ClangTool() = default;
 
   // LibTooling is the C++ interface Clang provided.
@@ -34,8 +37,7 @@ public:
     // command-line arguments
     const std::vector<std::string>& args
     // custom settings
-    , scoped_refptr<clang_utils::AnnotationMatchOptions>
-        annotationMatchOptions);
+    , AnnotationMatchOptionsPtr annotationMatchOptions);
 
 private:
   DISALLOW_COPY_AND_ASSIGN(ClangTool);

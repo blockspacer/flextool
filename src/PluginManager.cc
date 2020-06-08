@@ -21,21 +21,24 @@
 #include <base/trace_event/trace_event.h>
 
 #ifdef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
-#error "no CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT for that platform"
+#error \
+  "no CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT" \
+  " for that platform"
 #endif
 
 namespace backend {
 
-void PluginManager::connect_to_dispatcher(entt::dispatcher& events_dispatcher)
+void PluginManager::connect_to_dispatcher(
+  entt::dispatcher& events_dispatcher)
 {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   TRACE_EVENT0("toplevel", "PluginManager::connect_to_dispatcher()");
 
   events_dispatcher.sink<Events::Startup>()
-      .connect<&PluginManager::startup>(this);
+    .connect<&PluginManager::startup>(this);
   events_dispatcher.sink<Events::Shutdown>()
-      .connect<&PluginManager::shutdown>(this);
+    .connect<&PluginManager::shutdown>(this);
 }
 
 void PluginManager::connect_plugins_to_dispatcher(
@@ -67,24 +70,27 @@ void PluginManager::startup(const Events::Startup& event)
     << "invalid executable path";
 
   const base::FilePath pathToDirWithPlugins
-      = event.pathToDirWithPlugins.empty()
-        // default value
+    = event.pathToDirWithPlugins.empty()
+      // default value
         ? base::FilePath{executable_path}
         : event.pathToDirWithPlugins;
   CHECK(!pathToDirWithPlugins.empty())
-      << "invalid path to directory with plugins";
+    << "invalid path to directory with plugins";
+
+  const std::string pluginsConfFile
+    = ::Corrade::Utility::Directory::join(
+        std::initializer_list<std::string>{
+          pathToDirWithPlugins.value()
+          , "plugins.conf"}
+        );
 
   const base::FilePath pathToPluginsConfFile
     = event.pathToPluginsConfFile.empty()
       // default value
-      ? base::FilePath{::Corrade::Utility::Directory::join(
-          std::initializer_list<std::string>{
-            pathToDirWithPlugins.value()
-            , "plugins.conf"}
-        )}
+      ? base::FilePath{pluginsConfFile}
       : event.pathToPluginsConfFile;
   CHECK(!pathToPluginsConfFile.empty())
-      << "invalid path to plugins configuration file";
+    << "invalid path to plugins configuration file";
 
   VLOG(9)
     << "using plugins configuration file: "
@@ -109,10 +115,8 @@ void PluginManager::startup(const Events::Startup& event)
 
   manager_
     = std::make_unique<
-        ::Corrade::PluginManager::Manager<
-          PluginType
-        >
-      >();
+    ::Corrade::PluginManager::Manager<PluginType>
+    >();
 
   /**
    * Set the plugin manager directory to load plugins
@@ -144,8 +148,8 @@ void PluginManager::startup(const Events::Startup& event)
       if(!plugin_group->hasValue("title"))
       {
         LOG(WARNING)
-          << "invalid plugin configuration: "
-          << "title not provided";
+            << "invalid plugin configuration: "
+            << "title not provided";
         DCHECK(false);
         continue;
       }
@@ -154,13 +158,13 @@ void PluginManager::startup(const Events::Startup& event)
         = plugin_group->value("title");
       auto find_result
         = std::find(all_plugins.begin()
-            , all_plugins.end()
-            , plugin_conf_name);
+                    , all_plugins.end()
+                    , plugin_conf_name);
       if(find_result == all_plugins.end())
       {
         LOG(WARNING)
-          << "plugin not found: "
-          << plugin_conf_name;
+            << "plugin not found: "
+            << plugin_conf_name;
         NOTREACHED();
       } else {
         filtered_plugins.push_back(plugin_conf_name);
@@ -171,11 +175,11 @@ void PluginManager::startup(const Events::Startup& event)
   // append path to plugins that
   // must be loaded independently of configuration file
   for(const base::FilePath& pluginPath
-    : event.pathsToExtraPluginFiles)
+      : event.pathsToExtraPluginFiles)
   {
     VLOG(9)
-      << "added plugin: "
-      << pluginPath;
+        << "added plugin: "
+        << pluginPath;
     if(pluginPath.empty() || !base::PathExists(pluginPath)) {
       LOG(ERROR)
         << "invalid path to plugin file: "
@@ -191,10 +195,12 @@ void PluginManager::startup(const Events::Startup& event)
       * Use @ref Utility::Directory::fromNativeSeparators()
       *      to convert from platform-specific format.
       */
-      Corrade::Utility::Directory::fromNativeSeparators(pluginPath.value()));
+      Corrade::Utility::Directory::fromNativeSeparators(
+        pluginPath.value()));
   }
 
-  for(std::vector<std::string>::const_iterator it = filtered_plugins.begin()
+  for(std::vector<std::string>::const_iterator it =
+        filtered_plugins.begin()
       ; it != filtered_plugins.end(); ++it)
   {
     const std::string& pluginNameOrPath = *it;
@@ -204,8 +210,8 @@ void PluginManager::startup(const Events::Startup& event)
              pluginNameOrPath) == pluginNameOrPath);
 
     VLOG(9)
-      << "plugin enabled: "
-      << pluginNameOrPath;
+        << "plugin enabled: "
+        << pluginNameOrPath;
 
     /**
      * @brief Load a plugin
@@ -241,17 +247,19 @@ void PluginManager::startup(const Events::Startup& event)
      *      @ref LoadState::NotFound.
     **/
     const bool is_loaded
-      = static_cast<bool>(manager_->load(pluginNameOrPath)
+      = static_cast<bool>(
+          manager_->load(pluginNameOrPath)
           & (Corrade::PluginManager::LoadState::Loaded
-          | Corrade::PluginManager::LoadState::Static)
-        );
+             | Corrade::PluginManager::LoadState::
+               Static)
+          );
     if(!is_loaded) {
-        LOG(ERROR)
-          << "The requested plugin "
-          << pluginNameOrPath
-          << " cannot be loaded.";
-        DCHECK(false);
-        continue;
+      LOG(ERROR)
+        << "The requested plugin "
+        << pluginNameOrPath
+        << " cannot be loaded.";
+      DCHECK(false);
+      continue;
     }
 
     /**
@@ -264,11 +272,11 @@ void PluginManager::startup(const Events::Startup& event)
     @see @ref path(), @ref splitExtension()
     */
     const std::string pluginNameOrFilenameWithExt
-        = Corrade::Utility::Directory::filename(pluginNameOrPath);
+      = Corrade::Utility::Directory::filename(pluginNameOrPath);
 
     DCHECK(base::FilePath{pluginNameOrPath}
-            .BaseName().value()
-              == pluginNameOrFilenameWithExt);
+             .BaseName().value()
+           == pluginNameOrFilenameWithExt);
 
     /**
     @brief Split basename and extension
@@ -284,24 +292,27 @@ void PluginManager::startup(const Events::Startup& event)
     @see @ref path(), @ref filename(), @ref String::partition()
     */
     const std::string pluginName
-        = Corrade::Utility::Directory::splitExtension(
-            pluginNameOrFilenameWithExt).first;
+      = Corrade::Utility::Directory::splitExtension(
+          pluginNameOrFilenameWithExt).first;
 
     DCHECK(base::FilePath{pluginNameOrFilenameWithExt}
-            .BaseName().RemoveExtension().value()
-              == pluginName);
+             .BaseName().RemoveExtension().value()
+           == pluginName);
 
-    DCHECK(static_cast<bool>(manager_->loadState(pluginName)
-                               & (Corrade::PluginManager::LoadState::Loaded
-                               | Corrade::PluginManager::LoadState::Static)
-                             ));
+    DCHECK(static_cast<bool>(
+             manager_->loadState(pluginName)
+             & (Corrade::PluginManager::LoadState::
+                  Loaded
+                | Corrade::PluginManager::LoadState::
+                  Static)
+             ));
 
     /// Returns new instance of given plugin.
     /// \note The plugin must be already
     /// successfully loaded by this manager.
     /// \note The returned value is never |nullptr|
     PluginPtr plugin
-      /// \note must be plugin name, not path to file
+    /// \note must be plugin name, not path to file
       = manager_->instantiate(pluginName);
     if(!plugin) {
       LOG(ERROR)
@@ -315,12 +326,12 @@ void PluginManager::startup(const Events::Startup& event)
     VLOG(9)
       << "=== loading plugin ==";
     VLOG(9)
-      << "plugin title:       "
-      << plugin->title();
+        << "plugin title:       "
+        << plugin->title();
     VLOG(9)
-      << "plugin description: "
-      << plugin->description().substr(0, 100)
-      << "...";
+        << "plugin description: "
+        << plugin->description().substr(0, 100)
+        << "...";
 
     plugin->load();
 

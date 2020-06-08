@@ -28,8 +28,9 @@ std::ostream& operator<<(
   std::ostream& stream, const std::vector<T>& data)
 {
   std::copy(data.begin(), data.end(),
-    std::ostream_iterator<T>(stream, " "));
-  return stream;
+            std::ostream_iterator<T>(stream, " "));
+  return
+    stream;
 }
 
 static const char kExtraClangFlag[] = "-extra-arg";
@@ -41,31 +42,35 @@ static const char kClingIncludeFlag[] = "-I";
 static const char kClangBuildPathFlag[] = "-p=";
 
 static bool add_default_clang_args(
-    const base::FilePath clangBuildPath
-    , std::vector<std::string>& args)
+  const base::FilePath clangBuildPath
+  , std::vector<std::string>& args)
 {
 
   base::FilePath dir_exe;
   if (!base::PathService::Get(base::DIR_EXE, &dir_exe)) {
     NOTREACHED();
-    return false;
+    return
+      false;
   }
 
   base::FilePath app_path;
   if (!base::PathService::Get(base::FILE_EXE, &app_path)) {
     NOTREACHED();
-    return false;
+    return
+      false;
   }
 
   {
     /// \note must be first arg
     CHECK(args.empty());
-    args.push_back("clang_app"); // app name
+    args.push_back(
+      "clang_app"); // app name
   }
 
   if(!clangBuildPath.empty()) {
     if(base::PathExists(clangBuildPath)) {
-      args.push_back(kClangBuildPathFlag
+      args.push_back(
+        kClangBuildPathFlag
         + clangBuildPath.value());
       LOG(INFO)
         << "files will be written into directory: "
@@ -80,7 +85,8 @@ static bool add_default_clang_args(
   //args.push_back("-extra-arg=-nostdinc");
 
   args.push_back(
-    std::string(kExtraClangFlag) + "=-Wno-unused-command-line-argument");
+    std::string(
+      kExtraClangFlag) + "=-Wno-unused-command-line-argument");
 
   args.push_back(
     std::string(kExtraClangFlag) + "=-DCLANG_ENABLED=1");
@@ -91,24 +97,29 @@ static bool add_default_clang_args(
   // see https://stackoverflow.com/a/30877725
   {
     args.push_back(
-      std::string(kExtraClangFlag) + "=-DBOOST_SYSTEM_NO_DEPRECATED");
+      std::string(kExtraClangFlag) +
+      "=-DBOOST_SYSTEM_NO_DEPRECATED");
     args.push_back(
-      std::string(kExtraClangFlag) + "=-DBOOST_ERROR_CODE_HEADER_ONLY");
+      std::string(kExtraClangFlag) +
+      "=-DBOOST_ERROR_CODE_HEADER_ONLY");
   }
 
   // include paths
   {
-    args.push_back(kExtraIncludeFlag
+    args.push_back(
+      kExtraIncludeFlag
       + dir_exe.value());
 
-    args.push_back(kExtraIncludeFlag
+    args.push_back(
+      kExtraIncludeFlag
       + dir_exe.Append("./resources").value());
   }
 
   args.push_back(
     std::string(kExtraClangFlag) + "=-std=c++17");
 
-  return true;
+  return
+    true;
 }
 
 } // namespace
@@ -169,7 +180,8 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
        , base::StringPiece{"help"}
        , base::CompareCase::INSENSITIVE_ASCII))
   {
-    return true;
+    return
+      true;
   }
 
   if(base::StartsWith(
@@ -177,7 +189,8 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
        , base::StringPiece{"help-list"}
        , base::CompareCase::INSENSITIVE_ASCII))
   {
-    return true;
+    return
+      true;
   }
 
   if(base::StartsWith(
@@ -185,7 +198,8 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
        , base::StringPiece{"version"}
        , base::CompareCase::INSENSITIVE_ASCII))
   {
-    return true;
+    return
+      true;
   }
 
   if(base::StartsWith(
@@ -193,7 +207,8 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
        , base::StringPiece{"extra-arg="}
        , base::CompareCase::INSENSITIVE_ASCII))
   {
-    return true;
+    return
+      true;
   }
 
   if(base::StartsWith(
@@ -201,7 +216,8 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
        , base::StringPiece{"extra-arg-before="}
        , base::CompareCase::INSENSITIVE_ASCII))
   {
-    return true;
+    return
+      true;
   }
 
   if(base::StartsWith(
@@ -209,20 +225,23 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
        , base::StringPiece{"p="}
        , base::CompareCase::INSENSITIVE_ASCII))
   {
-    return true;
+    return
+      true;
   }
 
   // clang can accept file paths
   if(base::PathExists(base::FilePath(arg)))
   {
-    return true;
+    return
+      true;
   } else {
     LOG(WARNING)
-      << "path does not exist: "
-      << arg;
+        << "path does not exist: "
+        << arg;
   }
 
-  return false;
+  return
+    false;
 }
 
 bool add_default_cling_args(
@@ -231,39 +250,50 @@ bool add_default_cling_args(
   base::FilePath dir_exe;
   if (!base::PathService::Get(base::DIR_EXE, &dir_exe)) {
     NOTREACHED();
-    return false;
+    return
+      false;
   }
 
   {
     /// \note must be first arg
     CHECK(clingInterpreterArgs.empty());
-    clingInterpreterArgs.push_back("cling_app"); // app name
+    clingInterpreterArgs.push_back(
+      "cling_app"); // app name
   }
 
   //clingInterpreterArgs.push_back("-nostdinc");
 
-  clingInterpreterArgs.push_back("-Wno-unused-command-line-argument");
+  clingInterpreterArgs.push_back(
+    "-Wno-unused-command-line-argument");
 
-  clingInterpreterArgs.push_back("-DCLING_ENABLED=1");
-  clingInterpreterArgs.push_back("-DCLING_IS_ON=1");
+  clingInterpreterArgs.push_back(
+    "-DCLING_ENABLED=1");
+  clingInterpreterArgs.push_back(
+    "-DCLING_IS_ON=1");
 
   // https://stackoverflow.com/a/30877725
-  clingInterpreterArgs.push_back("-DBOOST_SYSTEM_NO_DEPRECATED");
-  clingInterpreterArgs.push_back("-DBOOST_ERROR_CODE_HEADER_ONLY");
+  clingInterpreterArgs.push_back(
+    "-DBOOST_SYSTEM_NO_DEPRECATED");
+  clingInterpreterArgs.push_back(
+    "-DBOOST_ERROR_CODE_HEADER_ONLY");
 
-  clingInterpreterArgs.push_back("--std=c++17");
+  clingInterpreterArgs.push_back(
+    "--std=c++17");
 
   // include paths
   {
-    clingInterpreterArgs.push_back(kClingIncludeFlag
+    clingInterpreterArgs.push_back(
+      kClingIncludeFlag
       + dir_exe.value());
 
-    clingInterpreterArgs.push_back(kClingIncludeFlag
+    clingInterpreterArgs.push_back(
+      kClingIncludeFlag
       + dir_exe.Append(
-          "./resources").value());
+        "./resources").value());
   }
 
-  return true;
+  return
+    true;
 }
 
 base::Optional<std::string> clangArgToClingArg(
@@ -277,11 +307,12 @@ base::Optional<std::string> clangArgToClingArg(
        , base::CompareCase::INSENSITIVE_ASCII))
   {
     LOG(ERROR)
-      << "Command-line argument can not start with "
-      << kInvalidParsedArgPrefix
-      << " Error in argument: "
-      << arg;
-    return base::nullopt;
+        << "Command-line argument can not start with "
+        << kInvalidParsedArgPrefix
+        << " Error in argument: "
+        << arg;
+    return
+      base::nullopt;
   }
 
   // pipeline only args starting with "--extra-arg="
@@ -291,11 +322,12 @@ base::Optional<std::string> clangArgToClingArg(
        , base::CompareCase::INSENSITIVE_ASCII))
   {
     VLOG(9)
-      << "unable to pipeline clang argument to cling: "
-      << arg
-      << " cause it does not have prefix: "
-      << kExtraArgPrefix;
-    return base::nullopt;
+        << "unable to pipeline clang argument to cling: "
+        << arg
+        << " cause it does not have prefix: "
+        << kExtraArgPrefix;
+    return
+      base::nullopt;
   }
 
   base::StringPiece arg_without_prefix = arg;
@@ -309,7 +341,8 @@ base::Optional<std::string> clangArgToClingArg(
   std::string combined_for_cling;
   arg_without_prefix.CopyToString(&combined_for_cling);
 
-  return combined_for_cling;
+  return
+    combined_for_cling;
 }
 
 /// \todo long method
@@ -318,7 +351,7 @@ bool populateClangArguments(
   , std::vector<std::string>& args_storage
   , std::vector<std::string>& cling_extra_args
   , cmd::BoostCmd& boostCmd
-){
+  ){
   {
     /// \note must be before all custom arguments
     const bool add_ok = add_default_clang_args(
@@ -326,7 +359,8 @@ bool populateClangArguments(
       , args_storage);
     DCHECK(!args_storage.empty());
     if(!add_ok) {
-      return false;
+      return
+        false;
     }
   }
 
@@ -342,11 +376,11 @@ bool populateClangArguments(
     //DCHECK(unergisteredOption.key);
     //DCHECK(unergisteredOption.values);
     VLOG(9)
-      << "forwarding unregistered (unknown)"
-         " command-line argument: "
-      << /***/unergisteredOption.key
-      << " with values: "
-      << unergisteredOption.values;
+        << "forwarding unregistered (unknown)"
+      " command-line argument: "
+        << unergisteredOption.key
+        << " with values: "
+        << unergisteredOption.values;
 
     if(base::StartsWith(
          base::StringPiece{unergisteredOption.key}
@@ -361,7 +395,9 @@ bool populateClangArguments(
       continue;
     }
 
-    for(size_t i = 0; i < (/***/unergisteredOption.values).size(); i++)
+    for(size_t i = 0
+        ; i < unergisteredOption.values.size();
+        i++)
     {
       // separator for key and value concatenation
       /// \note we do not add '=' before argument value
@@ -379,11 +415,11 @@ bool populateClangArguments(
         = unergisteredOption.KVToSting(
             i
             , KVseparator
-          );
+            );
 
       VLOG(9)
         << "pipelining unregistered option "
-           "to clang libtooling: "
+        "to clang libtooling: "
         << combined_for_clang;
 
       if(combined_for_clang.empty()) {
@@ -394,9 +430,9 @@ bool populateClangArguments(
       if(!isAllowedClangArgument(combined_for_clang))
       {
         VLOG(9)
-          << "unable to pipeline unknown"
-             " to clang libtooling argument: "
-          << combined_for_clang;
+            << "unable to pipeline unknown"
+          " to clang libtooling argument: "
+            << combined_for_clang;
         continue;
       }
 
@@ -427,7 +463,8 @@ bool populateClangArguments(
             ? combined_for_clang
             : (kClangArgPrefix + combined_for_clang);
 
-        args_storage.push_back(std::move(withPrefix));
+        args_storage.push_back(
+          std::move(withPrefix));
       }
 
       /// \note only arguments starting with `--extra-arg=`
@@ -460,10 +497,10 @@ bool populateClangArguments(
                , base::CompareCase::INSENSITIVE_ASCII))
           {
             LOG(ERROR)
-              << "Command-line argument can not start with "
-              << kClingArgPrefix
-              << " Error in argument: "
-              << combined_for_cling.value();
+                << "Command-line argument can not start with "
+                << kClingArgPrefix
+                << " Error in argument: "
+                << combined_for_cling.value();
             continue;
           }
 
@@ -482,13 +519,14 @@ bool populateClangArguments(
 #endif // CLING_IS_ON
       } else {
         VLOG(9)
-          << "failed to pipeline clang argument to cling: "
-          << combined_for_clang;
+            << "failed to pipeline clang argument to cling: "
+            << combined_for_clang;
       }
     } // for
   } // for
 
-  return true;
+  return
+    true;
 }
 
 void FileSaveHandler::saveFile(
@@ -498,14 +536,14 @@ void FileSaveHandler::saveFile(
   , const clang::FileID &fileID
   , const clang::FileEntry *fileEntry
   , clang::Rewriter &rewriter
-){
+  ){
   std::string full_file_path = fileEntry->getName();
   VLOG(9)
     << "full_file_path is "
     << full_file_path;
   if(full_file_path.empty()) {
     LOG(WARNING)
-        << "unable to save file, invalid file path";
+      << "unable to save file, invalid file path";
     return;
   }
 
@@ -515,7 +553,7 @@ void FileSaveHandler::saveFile(
     << filename;
   if(filename.empty()) {
     LOG(WARNING)
-        << "unable to save file, invalid file name";
+      << "unable to save file, invalid file name";
     return;
   }
 
@@ -524,33 +562,33 @@ void FileSaveHandler::saveFile(
     << fileEntry->getName().str();
 
   const std::string originalFileExtention
-      = fs::path(full_file_path).extension();
+    = fs::path(full_file_path).extension();
   if(originalFileExtention.empty()) {
     LOG(WARNING)
-        << "unable to save file, invalid file extension";
+      << "unable to save file, invalid file extension";
     return;
   }
 
   const char kGeneratedFileExtentionSuffix[]
-      = ".generated";
+    = ".generated";
 
   const base::FilePath out_path
-      = outDir.Append(
+    = outDir.Append(
         filename
         + kGeneratedFileExtentionSuffix
         + originalFileExtention);
 
   if (shouldFlushFile) {
     VLOG(9)
-      << "writing data to file with path = "
-      << out_path.value();
+        << "writing data to file with path = "
+        << out_path.value();
 
     std::error_code error_code;
 
     llvm::raw_fd_ostream outFile(
-          out_path.value(),
-          error_code,
-          llvm::sys::fs::F_None);
+      out_path.value(),
+      error_code,
+      llvm::sys::fs::F_None);
     rewriter.getEditBuffer(fileID).write(outFile);
     outFile.close();
     if(error_code != std::error_code{}) {
@@ -567,8 +605,8 @@ void FileSaveHandler::saveFile(
     /// \note On POSIX, |MakeAbsoluteFilePath| fails
     /// if the path does not exist
     DCHECK(out_path == base::MakeAbsoluteFilePath(out_path))
-      << "unable to find absolute path to "
-      << out_path;
+        << "unable to find absolute path to "
+        << out_path;
   }
 
   // this will output to screen
@@ -577,7 +615,7 @@ void FileSaveHandler::saveFile(
       = rewriter.getSourceMgr();
     rewriter.getEditBuffer(
       sourceManager.getMainFileID())
-        .write(llvm::outs());
+      .write(llvm::outs());
   }
 }
 

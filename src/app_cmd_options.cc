@@ -78,31 +78,31 @@ const char kDefaultPluginsConfig[] = "plugins.conf";
 
 // static
 boost::optional<std::string>
-  AppCmdOptions::BoostCmdOptions::tracing_categories_arg{};
+AppCmdOptions::BoostCmdOptions::tracing_categories_arg{};
 
 // static
 boost::optional<std::string>
-  AppCmdOptions::BoostCmdOptions::srcdir_arg{};
+AppCmdOptions::BoostCmdOptions::srcdir_arg{};
 
 // static
 boost::optional<std::string>
-  AppCmdOptions::BoostCmdOptions::outdir_arg{};
+AppCmdOptions::BoostCmdOptions::outdir_arg{};
 
 // static
 boost::optional<std::string>
-  AppCmdOptions::BoostCmdOptions::plugin_dir_arg{};
+AppCmdOptions::BoostCmdOptions::plugin_dir_arg{};
 
 // static
 boost::optional<std::string>
-  AppCmdOptions::BoostCmdOptions::plugin_conf_arg{};
+AppCmdOptions::BoostCmdOptions::plugin_conf_arg{};
 
 // static
 boost::optional<int>
-  AppCmdOptions::BoostCmdOptions::thread_num_arg{};
+AppCmdOptions::BoostCmdOptions::thread_num_arg{};
 
 // static
 std::vector<std::string>
-  AppCmdOptions::BoostCmdOptions::cling_scripts{};
+AppCmdOptions::BoostCmdOptions::cling_scripts{};
 
 // static
 //std::vector<std::string>
@@ -110,7 +110,7 @@ std::vector<std::string>
 
 // static
 std::vector<std::string>
-  AppCmdOptions::BoostCmdOptions::pathsToExtraPluginFiles{};
+AppCmdOptions::BoostCmdOptions::pathsToExtraPluginFiles{};
 
 AppCmdOptions::AppCmdOptions(BoostCmd& boostCmd)
   : boostCmd_(boostCmd)
@@ -128,7 +128,7 @@ AppCmdOptions::~AppCmdOptions()
 }
 
 static std::vector<base::FilePath>
-  toFilePaths(const std::vector<std::string>& paths)
+toFilePaths(const std::vector<std::string>& paths)
 {
   std::vector<base::FilePath> result;
   for (const std::string& it: paths)
@@ -138,46 +138,54 @@ static std::vector<base::FilePath>
       /// if the path does not exist
       base::MakeAbsoluteFilePath(base::FilePath{it}));
   }
-  return result;
+  return
+    result;
 }
 
 std::vector<base::FilePath>
-  AppCmdOptions::pathsToExtraPluginFiles()
+AppCmdOptions::pathsToExtraPluginFiles()
 {
-  return toFilePaths(boostCmdOptions.pathsToExtraPluginFiles);
+  return
+    toFilePaths(boostCmdOptions.pathsToExtraPluginFiles);
 }
 
 std::string AppCmdOptions::tracingCategories()
 {
-  return boostCmdOptions.tracing_categories_arg
-    .value_or(DEFAULT_EVENT_CATEGORIES);
+  return
+    boostCmdOptions.tracing_categories_arg
+      .value_or(DEFAULT_EVENT_CATEGORIES);
 }
 
 bool AppCmdOptions::hasAutoStartTracer()
 {
-  return boostCmd_.count(cmd::kAutoStartTracer);
+  return
+    boostCmd_.count(cmd::kAutoStartTracer);
 }
 
 bool AppCmdOptions::hasHelp()
 {
-  return boostCmd_.count(cmd::kHelp);
+  return
+    boostCmd_.count(cmd::kHelp);
 }
 
 bool AppCmdOptions::hasVersion()
 {
-  return boostCmd_.count(cmd::kVersion);
+  return
+    boostCmd_.count(cmd::kVersion);
 }
 
 std::vector<base::FilePath> AppCmdOptions::scriptFiles()
 {
-  return toFilePaths(boostCmdOptions.cling_scripts);
+  return
+    toFilePaths(boostCmdOptions.cling_scripts);
 }
 
 base::FilePath AppCmdOptions::inDir()
 {
   base::FilePath dir
     = cmdKeyToDirectory(cmd::kInDir);
-  return dir.empty()
+  return
+    dir.empty()
     // default value
     ? dir_exe_
     : dir;
@@ -187,7 +195,8 @@ base::FilePath AppCmdOptions::outDir()
 {
   base::FilePath dir
     = cmdKeyToDirectory(cmd::kOutDir);
-  return dir.empty()
+  return
+    dir.empty()
     // default value
     ? dir_exe_
     : dir;
@@ -197,7 +206,8 @@ base::FilePath AppCmdOptions::pluginsDir()
 {
   base::FilePath dir
     = cmdKeyToDirectory(cmd::kPluginsDir);
-  return dir.empty()
+  return
+    dir.empty()
     // default value
     ? dir_exe_
       .AppendASCII(kDefaultPluginsDir)
@@ -208,7 +218,8 @@ base::FilePath AppCmdOptions::pluginsConfigFile()
 {
   base::FilePath pluginsConfigFile
     = cmdKeyToFile(cmd::kPluginsConfFile);
-  return pluginsConfigFile.empty()
+  return
+    pluginsConfigFile.empty()
     // default value
     ? dir_exe_
       .AppendASCII(kDefaultPluginsDir)
@@ -218,10 +229,12 @@ base::FilePath AppCmdOptions::pluginsConfigFile()
 
 int AppCmdOptions::threadsNum()
 {
-  return std::clamp(
+  return
+    std::clamp(
     boostCmdOptions.thread_num_arg.get_value_or(kDefaultThreadNum)
     , kMinThreadNum
-    , kMaxThreadNum);
+    , kMaxThreadNum
+    );
 }
 
 int AppCmdOptions::cmdKeyToInt(
@@ -235,15 +248,16 @@ int AppCmdOptions::cmdKeyToInt(
         == base::StringPiece::npos);
   if(!boostCmd_.count(key)) {
     VLOG(9)
-      << "Unable to find command-line argument: "
-      << key;
-    return result;
+        << "Unable to find command-line argument: "
+        << key;
+    return
+      result;
   }
 
   const boost::optional<int>& value
-      = boostCmd_.getAs<
-          boost::optional<int>
-        >(key.as_string());
+    = boostCmd_.getAs<
+    boost::optional<int>
+    >(key.as_string());
 
   if(value.is_initialized()) {
     result = value.value();
@@ -251,7 +265,8 @@ int AppCmdOptions::cmdKeyToInt(
     VLOG_NOT_INITIALIZED(9, key);
   }
 
-  return result;
+  return
+    result;
 }
 
 base::FilePath AppCmdOptions::getAsPath(
@@ -265,15 +280,16 @@ base::FilePath AppCmdOptions::getAsPath(
         == base::StringPiece::npos);
   if(!boostCmd_.count(key)) {
     VLOG(9)
-      << "Unable to find command-line argument: "
-      << key;
-    return result;
+        << "Unable to find command-line argument: "
+        << key;
+    return
+      result;
   }
 
   const boost::optional<std::string>& value
-      = boostCmd_.getAs<
-          boost::optional<std::string>
-        >(key.as_string());
+    = boostCmd_.getAs<
+    boost::optional<std::string>
+    >(key.as_string());
 
   if(value.is_initialized() && !value.value().empty()) {
     result = base::FilePath{value.value()};
@@ -281,7 +297,8 @@ base::FilePath AppCmdOptions::getAsPath(
     VLOG_NOT_INITIALIZED(9, key);
   }
 
-  return result;
+  return
+    result;
 }
 
 base::FilePath AppCmdOptions::cmdKeyToDirectory(
@@ -296,7 +313,8 @@ base::FilePath AppCmdOptions::cmdKeyToDirectory(
     << dirPath;
 
   if(dirPath.empty()) {
-    return base::FilePath{};
+    return
+      base::FilePath{};
   }
 
   /// \note On POSIX, |MakeAbsoluteFilePath| fails
@@ -308,16 +326,19 @@ base::FilePath AppCmdOptions::cmdKeyToDirectory(
 
   if (!base::PathExists(dirPath)) {
     LOG_PATH_NOT_EXIST(WARNING, dirPath);
-    return base::FilePath{};
+    return
+      base::FilePath{};
   }
 
   // we expect dir, NOT file
   if(!base::DirectoryExists(dirPath)) {
     LOG_PATH_NOT_DIRECTORY(WARNING, dirPath);
-    return base::FilePath{};
+    return
+      base::FilePath{};
   }
 
-  return dirPath;
+  return
+    dirPath;
 }
 
 base::FilePath AppCmdOptions::cmdKeyToFile(
@@ -332,7 +353,8 @@ base::FilePath AppCmdOptions::cmdKeyToFile(
     << filePath;
 
   if(filePath.empty()) {
-    return base::FilePath{};
+    return
+      base::FilePath{};
   }
 
   /// \note On POSIX, |MakeAbsoluteFilePath| fails
@@ -344,25 +366,29 @@ base::FilePath AppCmdOptions::cmdKeyToFile(
 
   if (!base::PathExists(filePath)) {
     LOG_PATH_NOT_EXIST(WARNING, filePath);
-    return base::FilePath{};
+    return
+      base::FilePath{};
   }
 
   // we expect file, NOT dir
   if (base::DirectoryExists(filePath)) {
     LOG_PATH_MUST_BE_NOT_DIRECTORY(WARNING, filePath);
-    return base::FilePath{};
+    return
+      base::FilePath{};
   }
 
   base::File::Info fileInfo;
   bool hasInfo = base::GetFileInfo(filePath, &fileInfo);
   if(!hasInfo) {
     LOG(WARNING)
-      << "unable to get source file information: "
-      << filePath;
-    return base::FilePath{};
+        << "unable to get source file information: "
+        << filePath;
+    return
+      base::FilePath{};
   }
 
-  return filePath;
+  return
+    filePath;
 }
 
 ///\todo flextool will save file with all source code transformations applied,
@@ -393,62 +419,66 @@ base::FilePath AppCmdOptions::cmdKeyToFile(
 /// plugin may register cache observer with key "typeclassCache"
 /// plugin may register cache observer for any key
 boost::program_options::options_description_easy_init
-  AppCmdOptions::registerOptions(
-    boost::program_options::options_description_easy_init& options)
+AppCmdOptions::registerOptions(
+  boost::program_options::options_description_easy_init& options)
 {
-  return options
-    (cmd::kHelp, "produce help message")
-    (cmd::kVersion, "produce version message")
-      /// \todo
+  return
+    options
+      (cmd::kHelp, "produce help message")
+      (cmd::kVersion, "produce version message")
+    /// \todo
     //(cmd::kClangIncludeDirs
     // , po::value(&boostCmdOptions.clang_includes_dir_arg)
     //     ->default_value(boost::none, "")
     // , "path to directory with clang includes")
-      /// \todo
+    /// \todo
     //(cmd::kClingIncludeDirs
     // , po::value(&boostCmdOptions.cling_includes_dir_arg)
     //     ->default_value(boost::none, "")
     // , "path to directory with cling includes")
-    (cmd::kPluginsDir
-     , po::value(&boostCmdOptions.plugin_dir_arg)
-         ->default_value(boost::none, "")
-     , "path to directory with plugins")
-    (cmd::kPluginsConfFile
-     , po::value(&boostCmdOptions.plugin_conf_arg)
-         ->default_value(boost::none, "")
-     , "path to plugins configuration file")
-    (cmd::kScriptFiles
-     , po::value(&boostCmdOptions.cling_scripts)
-         ->multitoken()
-     , "list of C++ files what need to be loaded by Cling interpreter")
+      (cmd::kPluginsDir
+      , po::value(&boostCmdOptions.plugin_dir_arg)
+        ->default_value(boost::none, "")
+      , "path to directory with plugins")
+      (cmd::kPluginsConfFile
+      , po::value(&boostCmdOptions.plugin_conf_arg)
+        ->default_value(boost::none, "")
+      , "path to plugins configuration file")
+      (cmd::kScriptFiles
+      , po::value(&boostCmdOptions.cling_scripts)
+        ->multitoken()
+      ,
+      "list of C++ files what need to be loaded by Cling interpreter")
     /// \todo
     //(cmd::kScriptDirs
     // , po::value(&boostCmdOptions.ctp_scripts_search_paths)
     //     ->multitoken()
     // , "list of paths where toll will search for ctp_scripts subfolder")
-    (cmd::kExtraPluginFiles
-     , po::value(&boostCmdOptions.pathsToExtraPluginFiles)
-         ->multitoken()
-     , "paths to plugin files that "
-       "must be loaded independently from plugins configuration file")
-    (cmd::kOutDir
-     , po::value(&boostCmdOptions.outdir_arg)
-         ->default_value(boost::none, "")
-     , "change output directory path (where to place generated files)")
-    (cmd::kInDir
-     , po::value(&boostCmdOptions.srcdir_arg)
-         ->default_value(boost::none, "")
-     , "change current working directory path (path to template files)")
-    (cmd::kTracingCategories
-     , po::value(&boostCmdOptions.tracing_categories_arg)
-         ->default_value(boost::none, "")
-     , "start tracing at application start"
-       " you usually don't want to write big trace file,"
-       " so trace only required period of time")
-    (cmd::kThreadNum
-     , po::value(&boostCmdOptions.thread_num_arg)
-         ->default_value(boost::none, "")
-     , "number of threads")
+      (cmd::kExtraPluginFiles
+      , po::value(&boostCmdOptions.pathsToExtraPluginFiles)
+        ->multitoken()
+      , "paths to plugin files that "
+      "must be loaded independently from plugins configuration file")
+      (cmd::kOutDir
+      , po::value(&boostCmdOptions.outdir_arg)
+        ->default_value(boost::none, "")
+      ,
+      "change output directory path (where to place generated files)")
+      (cmd::kInDir
+      , po::value(&boostCmdOptions.srcdir_arg)
+        ->default_value(boost::none, "")
+      ,
+      "change current working directory path (path to template files)")
+      (cmd::kTracingCategories
+      , po::value(&boostCmdOptions.tracing_categories_arg)
+        ->default_value(boost::none, "")
+      , "start tracing at application start"
+      " you usually don't want to write big trace file,"
+      " so trace only required period of time")
+      (cmd::kThreadNum
+      , po::value(&boostCmdOptions.thread_num_arg)
+        ->default_value(boost::none, "")
+      , "number of threads")
     /// \todo LOG arg
     //(log_arg_name, po::value(&log_config)->
     //  default_value(boost::none, ""), "log configuration")
@@ -456,101 +486,101 @@ boost::program_options::options_description_easy_init
     // START BASE SWITCHES, see base/base_switches.h
     // redirect some switches from base lib to boost::program_options
     //
-    (switches::kDisableBestEffortTasks
+      (switches::kDisableBestEffortTasks
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kDisableBreakpad
+      (switches::kDisableBreakpad
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kDisableFeatures
+      (switches::kDisableFeatures
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kDisableLowEndDeviceMode
+      (switches::kDisableLowEndDeviceMode
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kEnableCrashReporter
+      (switches::kEnableCrashReporter
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kEnableFeatures
+      (switches::kEnableFeatures
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kEnableLowEndDeviceMode
+      (switches::kEnableLowEndDeviceMode
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kForceFieldTrials
+      (switches::kForceFieldTrials
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kFullMemoryCrashReport
+      (switches::kFullMemoryCrashReport
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kNoErrorDialogs
+      (switches::kNoErrorDialogs
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kProfilingAtStart
+      (switches::kProfilingAtStart
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kProfilingFile
+      (switches::kProfilingFile
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kProfilingFlush
+      (switches::kProfilingFlush
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kTestChildProcess
+      (switches::kTestChildProcess
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kTestDoNotInitializeIcu
+      (switches::kTestDoNotInitializeIcu
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kTraceToFile
+      (switches::kTraceToFile
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kTraceToFileName
+      (switches::kTraceToFileName
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kV
+      (switches::kV
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kVModule
+      (switches::kVModule
       , po::value<std::string>()
       , "switch provided by base lib")
-    (switches::kWaitForDebugger
+      (switches::kWaitForDebugger
       , po::value<std::string>()
       , "switch provided by base lib")
 #if defined(OS_WIN)
     (switches::kDisableUsbKeyboardDetect
-      , po::value<std::string>()
-      , "switch provided by base lib")
-    (switches::kDisableUsbKeyboardDetect
+     , po::value<std::string>()
+     , "switch provided by base lib")
+      (switches::kDisableUsbKeyboardDetect
       , po::value<std::string>()
       , "switch provided by base lib")
 #endif
 #if defined(OS_LINUX) && !defined(OS_CHROMEOS)
     (switches::kDisableDevShmUsage
-      , po::value<std::string>()
-      , "switch provided by base lib")
+     , po::value<std::string>()
+     , "switch provided by base lib")
 #endif
 #if defined(OS_POSIX)
     (switches::kEnableCrashReporterForTesting
-      , po::value<std::string>()
-      , "switch provided by base lib")
+     , po::value<std::string>()
+     , "switch provided by base lib")
 #endif
 #if defined(OS_ANDROID)
     (switches::kEnableReachedCodeProfiler
-      , po::value<std::string>()
-      , "switch provided by base lib")
-    (switches::kOrderfileMemoryOptimization
+     , po::value<std::string>()
+     , "switch provided by base lib")
+      (switches::kOrderfileMemoryOptimization
       , po::value<std::string>()
       , "switch provided by base lib")
 #endif
 #if defined(OS_LINUX)
     (switches::kEnableThreadInstructionCount
-      , po::value<std::string>()
-      , "switch provided by base lib")
+     , po::value<std::string>()
+     , "switch provided by base lib")
 #endif
     //
     // END BASE SWITCHES, see base/base_switches.h
     //
-    ;
+  ;
 }
 
 } // namespace cmd

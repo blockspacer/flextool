@@ -22,8 +22,8 @@ class UnergisteredOption
 {
 public:
   UnergisteredOption(
-    const std::string/***/ key
-      , const std::vector<std::string>/***/ values);
+    const std::string& key
+    , const std::vector<std::string>& values);
 
   UnergisteredOption(UnergisteredOption&& other);
 
@@ -69,7 +69,7 @@ public:
   std::string optionsToString();
 
   boost::program_options::options_description_easy_init&
-    options();
+  options();
 
   size_t count(const base::StringPiece& key);
 
@@ -93,7 +93,7 @@ public:
     // We expect comma as delimiter.
     // Example: outdir,R
     std::vector<base::StringPiece> key_split
-        = base::SplitStringPiece(
+      = base::SplitStringPiece(
           key
           , ","
           , base::TRIM_WHITESPACE
@@ -103,29 +103,30 @@ public:
       optIter = vm_.find(part.as_string());
       if(optIter != vm_.end()) {
         DVLOG(9)
-          << "Found associated command-line argument: "
-          << part
-          << " for key "
-          << key;
+            << "Found associated command-line argument: "
+            << part
+            << " for key "
+            << key;
         break;
       } else {
         DVLOG(9)
-          << "Unable to find associated command-line argument: "
-          << part
-          << " for key "
-          << key;
+            << "Unable to find associated command-line argument: "
+            << part
+            << " for key "
+            << key;
       }
     }
 
     CHECK(optIter != vm_.end())
-      << "Unable to find any of command-line arguments: "
-      << key;
+        << "Unable to find any of command-line arguments: "
+        << key;
 
     CHECK(vm_.count((*optIter).first))
-      << "Unable to count any of command-line arguments: "
-      << key;
+        << "Unable to count any of command-line arguments: "
+        << key;
 
-    return (*optIter).second.as<T>();
+    return
+      (*optIter).second.as<T>();
   }
 
 private:
@@ -133,7 +134,7 @@ private:
 
   std::unique_ptr<
     boost::program_options::basic_parsed_options<charType>
-  > parsed_options_;
+    > parsed_options_;
 
   boost::program_options::options_description desc_;
 

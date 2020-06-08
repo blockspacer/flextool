@@ -10,8 +10,9 @@ std::ostream& operator<<(
   std::ostream& stream, const std::vector<T>& data)
 {
   std::copy(data.begin(), data.end(),
-    std::ostream_iterator<T>(stream, " "));
-  return stream;
+            std::ostream_iterator<T>(stream, " "));
+  return
+    stream;
 }
 
 } // namespace
@@ -23,18 +24,19 @@ UnergisteredOption::
 {
   //CHECK(key);
   //CHECK(values);
-  std::string result = /***/key;
-  for (const auto &piece : /***/values) {
+  std::string result = key;
+  for (const auto &piece : values) {
     result += piece;
   }
-  return result;
+  return
+    result;
 }
 
 UnergisteredOption::UnergisteredOption(
-  const std::string /***/key
-  , const std::vector<std::string> /***/values)
-  : key(key)
-  , values(values)
+  const std::string& key
+  , const std::vector<std::string>& values)
+  : key(key) /// \note copy
+  , values(values) /// \note copy
 {}
 
 UnergisteredOption::UnergisteredOption(
@@ -45,12 +47,12 @@ UnergisteredOption::UnergisteredOption(
 
 std::string
 UnergisteredOption::KVToSting(
-    const size_t value_index
-    , const std::string &separator) const
+  const size_t value_index
+  , const std::string &separator) const
 {
   //CHECK(key);
   //CHECK(values);
-  CHECK(value_index >=0 && value_index < (/***/values).size());
+  CHECK(value_index >=0 && value_index < values.size());
   VLOG(9)
     << "KVToSting. key: "
     << key
@@ -59,8 +61,9 @@ UnergisteredOption::KVToSting(
     << " values: "
     << values
     << " value: "
-    << (/***/values)[value_index];
-  return /***/key + separator + (/***/values)[value_index];
+    << (values)[value_index];
+  return
+    key + separator + values[value_index];
 }
 
 BoostCmd::BoostCmd()
@@ -80,24 +83,27 @@ size_t BoostCmd::count(const base::StringPiece &key)
   CHECK(!key.empty());
   CHECK(key.find_first_of(',')
         == base::StringPiece::npos);
-  return vm_.count(key.as_string());
+  return
+    vm_.count(key.as_string());
 }
 
 boost::program_options::options_description_easy_init&
-  BoostCmd::options()
+BoostCmd::options()
 {
-  return options_;
+  return
+    options_;
 }
 
 std::string BoostCmd::optionsToString()
 {
   std::stringstream stream;
   desc_.print(stream);
-  return stream.str();
+  return
+    stream.str();
 }
 
 std::vector<UnergisteredOption>
-  BoostCmd::unregisteredOptions()
+BoostCmd::unregisteredOptions()
 {
   CHECK(parsed_options_);
   CHECK(!vm_.empty());
@@ -110,7 +116,7 @@ std::vector<UnergisteredOption>
     CHECK(opt.string_key.find_first_of(',')
           == base::StringPiece::npos);
     const bool isOptionSpecified
-        = vm_.find(opt.string_key) != vm_.end();
+      = vm_.find(opt.string_key) != vm_.end();
     if (!isOptionSpecified)
     {
       VLOG(9)
@@ -122,12 +128,13 @@ std::vector<UnergisteredOption>
         UnergisteredOption(
           opt.string_key
           , opt.value
-        )
-      );
+          )
+        );
     }
   }
 
-  return result;
+  return
+    result;
 }
 
 bool BoostCmd::init(int argc, char* argv[])
@@ -139,24 +146,25 @@ bool BoostCmd::init(int argc, char* argv[])
 
   try {
     // see https://theboostcpplibraries.com/boost.program_options
-    parsed_options_ = std::make_unique<po::basic_parsed_options<char>>(
-      po::command_line_parser(argc, argv).
-        options(desc_)
+    parsed_options_ =
+      std::make_unique<po::basic_parsed_options<char> >(
+        po::command_line_parser(argc, argv).
+          options(desc_)
         // see https://www.boost.org/doc/libs/1_73_0/doc/html/boost/program_options/command_line_style/style_t.html
-        .style(po::command_line_style::default_style
-           // Allow "--long_name" style.
-           | po::command_line_style::allow_long
-           // Allow "-<single character" style.
-           | po::command_line_style::allow_short
-           // Ignore the difference in case for all options.
-           | po::command_line_style::case_insensitive
-           // Allow "-" in short options.
-           | po::command_line_style::allow_dash_for_short
-           // Allow long options with single option starting character, e.g -foo=10
-           | po::command_line_style::allow_long_disguise)
-        .allow_unregistered()
-        .run()
-    );
+          .style(po::command_line_style::default_style
+                 // Allow "--long_name" style.
+                 | po::command_line_style::allow_long
+                 // Allow "-<single character" style.
+                 | po::command_line_style::allow_short
+                 // Ignore the difference in case for all options.
+                 | po::command_line_style::case_insensitive
+                 // Allow "-" in short options.
+                 | po::command_line_style::allow_dash_for_short
+                 // Allow long options with single option starting character, e.g -foo=10
+                 | po::command_line_style::allow_long_disguise)
+          .allow_unregistered()
+          .run()
+        );
 
     po::store(*parsed_options_, vm_);
 
@@ -171,22 +179,25 @@ bool BoostCmd::init(int argc, char* argv[])
         << "app arguments:";
       for(int i = 0; i < argc; ++i) {
         LOG(ERROR)
-          << " "
-          << argv[i]
-          << " ";
+            << " "
+            << argv[i]
+            << " ";
       }
     }
     LOG(ERROR)
-      << "ERROR: "
-      << e.what();
-    return false;
+        << "ERROR: "
+        << e.what();
+    return
+      false;
   }
   catch(...) {
     LOG(ERROR) << "ERROR: Exception of unknown type!";
-    return false;
+    return
+      false;
   }
 
-  return true;
+  return
+    true;
 }
 
 } // namespace cmd

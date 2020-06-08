@@ -45,7 +45,7 @@ bool populateClangArguments(
   , std::vector<std::string>& args_storage
   , std::vector<std::string>& cling_extra_args
   , cmd::BoostCmd& boostCmd
-);
+  );
 
 bool add_default_cling_args(
   std::vector<std::string>& clingInterpreterArgs);
@@ -61,7 +61,7 @@ public:
     , const clang::FileID& fileID
     , const clang::FileEntry* fileEntry
     , clang::Rewriter& rewriter
-  );
+    );
 
 private:
   DISALLOW_COPY_AND_ASSIGN(FileSaveHandler);

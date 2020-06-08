@@ -127,8 +127,8 @@ public:
     const base::StringPiece& key);
 
   boost::program_options::options_description_easy_init
-    registerOptions(
-      boost::program_options::options_description_easy_init& options);
+  registerOptions(
+    boost::program_options::options_description_easy_init& options);
 
 private:
   BoostCmd& boostCmd_;

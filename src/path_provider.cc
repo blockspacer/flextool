@@ -14,9 +14,11 @@ static base::FilePath GetOrCreatePath(const base::FilePath& path)
   if (base::PathExists(path)
       || base::CreateDirectory(path))
   {
-    return path;
+    return
+      path;
   }
-  return base::FilePath();
+  return
+    base::FilePath();
 }
 
 }  // namespace
@@ -37,64 +39,72 @@ bool PathProvider(int key, base::FilePath* result)
   }
 
   switch (key) {
-    case DIR_APP_DEBUG_OUT: {
-      base::FilePath directory =
-          GetOrCreatePath(dir_exe.Append(kAppPathDebugOutputDirectory));
-      if (!directory.empty()) {
-        *result = directory;
-        return true;
-      } else {
-        DLOG(ERROR)
-          << "Unable to get or create paths::DIR_APP_DEBUG_OUT "
-          << directory.value();
-        return false;
-      }
+  case DIR_APP_DEBUG_OUT: {
+    base::FilePath directory =
+      GetOrCreatePath(dir_exe.Append(kAppPathDebugOutputDirectory));
+    if (!directory.empty()) {
+      *result = directory;
+      return
+        true;
+    } else {
+      DLOG(ERROR)
+        << "Unable to get or create paths::DIR_APP_DEBUG_OUT "
+        << directory.value();
+      return
+        false;
     }
+  }
 
-    case DIR_APP_TEST_OUT:
-      {
-        base::FilePath directory =
-            GetOrCreatePath(dir_exe.Append(kAppPathTestOutputDirectory));
-        if (!directory.empty()) {
-          *result = directory;
-          return true;
-        } else {
-          DLOG(ERROR)
-            << "Unable to get or create paths::DIR_APP_TEST_OUT "
-            << directory.value();
-          return false;
-        }
-      }
+  case DIR_APP_TEST_OUT:
+  {
+    base::FilePath directory =
+      GetOrCreatePath(dir_exe.Append(kAppPathTestOutputDirectory));
+    if (!directory.empty()) {
+      *result = directory;
+      return
+        true;
+    } else {
+      DLOG(ERROR)
+        << "Unable to get or create paths::DIR_APP_TEST_OUT "
+        << directory.value();
+      return
+        false;
+    }
+  }
 
-    case DIR_APP_WEB_ROOT: {
-      base::FilePath directory =
-          GetOrCreatePath(dir_exe.Append(kAppPathContentDirectory));
-      if (!directory.empty()) {
-        *result = directory.Append("web");
-        const bool dir_created
-          = base::CreateDirectory(*result);
-        if(!dir_created){
-          DLOG(ERROR)
+  case DIR_APP_WEB_ROOT: {
+    base::FilePath directory =
+      GetOrCreatePath(dir_exe.Append(kAppPathContentDirectory));
+    if (!directory.empty()) {
+      *result = directory.Append("web");
+      const bool dir_created
+        = base::CreateDirectory(*result);
+      if(!dir_created) {
+        DLOG(ERROR)
             << "Unable to create directory "
             << result->value();
-          DCHECK(false);
-        }
-        return true;
-      } else {
-        DLOG(ERROR)
-          << "Unable to get or create paths::DIR_APP_WEB_ROOT "
-          << directory.value();
-        return false;
+        DCHECK(false);
       }
+      return
+        true;
+    } else {
+      DLOG(ERROR)
+        << "Unable to get or create paths::DIR_APP_WEB_ROOT "
+        << directory.value();
+      return
+        false;
     }
+  }
 
-    default:
-      return false;
+  default:
+    return
+      false;
   }
 
   NOTREACHED()
     << "PathProvider failed";
-  return false;
+  return
+    false;
 }
 
 void AddPathProvider()

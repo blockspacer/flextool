@@ -33,10 +33,11 @@ namespace backend {
 
 class PluginManager {
 public:
-  typedef ::plugin::ToolPlugin PluginType;
-  typedef Corrade::Containers::Pointer<
-            PluginType
-          > PluginPtr;
+  using PluginType
+    = ::plugin::ToolPlugin;
+
+  using PluginPtr
+    = Corrade::Containers::Pointer<PluginType>;
 
   struct Events {
     struct Startup {
@@ -80,9 +81,10 @@ public:
     const Events::Shutdown& event);
 
   size_t countLoadedPlugins()
-    const noexcept
+  const noexcept
   {
-    return loaded_plugins_.size();
+    return
+      loaded_plugins_.size();
   }
 
 private:

@@ -38,28 +38,29 @@ namespace flextool {
 void ClangTool::run(
   const std::vector<std::string>& args
   , scoped_refptr<clang_utils::AnnotationMatchOptions>
-      annotationMatchOptions
-){
+  annotationMatchOptions
+  ){
   CHECK(!args.empty())
     << "You must provide at least one argument"
-       " to clang";
+    " to clang";
 
   // convert |std::vector<std::string>| to |std::vector<const char*>|
   std::vector<
-      const char* /// \note must manage pointer lifetime
-  > args_vec;
+    const char*   /// \note must manage pointer lifetime
+    > args_vec;
   std::transform(
     args.begin()
     , args.end()
     , std::back_inserter(args_vec)
     , [](const std::string& value)
     {
-        VLOG(9)
-          << "added command-line argument for clang: "
-          << value;
-        DCHECK(!value.empty());
-        /// \note must manage pointer lifetime
-        return value.c_str();
+      VLOG(9)
+        << "added command-line argument for clang: "
+        << value;
+      DCHECK(!value.empty());
+      /// \note must manage pointer lifetime
+      return
+      value.c_str();
     });
 
   int args_arc = args_vec.size();
@@ -67,7 +68,7 @@ void ClangTool::run(
 
   CHECK(!args_vec.empty())
     << "You must provide at least one argument"
-       " to clang";
+    " to clang";
   DCHECK(args_vec[0]);
   const char **args_argv = &(args_vec[0]);
   DCHECK(args_argv);
@@ -77,28 +78,28 @@ void ClangTool::run(
 
   // parse the command-line args passed to your code
   // see http://clang.llvm.org/doxygen/classclang_1_1tooling_1_1CommonOptionsParser.html
-  clang::tooling::CommonOptionsParser op(args_arc, args_argv,
-    UseOverrideCategory);
+  clang::tooling::CommonOptionsParser op(
+    args_arc, args_argv, UseOverrideCategory);
 
   // log information about files what will be processed
   for(const auto& it: op.getSourcePathList()) {
     VLOG(9)
-      << "added source file = "
-      << (it.empty()
+        << "added source file = "
+        << (it.empty()
          ? " (empty path)"
          : it);
     base::FilePath absolutePath
-      /// \note On POSIX, |MakeAbsoluteFilePath| fails
-      /// if the path does not exist
+    /// \note On POSIX, |MakeAbsoluteFilePath| fails
+    /// if the path does not exist
       = base::MakeAbsoluteFilePath(base::FilePath(it));
     DCHECK(!absolutePath.empty())
-      << "unable to find absolute path to "
-      << absolutePath;
+        << "unable to find absolute path to "
+        << absolutePath;
     base::File::Info fileInfo;
     bool hasInfo = base::GetFileInfo(absolutePath, &fileInfo);
     VLOG(9)
-      << "as absolute source file path = "
-      << (absolutePath.empty()
+        << "as absolute source file path = "
+        << (absolutePath.empty()
          ? " (empty path)"
          : absolutePath.value());
     if(!base::PathExists(absolutePath)) {
@@ -133,7 +134,7 @@ void ClangTool::run(
   clang::tooling::ClangTool tool(
     op.getCompilations()
     , op.getSourcePathList()
-  );
+    );
 
   VLOG(9)
     << "running clang tool...";

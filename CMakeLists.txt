@@ -20,6 +20,10 @@ option(ENABLE_VALGRIND "Enable valgrind" OFF)
 
 option(ENABLE_CLANG_TIDY "Enable clang-tidy" OFF)
 
+option(ENABLE_CLANG_FORMAT "Enable clang-format" OFF)
+
+option(ENABLE_UNCRUSTIFY "Enable uncrustify" OFF)
+
 option(ENABLE_IWYU "Enable include-what-you-use" OFF)
 
 option(ENABLE_CPPCLEAN "Enable cppclean" OFF)
@@ -3560,6 +3564,341 @@ clang_format_enabler(
     # to the files in-place, rather than spitting out
     # the formatted version of the files to the command line.
     -i
+    ${EXTRA_CLANG_FORMAT_FILES}
+  VERBOSE
+  REQUIRED
+)
+
+## ---------------------------- uncrustify -------------------------------- ##
+
+function(add_uncrustify_target)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    # empty
+  )
+  set(oneValueArgs
+    TARGET_NAME
+  )
+  set(multiValueArgs
+    UNCRUSTIFY_FULL_CMD
+    # adds options to default options
+    EXTRA_OPTIONS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+
+  FROM_HERE("invalid ARGUMENTS_TARGET_NAME")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_TARGET_NAME}
+    TEXT "${FROM_HERE}"
+  )
+
+  #
+  FROM_HERE("invalid ARGUMENTS_UNCRUSTIFY_FULL_CMD")
+  validate(CHECK_NOT_EMPTY ${ARGUMENTS_UNCRUSTIFY_FULL_CMD}
+    TEXT ${FROM_HERE}
+  )
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_UNCRUSTIFY_FULL_CMD=${ARGUMENTS_UNCRUSTIFY_FULL_CMD}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  set(UNCRUSTIFY_FULL_CMD
+    ${ARGUMENTS_UNCRUSTIFY_FULL_CMD}
+    ${ARGUMENTS_EXTRA_OPTIONS}
+  )
+  #
+  # USAGE:
+  # cmake -E time cmake --build . --target TARGET_NAME_run_uncrustify
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "added new target: ${ARGUMENTS_TARGET_NAME}_run_uncrustify")
+  endif(ARGUMENTS_VERBOSE)
+  add_custom_target(${ARGUMENTS_TARGET_NAME}_run_uncrustify
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_uncrustify_report.xml
+    # create report dir
+    COMMAND
+      ${CMAKE_COMMAND}
+      -E
+      make_directory
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report
+    # remove old report
+    COMMAND
+      # Remove the file(s).
+      # If any of the listed files already do not exist,
+      # the command returns a non-zero exit code,
+      # but no message is logged.
+      # The -f option changes the behavior to return a zero exit code
+      # (i.e. success) in such situations instead.
+      ${CMAKE_COMMAND}
+      -E
+      remove
+      -f
+      ${CMAKE_BINARY_DIR}/${ARGUMENTS_TARGET_NAME}_report/index.html
+    # print command that will be executed
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND
+      "${CMAKE_COMMAND}"
+      -E
+      echo
+      "executing command: ${UNCRUSTIFY_FULL_CMD}"
+    # Run uncrustify static analysis
+    COMMAND
+      "${UNCRUSTIFY_FULL_CMD}"
+    VERBATIM
+    # NOTE: uses COMMAND_EXPAND_LISTS
+    # to support generator expressions
+    # see https://cmake.org/cmake/help/v3.13/command/add_custom_target.html
+    COMMAND_EXPAND_LISTS
+    #USES_TERMINAL
+    # Set work directory for target
+    WORKING_DIRECTORY
+      ${CMAKE_BINARY_DIR}
+    # Echo what is being done
+    COMMENT "running uncrustify"
+  )
+endfunction(add_uncrustify_target)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_run_uncrustify
+# EXAMPLE:
+# uncrustify_enabler(
+#   PATHS
+#     ${CONAN_BIN_DIRS}
+#     ${CONAN_BIN_DIRS_LLVM_TOOLS}
+#   NO_SYSTEM_ENVIRONMENT_PATH
+#   NO_CMAKE_SYSTEM_PATH
+#   IS_ENABLED
+#     ${ENABLE_UNCRUSTIFY}
+#   CHECK_TARGETS
+#     ${LIB_NAME}
+#   EXTRA_OPTIONS
+#    # ...
+#   VERBOSE
+# )
+function(uncrustify_enabler)
+  # see https://cliutils.gitlab.io/modern-cmake/chapters/basics/functions.html
+  set(options
+    VERBOSE
+    REQUIRED
+    # will run check when target will be built
+    CHECK_TARGETS_DEPEND
+  )
+  set(oneValueArgs
+    IS_ENABLED
+    STANDALONE_TARGET
+  )
+  set(multiValueArgs
+    # completely changes options to provided options
+    OVERRIDE_OPTIONS
+    # adds options to default options
+    EXTRA_OPTIONS
+    # Will collect include dirs, defines and source files
+    # from cmake targets
+    # NOTE: Why not compile_commands.json?
+    # - cmake can not generate that file on per-target basis
+    # or into custom out dir
+    # NOTE: Why not CMAKE_CXX_UNCRUSTIFY?
+    # - we want to run custom uncrustify target without
+    # need to build whole poject per each check
+    CHECK_TARGETS
+  )
+  #
+  cmake_parse_arguments(
+    ARGUMENTS # prefix of output variables
+    "${options}" # list of names of the boolean arguments (only defined ones will be true)
+    "${oneValueArgs}" # list of names of mono-valued arguments
+    "${multiValueArgs}" # list of names of multi-valued arguments (output variables are lists)
+    ${ARGN} # arguments of the function to parse, here we take the all original ones
+  )
+  #
+  set(args_unparsed ${ARGUMENTS_UNPARSED_ARGUMENTS})
+  #
+  # default options
+  #
+  # TODO
+  #set(UNCRUSTIFY_SUPRESSIONS
+  #  ${PROJECT_SOURCE_DIR}/cmake/uncrustify.cfg
+  #)
+  ## set supressions file only if it exists
+  #if(EXISTS "${UNCRUSTIFY_SUPRESSIONS}")
+  #  set(UNCRUSTIFY_DEFAULT_SUPRESSIONS_ARG
+  #    --suppressions-list=${UNCRUSTIFY_SUPRESSIONS}
+  #  )
+  #  message(STATUS
+  #    "found uncrustify config file: ${UNCRUSTIFY_SUPRESSIONS}"
+  #  )
+  #else()
+  #  message(WARNING
+  #    "unable to find uncrustify config file: ${UNCRUSTIFY_SUPRESSIONS}"
+  #  )
+  #endif()
+  # Set message template
+  # TODO
+  #set(UNCRUSTIFY_TEMPLATE
+  #  "[{file}:{line}] ({severity}) {message} ({id}) ({callstack})"
+  #)
+  # Set uncrustify cache directory
+  set(UNCRUSTIFY_BUILD_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}/uncrustify_cache
+  )
+  #
+  set(UNCRUSTIFY_OPTIONS
+    # more info in console
+    #--verbose
+  )
+  if(ARGUMENTS_OVERRIDE_OPTIONS)
+    set(UNCRUSTIFY_OPTIONS ${ARGUMENTS_OVERRIDE_OPTIONS})
+  else()
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "uncrustify: no OVERRIDE_OPTIONS provided")
+    endif(ARGUMENTS_VERBOSE)
+    # skip, use defaults
+  endif()
+  #
+  list(APPEND UNCRUSTIFY_OPTIONS ${ARGUMENTS_EXTRA_OPTIONS})
+  if(ARGUMENTS_VERBOSE)
+    message(STATUS "ARGUMENTS_EXTRA_OPTIONS=${ARGUMENTS_EXTRA_OPTIONS}")
+  endif(ARGUMENTS_VERBOSE)
+  #
+  if(${ARGUMENTS_IS_ENABLED})
+    message(STATUS "uncrustify enabled")
+
+    # to use `uncrustify` from conan
+    list(APPEND CMAKE_PROGRAM_PATH ${CONAN_BIN_DIRS})
+
+    find_program_helper(uncrustify
+      #PATHS
+      #  ${CONAN_BIN_DIRS}
+      #  ${CONAN_BIN_DIRS_LLVM_TOOLS}
+      #NO_SYSTEM_ENVIRONMENT_PATH
+      #NO_CMAKE_SYSTEM_PATH
+      ${ARGUMENTS_UNPARSED_ARGUMENTS}
+      REQUIRED
+      OUT_VAR UNCRUSTIFY_PROGRAM
+      VERBOSE TRUE
+    )
+
+    if(UNCRUSTIFY_PROGRAM)
+      # Create uncrustify cache directory
+      file(MAKE_DIRECTORY ${UNCRUSTIFY_BUILD_DIR})
+
+      # Set uncrustify program + options.
+      list(APPEND UNCRUSTIFY_RUNNABLE
+        ${UNCRUSTIFY_PROGRAM}
+      )
+      if(ARGUMENTS_VERBOSE)
+        message(STATUS "UNCRUSTIFY_RUNNABLE=${UNCRUSTIFY_RUNNABLE}")
+      endif(ARGUMENTS_VERBOSE)
+
+      # create separate target for uncrustify
+      if(ARGUMENTS_STANDALONE_TARGET)
+        add_uncrustify_target(
+          TARGET_NAME ${ARGUMENTS_STANDALONE_TARGET}
+          UNCRUSTIFY_FULL_CMD
+            ${UNCRUSTIFY_RUNNABLE}
+          EXTRA_OPTIONS ${UNCRUSTIFY_OPTIONS}
+        )
+      endif(ARGUMENTS_STANDALONE_TARGET)
+
+      # collect headers and defines from existing target
+      if(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "uncrustify: ARGUMENTS_CHECK_TARGETS=${ARGUMENTS_CHECK_TARGETS}")
+        endif(ARGUMENTS_VERBOSE)
+        foreach(TARGET_NAME ${ARGUMENTS_CHECK_TARGETS})
+          if(ARGUMENTS_VERBOSE)
+            message(STATUS "enabled uncrustify for target ${TARGET_NAME}")
+          endif(ARGUMENTS_VERBOSE)
+          #
+          get_all_compile_definitions(collected_defines
+            ${TARGET_NAME}
+          )
+          #
+          get_all_include_directories(collected_includes
+            ${TARGET_NAME}
+          )
+          #
+          get_target_sources(TARGET_SOURCES
+            ${TARGET_NAME}
+          )
+          #
+          add_uncrustify_target(
+            TARGET_NAME ${TARGET_NAME}
+            UNCRUSTIFY_FULL_CMD
+              ${UNCRUSTIFY_RUNNABLE}
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              #$<$<BOOL:${collected_defines}>:-extra-arg=-D$<JOIN:${collected_defines}, -extra-arg=-D>>
+              # NOTE: generator expression, expands during build time
+              # if the ${ITEM} is non-empty, than append it
+              # To suppress compiler diagnostic messages
+              # from third-party headers just use -isystem
+              # instead of -I to include those headers.
+              #$<$<BOOL:${collected_includes}>:-extra-arg=-isystem$<JOIN:${collected_includes}, -extra-arg=-isystem>>
+              ${TARGET_SOURCES}
+            EXTRA_OPTIONS ${UNCRUSTIFY_OPTIONS}
+          )
+          if(CHECK_TARGETS_DEPEND)
+            # run uncrustify on each build of target
+            add_dependencies(
+              ${TARGET_NAME}
+              ${TARGET_NAME}_run_uncrustify
+            )
+          endif(CHECK_TARGETS_DEPEND)
+        endforeach()
+      else(ARGUMENTS_CHECK_TARGETS)
+        if(ARGUMENTS_VERBOSE)
+          message(STATUS "uncrustify: no CHECK_TARGETS provided")
+        endif(ARGUMENTS_VERBOSE)
+      endif(ARGUMENTS_CHECK_TARGETS)
+    else(UNCRUSTIFY_PROGRAM)
+      message(WARNING "Program 'uncrustify' not found, unable to run 'uncrustify'.")
+    endif(UNCRUSTIFY_PROGRAM)
+  else() # ARGUMENTS_IS_ENABLED
+    if(ARGUMENTS_VERBOSE)
+      message(STATUS "uncrustify disabled")
+    endif(ARGUMENTS_VERBOSE)
+  endif() # ARGUMENTS_IS_ENABLED
+endfunction(uncrustify_enabler)
+
+set(EXTRA_UNCRUSTIFY_FILES
+  # place here files what need to be to be formatted
+)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_uncrustify
+uncrustify_enabler(
+  PATHS
+    ${CONAN_BIN_DIRS}
+    ${CONAN_BIN_DIRS_LLVM_TOOLS}
+  IS_ENABLED
+    ${ENABLE_UNCRUSTIFY}
+  CHECK_TARGETS
+    ${LIB_NAME}
+  EXTRA_OPTIONS
+    --no-backup
+    -c ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg
+    ${EXTRA_UNCRUSTIFY_FILES}
   VERBOSE
   REQUIRED
 )

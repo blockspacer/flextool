@@ -948,6 +948,93 @@ NOTE: we use `DisableFormat`, so clang-format will change only include order bas
 
 Unfortunately, `clang-format` is not configurable enough, so it can be used only to sort includes. See https://stackoverflow.com/a/32191189
 
+## For contibutors: uncrustify
+
+We use uncrustify bacause clang-format and astyle [do not support a lot of options](https://dev.to/voins/does-anybody-know-a-good-working-c-formatting-tool-2lpi).
+
+See for details [https://patrickhenson.com/2018/06/07/uncrustify-configuration.html](https://patrickhenson.com/2018/06/07/uncrustify-configuration.html)
+
+Installation:
+
+```bash
+cd ~
+git clone https://github.com/uncrustify/uncrustify.git
+cd uncrustify
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build .
+export UNCRUSTIFY_HOME=~/uncrustify/build
+export PATH=$UNCRUSTIFY_HOME:$PATH
+# OR sudo make install
+
+uncrustify -version
+```
+
+Usage:
+
+```bash
+cd ~/flextool
+
+# see section about `conan editable mode`
+cd local_build
+
+# remove old CMakeCache
+(rm CMakeCache.txt || true)
+
+# NOTE: -DENABLE_IWYU=ON
+cmake .. \
+  -DENABLE_UNCRUSTIFY=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+
+# remove old build artifacts
+rm -rf flextool
+rm -rf bin
+find . -iname '*.o' -exec rm {} \;
+find . -iname '*.a' -exec rm {} \;
+find . -iname '*.dll' -exec rm {} \;
+find . -iname '*.lib' -exec rm {} \;
+
+cmake -E time cmake --build . --target flextool_run_uncrustify
+```
+
+We use `uncrustify.cfg` file. See for details [https://patrickhenson.com/2018/06/07/uncrustify-configuration.html](https://patrickhenson.com/2018/06/07/uncrustify-configuration.html)
+
+To get a list of all available options use:
+
+```bash
+uncrustify --show-config
+```
+
+Uncrustify has a lot of configurable options. You'll probably need Universal Indent GUI (in Konstantin's reply) as well to configure it: http://universalindent.sourceforge.net/
+
+Use comments containing `/* *INDENT-OFF* */` and `/* *INDENT-ON* */` to disable processing of parts of the source file.
+
+See `disable_processing_cmt` from `uncrustify.cfg`:
+
+```ini
+# Specify the marker used in comments to disable processing of part of the
+# file.
+# The comment should be used alone in one line.
+#
+# Default:  *INDENT-OFF*
+disable_processing_cmt          = " *INDENT-OFF*"      # string
+
+# Specify the marker used in comments to (re)enable processing in a file.
+# The comment should be used alone in one line.
+#
+# Default:  *INDENT-ON*
+enable_processing_cmt           = " *INDENT-ON*"     # string
+```
+
+You can integrate `uncrustify` with IDE:
+
+* QT Creator [https://doc.qt.io/qtcreator/creator-beautifier.html](https://doc.qt.io/qtcreator/creator-beautifier.html)
+* Visual Studio Code [https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify](https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify)
+
 ## LICENSE for open source components
 
 All the open source components are used under their associated open source licences.

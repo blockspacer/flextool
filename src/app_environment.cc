@@ -84,8 +84,9 @@ std::ostream& operator<<(
   std::ostream& stream, const std::vector<T>& data)
 {
   std::copy(data.begin(), data.end(),
-    std::ostream_iterator<T>(stream, " "));
-  return stream;
+            std::ostream_iterator<T>(stream, " "));
+  return
+    stream;
 }
 
 static const base::FilePath::CharType kIcuDataFileName[]
@@ -213,18 +214,19 @@ ScopedAppEnvironment::~ScopedAppEnvironment()
       static const char kStart[] = "{\"traceEvents\":[";
       output_file.WriteAtCurrentPos(kStart, strlen(kStart));
 
-      trace_buffer.SetOutputCallback(base::Bind(
+      trace_buffer.SetOutputCallback(
+        base::Bind(
           []
-          (base::File& output_file
-           , const std::string& data)
+            (base::File& output_file
+            , const std::string& data)
           {
             output_file.WriteAtCurrentPos(
               data.c_str()
               , data.length());
           }
           , std::ref(output_file)
-        )
-      );
+          )
+        );
 
       base::trace_event::MemoryDumpManager::GetInstance()
         ->TeardownForTracing();
@@ -233,25 +235,26 @@ ScopedAppEnvironment::~ScopedAppEnvironment()
 
       // you can open resulting file in chrome://tracing
       base::trace_event::TraceLog::GetInstance()->Flush(
-      base::Bind(
-        []
-        (base::File& output_file
-         , base::Closure quit_closure
-         , base::trace_event::TraceResultBuffer* trace_buffer
-         , const scoped_refptr<base::RefCountedString>& json_events_str
-         , bool has_more_events)
-        {
-          DCHECK(trace_buffer);
-          trace_buffer->AddFragment(json_events_str->data());
-          if (!has_more_events) {
+        base::Bind(
+          []
+            (base::File& output_file
+            , base::Closure quit_closure
+            , base::trace_event::TraceResultBuffer* trace_buffer
+            , const scoped_refptr<base::RefCountedString>&
+            json_events_str
+            , bool has_more_events)
+          {
+            DCHECK(trace_buffer);
+            trace_buffer->AddFragment(json_events_str->data());
+            if (!has_more_events) {
               quit_closure.Run();
-          } else {
-            output_file.WriteAtCurrentPos(",", 1);
-          }
-        },
-        std::ref(output_file)
-        , trace_run_loop.QuitClosure()
-        , base::Unretained(&trace_buffer)));
+            } else {
+              output_file.WriteAtCurrentPos(",", 1);
+            }
+          },
+          std::ref(output_file)
+          , trace_run_loop.QuitClosure()
+          , base::Unretained(&trace_buffer)));
 
       trace_run_loop.Run();
 
@@ -295,16 +298,17 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   if (!base::PathService::Get(base::DIR_EXE, &dir_exe_)) {
     NOTREACHED();
     // stop app execution with EXIT_FAILURE
-    return false;
+    return
+      false;
   }
 
   /// \note log all command-line arguments before
   /// parsing them as program options
   {
     VLOG(9)
-      << "started "
-      << dir_exe_
-      << " with arguments:";
+        << "started "
+        << dir_exe_
+        << " with arguments:";
     for(int i = 0; i < argc; ++i) {
       VLOG(9)
         << " "
@@ -316,7 +320,7 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   // set application command-line arguments
   {
     boost::program_options::options_description_easy_init&
-      options = boostCmd.options();
+    options = boostCmd.options();
     options = appCmd.registerOptions(options);
   }
 
@@ -328,7 +332,8 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
         << "Unable to parse command-line arguments";
       DCHECK(false);
       // stop app execution with EXIT_FAILURE
-      return false;
+      return
+        false;
     }
   }
 
@@ -373,14 +378,15 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
 
   basis::initLogging(
     "" // logFile
-  );
+    );
 
   if(!base::PathExists(dir_exe_.Append(kIcuDataFileName))) {
     LOG(ERROR)
-      << "unable to load icu i18n data file: "
-      << dir_exe_.Append(kIcuDataFileName);
+        << "unable to load icu i18n data file: "
+        << dir_exe_.Append(kIcuDataFileName);
     // stop app execution with EXIT_FAILURE
-    return false;
+    return
+      false;
   }
 
   icu_util::initICUi18n(kIcuDataFileName);
@@ -388,7 +394,7 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   /// \note you must init ICU before i18n
   i18n = std::make_unique<i18n::I18n>(
     nullptr // locale
-  );
+    );
 
   {
     const int num_cores
@@ -403,7 +409,7 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
           , num_cores - 1);
     CHECK(kForegroundMaxThreads >= 1)
       << "Unable to register foreground threads."
-         " Make sure you have at leat one cpu core";
+      " Make sure you have at leat one cpu core";
     basis::initThreadPool(
       kBackgroundMaxThreads
       , kForegroundMaxThreads);
@@ -414,7 +420,7 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   basis::initTracing(
     appCmd.hasAutoStartTracer()
     , appCmd.tracingCategories()
-  );
+    );
 
   /// \todo Disable MemoryPressureListener when memory coordinator is enabled.
   //base::MemoryPressureListener::SetNotificationsSuppressed(false);
@@ -429,14 +435,14 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   {
     VLOG(9)
       << "creating"
-         " plugin::ToolPlugin::Events::Init";
+      " plugin::ToolPlugin::Events::Init";
     DCHECK(main_events_dispatcher);
     main_events_dispatcher->trigger<
       plugin::ToolPlugin::Events::Init>(
-        plugin::ToolPlugin::Events::Init{
-          argc
-          , argv
-        }
+      plugin::ToolPlugin::Events::Init{
+        argc
+        , argv
+      }
       );
   }
 
@@ -451,13 +457,14 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     if(!ok) {
       LOG(ERROR)
         << "unable to populate Clang arguments";
-      return false;
+      return
+        false;
     }
     DCHECK(!args_storage.empty());
 
     LOG(INFO)
-      << "populated Clang arguments: "
-      << args_storage;
+        << "populated Clang arguments: "
+        << args_storage;
   }
 
   if (appCmd.hasHelp()) {
@@ -472,8 +479,8 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   if (appCmd.hasVersion())
   {
     LOG(INFO)
-      << "tool version: "
-      << flextool_VERSION;
+        << "tool version: "
+        << flextool_VERSION;
 
     /// \todo remove plugin::ToolPlugin::Events::StringCommand
     /// \note allow plugins to process commands before pre-built logic
@@ -484,17 +491,20 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
       DCHECK(main_events_dispatcher);
       main_events_dispatcher->trigger<
         plugin::ToolPlugin::Events::StringCommand>(
-          plugin::ToolPlugin::Events::StringCommand{
-            .raw_cmd = /*copy*/
-                std::string(StringCommandDelim) + kVersionStringCommand
-            , .split_parts = /*copy*/
-                std::vector<std::string>{kVersionStringCommand}
-          }
+        plugin::ToolPlugin::Events::StringCommand{
+          .raw_cmd =
+            /*copy*/
+            std::string(StringCommandDelim) + kVersionStringCommand
+          , .split_parts =
+            /*copy*/
+            std::vector<std::string>{kVersionStringCommand}
+        }
         );
     }
 
     // stop app execution with EXIT_SUCCESS
-    return true;
+    return
+      true;
   }
 
   /// \note that function may be usefull if Cling is turned off
@@ -566,8 +576,8 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     base::SetCurrentDirectory(outDir);
     DCHECK(base::FilePath{fs::current_path().string()} == outDir);
     VLOG(9)
-      << "Current path is "
-      << fs::current_path();
+        << "Current path is "
+        << fs::current_path();
   }
 
   //ctp::Options::res_path = fs::absolute(fs::current_path());
@@ -621,7 +631,8 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     if(!ok) {
       LOG(ERROR)
         << "unable to populate Cling arguments";
-      return false;
+      return
+        false;
     }
     DCHECK(!clingInterpreterArgs.empty());
 
@@ -650,23 +661,23 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     }
 
     LOG(INFO)
-      << "populated Cling arguments: "
-      << clingInterpreterArgs;
+        << "populated Cling arguments: "
+        << clingInterpreterArgs;
   }
 
   {
     VLOG(9)
       << "creating"
-         " clingInterpreter";
+      " clingInterpreter";
     DCHECK(!clingInterpreterArgs.empty());
     DCHECK(!clingIncludePaths.empty());
     clingInterpreter
       = std::make_unique<
-          cling_utils::ClingInterpreter>(
+      cling_utils::ClingInterpreter>(
           "MainClingInterpreter_debug_id"
           , clingInterpreterArgs
           , clingIncludePaths
-        );
+          );
   }
 
   for(const base::FilePath& full_path: appCmd.scriptFiles()) {
@@ -674,11 +685,11 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     DCHECK(!full_path.empty());
     VLOG(9)
       << "calling"
-         " clingInterpreter->loadFile";
+      " clingInterpreter->loadFile";
     clingInterpreter->loadFile(full_path.value());
     LOG(INFO)
-      << "added to InterpreterModule file "
-      << full_path;
+        << "added to InterpreterModule file "
+        << full_path;
   }
 
   //if(ctp::Options::ctp_scripts_search_paths.empty()) {
@@ -710,23 +721,23 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     {
       VLOG(9)
         << "running"
-           " backend::PluginManager::Events::Startup";
+        " backend::PluginManager::Events::Startup";
       DCHECK(main_events_dispatcher);
       // must have default value
       DCHECK(!appCmd.pluginsDir().empty());
       // must have default value
       DCHECK(!appCmd.pluginsConfigFile().empty());
       main_events_dispatcher->trigger<
-          backend::PluginManager::Events::Startup
+        backend::PluginManager::Events::Startup
         >(backend::PluginManager::Events::Startup{
-          .pathToDirWithPlugins
-            = appCmd.pluginsDir()
-          , .pathToPluginsConfFile
-            = appCmd.pluginsConfigFile()
-          , .pathsToExtraPluginFiles
-            =  appCmd.pathsToExtraPluginFiles()
-        }
-      );
+            .pathToDirWithPlugins
+              = appCmd.pluginsDir()
+              , .pathToPluginsConfFile
+              = appCmd.pluginsConfigFile()
+              , .pathsToExtraPluginFiles
+              =  appCmd.pathsToExtraPluginFiles()
+          }
+          );
     }
 
     /// \todo allow plugins to notify other plugins about
@@ -745,7 +756,7 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
     {
       VLOG(9)
         << "running"
-           " plug_mgr.connect_plugins_to_dispatcher";
+        " plug_mgr.connect_plugins_to_dispatcher";
       DCHECK(main_events_dispatcher);
       plug_mgr.connect_plugins_to_dispatcher(*main_events_dispatcher);
     }
@@ -755,14 +766,14 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   {
     VLOG(9)
       << "creating"
-         " plugin::ToolPlugin::Events::RegisterClingInterpreter";
+      " plugin::ToolPlugin::Events::RegisterClingInterpreter";
     DCHECK(clingInterpreter);
     DCHECK(main_events_dispatcher);
     main_events_dispatcher->trigger<
       plugin::ToolPlugin::Events::RegisterClingInterpreter>(
-        plugin::ToolPlugin::Events::RegisterClingInterpreter{
-          .clingInterpreter = clingInterpreter.get()
-        }
+      plugin::ToolPlugin::Events::RegisterClingInterpreter{
+        .clingInterpreter = clingInterpreter.get()
+      }
       );
   }
 #endif // defined(CLING_IS_ON)
@@ -770,86 +781,87 @@ bool ScopedAppEnvironment::init(int argc, char* argv[])
   {
     VLOG(9)
       << "creating"
-         " flexlib::AnnotationMethods";
+      " flexlib::AnnotationMethods";
     annotationMethods
       = std::make_unique<
-          ::flexlib::AnnotationMethods
-        >();
+      ::flexlib::AnnotationMethods
+      >();
   }
 
   {
     VLOG(9)
       << "creating"
-         " flexlib::AnnotationParser";
+      " flexlib::AnnotationParser";
     DCHECK(annotationMethods);
     annotationParser
       = std::make_unique<
-          ::flexlib::AnnotationParser
-        >(annotationMethods.get());
+      ::flexlib::AnnotationParser
+      >(annotationMethods.get());
   }
 
   {
     VLOG(9)
       << "creating"
-         " flexlib::AnnotationMatchHandler";
+      " flexlib::AnnotationMatchHandler";
     CHECK(!outDir.empty())
       << "you must provide output directory";
     DCHECK(annotationParser);
     DCHECK(annotationMethods);
     anotationMatchHandler
       = std::make_unique<
-          ::flexlib::AnnotationMatchHandler
-        >(annotationParser.get()
-          , annotationMethods.get()
-          , base::BindRepeating(
-              &clang_util::FileSaveHandler::saveFile
-              , base::Unretained(&fileSaveHandler) // must control lifetime
-              , outDir
-              , true // shouldFlushFile
-              , false // shouldPrintConsole
+      ::flexlib::AnnotationMatchHandler
+      >(annotationParser.get()
+        , annotationMethods.get()
+        , base::BindRepeating(
+          &clang_util::FileSaveHandler::saveFile
+          , base::Unretained(&fileSaveHandler) // must control lifetime
+          , outDir
+          , true // shouldFlushFile
+          , false // shouldPrintConsole
           ));
   }
 
   {
     VLOG(9)
       << "creating"
-         " clang_utils::AnnotationMatchOptions";
+      " clang_utils::AnnotationMatchOptions";
     DCHECK(!base::StringPiece(::flexlib::kAnnotateAttrName).empty());
     DCHECK(anotationMatchHandler);
     annotationMatchOptions =
       new clang_utils::AnnotationMatchOptions(
         ::flexlib::kAnnotateAttrName
         , base::BindRepeating(
-            &::flexlib::AnnotationMatchHandler::matchHandler
-            , base::Unretained(anotationMatchHandler.get()))
+          &::flexlib::AnnotationMatchHandler::matchHandler
+          , base::Unretained(anotationMatchHandler.get()))
         , base::BindRepeating(
-            &::flexlib::AnnotationMatchHandler::endSourceFileHandler
-            , base::Unretained(anotationMatchHandler.get()))
-      );
+          &::flexlib::AnnotationMatchHandler::endSourceFileHandler
+          , base::Unretained(anotationMatchHandler.get()))
+        );
   }
 
   sourceTransformPipeline
     = std::make_unique<
-        ::clang_utils::SourceTransformPipeline
-      >();
+    ::clang_utils::SourceTransformPipeline
+    >();
 
   /// \note allow plugins to process commands before pre-built logic
   {
     VLOG(9)
       << "sending"
-         " plugin::ToolPlugin::Events::RegisterAnnotationMethods";
+      " plugin::ToolPlugin::Events::RegisterAnnotationMethods";
     DCHECK(annotationMethods);
     DCHECK(sourceTransformPipeline);
     main_events_dispatcher->trigger<
       plugin::ToolPlugin::Events::RegisterAnnotationMethods>(
-        plugin::ToolPlugin::Events::RegisterAnnotationMethods{
-          .annotationMethods = annotationMethods.get()
-          , .sourceTransformPipeline = sourceTransformPipeline.get()
-        }
+      plugin::ToolPlugin::Events::RegisterAnnotationMethods{
+        .annotationMethods = annotationMethods.get()
+        , .sourceTransformPipeline = sourceTransformPipeline.get()
+      }
       );
   }
 
-  return true;
+  return
+    true;
 }
 
 } // flextool

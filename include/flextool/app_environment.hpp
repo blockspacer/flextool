@@ -65,16 +65,18 @@ public:
 
   std::unique_ptr<::flexlib::AnnotationMethods> annotationMethods;
 
-  std::unique_ptr<::clang_utils::SourceTransformPipeline> sourceTransformPipeline;
+  std::unique_ptr<::clang_utils::SourceTransformPipeline>
+  sourceTransformPipeline;
 
   std::unique_ptr<::flexlib::AnnotationParser> annotationParser;
 
   clang_util::FileSaveHandler fileSaveHandler{};
 
-  std::unique_ptr<::flexlib::AnnotationMatchHandler> anotationMatchHandler;
+  std::unique_ptr<::flexlib::AnnotationMatchHandler>
+  anotationMatchHandler;
 
   scoped_refptr<clang_utils::AnnotationMatchOptions>
-    annotationMatchOptions;
+  annotationMatchOptions;
 
   std::unique_ptr<cling_utils::ClingInterpreter> clingInterpreter;
 
