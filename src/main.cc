@@ -29,8 +29,8 @@ int main(int argc, char* argv[])
     DCHECK(env.annotationMatchOptions->endSourceFileAction);
 
     tool.run(
-      env.args_storage   // command-line arguments
-      , env.annotationMatchOptions   // custom settings
+      env.args_storage // command-line arguments
+      , env.annotationMatchOptions // custom settings
       );
   }
 
