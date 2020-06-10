@@ -245,6 +245,28 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_build_options_conan" # target to build
   ALWAYS_BUILD)
 
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cmake_helper_utils_conan")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cmake_helper_utils_conan"
+      "http://github.com/blockspacer/cmake_helper_utils_conan.git"
+      "")
+endif()
+conan_build_target_if(
+  "cmake_helper_utils" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/cmake_helper_utils_conan" # target to build
+  ALWAYS_BUILD)
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cmake_sanitizers_conan")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cmake_sanitizers_conan"
+      "http://github.com/blockspacer/cmake_sanitizers_conan.git"
+      "")
+endif()
+conan_build_target_if(
+  "cmake_sanitizers" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/cmake_sanitizers_conan" # target to build
+  ALWAYS_BUILD)
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_build_util_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_build_util_conan"
       "http://github.com/blockspacer/chromium_build_util_conan.git"

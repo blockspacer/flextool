@@ -57,6 +57,10 @@ macro(add_to_tests_list source_list)
 endmacro()
 
 macro(set_test_compile_options target)
+  # FIX for undefined reference to `typeinfo for clang::Decl'
+  target_compile_options(${target} PRIVATE
+    -frtti)
+
   target_compile_options(${target} PRIVATE
               $<$<CXX_COMPILER_ID:MSVC>:
               /W3 # Set warning level
@@ -130,6 +134,13 @@ macro(tests_add_executable target source_list TEST_ARGS TEST_LIB)
 
   add_test_command_targets( ${target} )
 
+  if(ENABLE_VALGRIND)
+    # |base::TestSuite| tries to kill test process
+    # but valgrind wraps process, so nothing to kill
+    target_compile_definitions( ${target} PUBLIC
+      GTEST_NO_SUITE=1) # TODO: valgrind may not support chromium base, FIXME. And remove GTEST_NO_SUITE
+  endif(ENABLE_VALGRIND)
+
   # USAGE:
   # cmake -E time cmake --build . --target TARGET_NAME_run_valgrind
   valgrind_enabler(
@@ -200,6 +211,10 @@ add_library( ${test_main_catch} OBJECT
 
 set_property(TARGET ${test_main_catch} PROPERTY CXX_STANDARD 17)
 
+# FIX for undefined reference to `typeinfo for clang::Decl'
+target_compile_options(${test_main_catch} PRIVATE
+  -frtti)
+
 # ensure that dependencies build before <target> does.
 add_dependencies(${test_main_catch} ${ROOT_PROJECT_LIB})
 
@@ -217,6 +232,13 @@ target_link_libraries(${test_main_catch} PUBLIC
 target_compile_definitions( ${test_main_catch} PUBLIC
   "-DUSE_CATCH_TEST=1" )
 
+if(ENABLE_VALGRIND)
+  # |base::TestSuite| tries to kill test process
+  # but valgrind wraps process, so nothing to kill
+  target_compile_definitions( ${test_main_catch} PUBLIC
+    GTEST_NO_SUITE=1) # TODO: valgrind may not support chromium base, FIXME. And remove GTEST_NO_SUITE
+endif(ENABLE_VALGRIND)
+
 set(test_main_gtest "${ROOT_PROJECT_NAME}-test_main_gtest")
 add_library( ${test_main_gtest} OBJECT
   main.cpp
@@ -226,6 +248,10 @@ add_library( ${test_main_gtest} OBJECT
   )
 
 set_property(TARGET ${test_main_gtest} PROPERTY CXX_STANDARD 17)
+
+# FIX for undefined reference to `typeinfo for clang::Decl'
+target_compile_options(${test_main_gtest} PRIVATE
+  -frtti)
 
 # ensure that dependencies build before <target> does.
 add_dependencies(${test_main_gtest} ${ROOT_PROJECT_LIB})
@@ -243,6 +269,13 @@ target_link_libraries(${test_main_gtest} PUBLIC
 
 target_compile_definitions( ${test_main_gtest} PUBLIC
   "-DUSE_GTEST_TEST=1" )
+
+if(ENABLE_VALGRIND)
+  # |base::TestSuite| tries to kill test process
+  # but valgrind wraps process, so nothing to kill
+  target_compile_definitions( ${test_main_gtest} PUBLIC
+    GTEST_NO_SUITE=1) # TODO: valgrind may not support chromium base, FIXME. And remove GTEST_NO_SUITE
+endif(ENABLE_VALGRIND)
 
 #target_link_libraries( test_main PUBLIC
 #  sol2::sol2_single Catch FakeIt boost_beast nlohmann_json microsoft_gsl boost_outcome better_enums )
@@ -276,6 +309,74 @@ if(${ROOT_PROJECT_NAME}_BUILD_TESTS)
   tests_add_executable(${ROOT_PROJECT_NAME}-fakeit
     "${fakeit_deps}" "${CATCH2_TEST_ARGS}" "${test_main_catch}")
 endif()
+
+# TODO: remove dummy_test after
+# FIXME see https://stackoverflow.com/questions/25922895/clang-link-time-optimization-with-replaced-operator-new-causes-mismatched-free
+
+add_executable(dummy_test
+  dummy_test.cpp)
+
+target_link_libraries(dummy_test PRIVATE
+  ${base_LIB}
+  ${basis_LIB}
+  #${build_util_LIB}
+  ## 3dparty libs
+  #${TESTS_3DPARTY_LIBS}
+  ## system libs
+  #${USED_SYSTEM_LIBS}
+  ## main project lib
+  #${ROOT_PROJECT_LIB}
+  #${TEST_LIB}
+)
+
+# USAGE:
+# cmake -E time cmake --build . --target TARGET_NAME_run_valgrind
+valgrind_enabler(
+  IS_ENABLED
+    ${ENABLE_VALGRIND}
+  STANDALONE_TARGET
+    dummy_test
+  EXTRA_OPTIONS # see https://valgrind.org/docs/manual/manual-core.html
+    # When enabled, Valgrind will trace into sub-processes
+    # initiated via the exec system call.
+    # This is necessary for multi-process programs.
+    --trace-children=yes
+    # --leak-check=full:
+    # each individual leak will be shown in detail
+    --leak-check=full
+    # --show-leak-kinds=all:
+    # Show all of "definite, indirect, possible, reachable"
+    # leak kinds in the "full" report.
+    --show-leak-kinds=all
+    # --track-origins=yes:
+    # Favor useful output over speed.
+    # This tracks the origins of uninitialized values,
+    # which could be very useful for memory errors.
+    # Consider turning off if Valgrind is unacceptably slow.
+    --track-origins=yes
+    # --verbose:
+    # Can tell you about unusual behavior of your program.
+    # Repeat for more verbosity.
+    --verbose
+    --show-reachable=yes
+    # When enabled, Valgrind stops reporting errors
+    # after 10,000,000 in total, or 1,000 different ones,
+    # have been seen.
+    --error-limit=yes
+    # is option is particularly useful with C++ programs,
+    # as it prints out the suppressions with mangled names,
+    # as required.
+    --gen-suppressions=all
+    # Write to a file.
+    # Useful when output exceeds terminal space.
+    --log-file=${CMAKE_CURRENT_BINARY_DIR}/dummy_test_valgrind_raw.log
+    # executable
+    $<TARGET_FILE:dummy_test>
+    # arguments of executable
+    #${TEST_ARGS}
+  VERBOSE
+  REQUIRED
+)
 
 #add_to_tests_list(utils)
 

@@ -16,6 +16,9 @@
 #include <vector>
 #include <algorithm>
 
+#include <base/threading/thread.h>
+#include <base/logging.h>
+
 #ifndef __has_include
   static_assert(false, "__has_include not supported");
 #else
@@ -63,3 +66,62 @@ TEST(Consumer, CalculateDomainLevel) {
   int domainLevel = consumer.countLevelOfDomain(url);
   EXPECT_EQ(domainLevel, 2);
 }
+
+TEST(ToolsSanityTest, DISABLED_AddressSanitizerTest) {
+  // Intentionally crash to make sure AddressSanitizer is instrumenting
+  // the local variables.
+  // This test should not be ran on bots.
+  int array[5];
+  // Work around the OOB warning reported by Clang.
+  int* volatile access = &array[5];
+  *access = 43;
+}
+
+TEST(ToolsSanityTest, DISABLED_MemorySanitizerTest) {
+  // Without the |volatile|, clang optimizes away the next two lines.
+  int* volatile leak = new int[256];  // Leak some memory intentionally.
+  leak[4] = 1;  // Make sure the allocated memory is used.
+}
+
+TEST(ToolsSanityTest, DISABLED_ValgrindTest) {
+  // Without the |volatile|, clang optimizes away the next two lines.
+  int* volatile leak = new int[256];  // Leak some memory intentionally.
+  leak[4] = 1;  // Make sure the allocated memory is used.
+}
+
+TEST(ToolsSanityTest, DISABLED_UndefinedBehaviorSanitizerTest) {
+  // divide by zero
+  int n = 42;
+  int d = 0;
+  auto f = n/d;
+  EXPECT_NE(f, 2); // do not optimize out
+}
+
+#if defined(OS_POSIX)
+namespace {
+
+typedef std::map<std::string, std::string> map_t;
+
+void *threadfunc(void *p) {
+  map_t& m = *(map_t*)p;
+  m["foo"] = "bar";
+  return 0;
+}
+
+}  // namespace
+
+#include <pthread.h>
+#include <stdio.h>
+#include <string>
+#include <map>
+
+TEST(ToolsSanityTest, DISABLED_ThreadSanitizerTest) {
+  // Example of a data race that can lead to crashes and memory corruptions
+  // See https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual
+  map_t m;
+  pthread_t t;
+  pthread_create(&t, 0, threadfunc, &m);
+  printf("foo=%s\n", m["foo"].c_str());
+  pthread_join(t, 0);
+}
+#endif // OS_POSIX

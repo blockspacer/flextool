@@ -1,7 +1,7 @@
 from conans import ConanFile, CMake, tools, AutoToolsBuildEnvironment, RunEnvironment, python_requires
 from conans.errors import ConanInvalidConfiguration, ConanException
 from conans.tools import os_info
-import os, re, stat, fnmatch, platform, glob
+import os, re, stat, fnmatch, platform, glob, traceback, shutil
 from functools import total_ordering
 
 # if you using python less than 3 use from distutils import strtobool
@@ -29,7 +29,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
     # If the source code is going to be in the same repo as the Conan recipe,
     # there is no need to define a `source` method. The source folder can be
     # defined like this
-    exports_sources = ("LICENSE", "*.md", "include/*", "src/*",
+    exports_sources = ("LICENSE", "VERSION", "*.md", "include/*", "src/*",
                        "cmake/*", "CMakeLists.txt", "tests/*", "benchmarks/*",
                        "scripts/*", "tools/*", "codegen/*", "assets/*",
                        "assets/configuration_files/*", "assets/icu/*", "assets",
@@ -40,14 +40,22 @@ class flextoolConan(conan_build_helper.CMakePackage):
     options = {
         "use_system_boost": [True, False],
         "enable_clang_from_conan": [True, False],
-        "enable_sanitizers": [True, False]
+        "enable_ubsan": [True, False],
+        "enable_asan": [True, False],
+        "enable_msan": [True, False],
+        "enable_tsan": [True, False],
+        "enable_valgrind": [True, False]
     }
 
     default_options = (
         #"*:shared=False",
         "enable_clang_from_conan=False",
         "use_system_boost=False",
-        "enable_sanitizers=False",
+        "enable_ubsan=False",
+        "enable_asan=False",
+        "enable_msan=False",
+        "enable_tsan=False",
+        "enable_valgrind=False",
         # boost
         "boost:without_atomic=True",
         "boost:without_chrono=True",
@@ -125,8 +133,16 @@ class flextoolConan(conan_build_helper.CMakePackage):
     def _build_dir(self):
         return "."
 
+    # installs clang 10 from conan
     def _is_llvm_tools_enabled(self):
-      return self._environ_option("ENABLE_LLVM_TOOLS", default = 'true')
+      return self._environ_option("ENABLE_LLVM_TOOLS", default = 'false')
+
+    def _is_cppcheck_enabled(self):
+      return self._environ_option("ENABLE_CPPCHECK", default = 'false')
+
+    # sets cmake variables required to use clang 10 from conan
+    def _is_compile_with_llvm_tools_enabled(self):
+      return self._environ_option("COMPILE_WITH_LLVM_TOOLS", default = 'false')
 
     def configure(self):
         lower_build_type = str(self.settings.build_type).lower()
@@ -135,10 +151,55 @@ class flextoolConan(conan_build_helper.CMakePackage):
         if lower_build_type != "release" and not self._is_llvm_tools_enabled():
             self.output.warn('enable llvm_tools for Debug builds')
 
+        if self._is_compile_with_llvm_tools_enabled() and not self._is_llvm_tools_enabled():
+            raise ConanInvalidConfiguration("llvm_tools must be enabled")
+
+        if self.options.enable_valgrind:
+            self.options["flexlib"].enable_valgrind = True
+            self.options["basis"].enable_valgrind = True
+            self.options["chromium_base"].enable_valgrind = True
+
+        if self.options.enable_ubsan \
+           or self.options.enable_asan \
+           or self.options.enable_msan \
+           or self.options.enable_tsan:
+            if not self._is_llvm_tools_enabled():
+                raise ConanInvalidConfiguration("sanitizers require llvm_tools")
+
+        if self.options.enable_ubsan:
+            self.options["flexlib"].enable_ubsan = True
+            self.options["basis"].enable_ubsan = True
+            self.options["chromium_base"].enable_ubsan = True
+
+        if self.options.enable_asan:
+            self.options["flexlib"].enable_asan = True
+            self.options["basis"].enable_asan = True
+            self.options["chromium_base"].enable_asan = True
+
+        if self.options.enable_msan:
+            self.options["flexlib"].enable_msan = True
+            self.options["basis"].enable_msan = True
+            self.options["chromium_base"].enable_msan = True
+
+        if self.options.enable_tsan:
+            self.options["flexlib"].enable_tsan = True
+            self.options["basis"].enable_tsan = True
+            self.options["chromium_base"].enable_tsan = True
+
     def build_requirements(self):
         self.build_requires("cmake_platform_detection/master@conan/stable")
         self.build_requires("cmake_build_options/master@conan/stable")
-        self.build_requires("cppcheck_installer/1.90@conan/stable")
+        self.build_requires("cmake_helper_utils/master@conan/stable")
+
+        if self.options.enable_tsan \
+            or self.options.enable_msan \
+            or self.options.enable_asan \
+            or self.options.enable_ubsan:
+          self.build_requires("cmake_sanitizers/master@conan/stable")
+
+        if self._is_cppcheck_enabled():
+          self.build_requires("cppcheck_installer/1.90@conan/stable")
+
         # provides clang-tidy, clang-format, IWYU, scan-build, etc.
         if self._is_llvm_tools_enabled():
           self.build_requires("llvm_tools/master@conan/stable")
@@ -151,7 +212,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
 
         self.requires("chromium_icu/master@conan/stable")
 
-        self.requires("doctest/[>=2.3.8]")
+        # TODO: support doctest
+        #self.requires("doctest/[>=2.3.8]")
 
         if not self.options.use_system_boost:
             self.requires("boost/1.71.0@dev/stable")
@@ -237,9 +299,25 @@ class flextoolConan(conan_build_helper.CMakePackage):
         if not self.options.enable_clang_from_conan:
           cmake.definitions["ENABLE_CLING"] = 'ON'
 
-        cmake.definitions["ENABLE_SANITIZERS"] = 'ON'
-        if not self.options.enable_sanitizers:
-            cmake.definitions["ENABLE_SANITIZERS"] = 'OFF'
+        cmake.definitions["ENABLE_UBSAN"] = 'ON'
+        if not self.options.enable_ubsan:
+            cmake.definitions["ENABLE_UBSAN"] = 'OFF'
+
+        cmake.definitions["ENABLE_ASAN"] = 'ON'
+        if not self.options.enable_asan:
+            cmake.definitions["ENABLE_ASAN"] = 'OFF'
+
+        cmake.definitions["ENABLE_MSAN"] = 'ON'
+        if not self.options.enable_msan:
+            cmake.definitions["ENABLE_MSAN"] = 'OFF'
+
+        cmake.definitions["ENABLE_TSAN"] = 'ON'
+        if not self.options.enable_tsan:
+            cmake.definitions["ENABLE_TSAN"] = 'OFF'
+
+        cmake.definitions["ENABLE_VALGRIND"] = 'ON'
+        if not self.options.enable_valgrind:
+            cmake.definitions["ENABLE_VALGRIND"] = 'OFF'
 
         cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = 'conan_paths.cmake'
 
