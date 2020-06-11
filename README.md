@@ -253,6 +253,9 @@ export CC=clang-6.0
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 build_type=Debug
 
+# optional
+# rm CMakeCache.txt
+
 # configure via cmake
 cmake -E time cmake . \
   -DENABLE_TESTS=TRUE \
@@ -263,9 +266,6 @@ cmake -E time cmake . \
 # remove generated files
 # change paths to yours
 # rm ~/flex_typeclass_plugin/build/Debug/*generated*
-
-# optional
-# rm CMakeCache.txt
 
 # build code
 cmake -E time cmake --build . \
@@ -480,6 +480,9 @@ export CC=clang-6.0
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 build_type=Debug
 
+# optional
+# rm CMakeCache.txt
+
 # configure via cmake
 cmake -E time cmake . \
   -DENABLE_TESTS=TRUE \
@@ -490,9 +493,6 @@ cmake -E time cmake . \
 # remove generated files
 # change paths to yours
 # rm ~/flex_typeclass_plugin/build/Debug/*generated*
-
-# optional
-# rm CMakeCache.txt
 
 # build code
 cmake -E time cmake --build . \

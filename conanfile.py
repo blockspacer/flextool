@@ -44,12 +44,14 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "enable_asan": [True, False],
         "enable_msan": [True, False],
         "enable_tsan": [True, False],
-        "enable_valgrind": [True, False]
+        "enable_valgrind": [True, False],
+        "enable_gold_linker": [True, False]
     }
 
     default_options = (
         #"*:shared=False",
-        "enable_clang_from_conan=False",
+        "enable_ubsan=False",
+        "enable_gold_linker=False",
         "use_system_boost=False",
         "enable_ubsan=False",
         "enable_asan=False",
@@ -137,8 +139,41 @@ class flextoolConan(conan_build_helper.CMakePackage):
     def _is_llvm_tools_enabled(self):
       return self._environ_option("ENABLE_LLVM_TOOLS", default = 'false')
 
+    def _is_lwyu_enabled(self):
+      return self._environ_option("ENABLE_LWYU", default = 'false')
+
+    def _is_coverage_enabled(self):
+      return self._environ_option("USE_COVERAGE", default = 'false')
+
+    def _is_docs_enabled(self):
+      return self._environ_option("BUILD_DOXY_DOC", default = 'false')
+
+    def _is_benchmark_enabled(self):
+      return self._environ_option("ENABLE_BENCHMARK", default = 'false')
+
+    def _is_ccache_enabled(self):
+      return self._environ_option("USE_CCACHE", default = 'false')
+
     def _is_cppcheck_enabled(self):
       return self._environ_option("ENABLE_CPPCHECK", default = 'false')
+
+    def _is_clang_tidy_enabled(self):
+      return self._environ_option("ENABLE_CLANG_TIDY", default = 'false')
+
+    def _is_clang_format_enabled(self):
+      return self._environ_option("ENABLE_CLANG_FORMAT", default = 'false')
+
+    def _is_uncrustify_enabled(self):
+      return self._environ_option("ENABLE_UNCRUSTIFY", default = 'false')
+
+    def _is_iwyu_enabled(self):
+      return self._environ_option("ENABLE_IWYU", default = 'false')
+
+    def _is_cppclean_enabled(self):
+      return self._environ_option("ENABLE_CPPCLEAN", default = 'false')
+
+    def _is_lto_enabled(self):
+      return self._environ_option("ENABLE_LTO", default = 'false')
 
     # sets cmake variables required to use clang 10 from conan
     def _is_compile_with_llvm_tools_enabled(self):
@@ -288,6 +323,30 @@ class flextoolConan(conan_build_helper.CMakePackage):
 
         self.add_cmake_option(cmake, "ENABLE_TESTS", self._is_tests_enabled())
 
+        self.add_cmake_option(cmake, "ENABLE_LWYU", self._is_lwyu_enabled())
+
+        self.add_cmake_option(cmake, "USE_COVERAGE", self._is_coverage_enabled())
+
+        self.add_cmake_option(cmake, "BUILD_DOXY_DOC", self._is_docs_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_BENCHMARK", self._is_benchmark_enabled())
+
+        self.add_cmake_option(cmake, "USE_CCACHE", self._is_ccache_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_CPPCHECK", self._is_cppcheck_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_CLANG_TIDY", self._is_clang_tidy_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_CLANG_FORMAT", self._is_clang_format_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_UNCRUSTIFY", self._is_uncrustify_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_IWYU", self._is_iwyu_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_CPPCLEAN", self._is_cppclean_enabled())
+
+        self.add_cmake_option(cmake, "ENABLE_LTO", self._is_lto_enabled())
+
         cmake.definitions["CONAN_AUTO_INSTALL"] = 'OFF'
 
         if self.settings.compiler == 'gcc':
@@ -318,6 +377,10 @@ class flextoolConan(conan_build_helper.CMakePackage):
         cmake.definitions["ENABLE_VALGRIND"] = 'ON'
         if not self.options.enable_valgrind:
             cmake.definitions["ENABLE_VALGRIND"] = 'OFF'
+
+        cmake.definitions["USE_LD_GOLD"] = 'ON'
+        if not self.options.enable_gold_linker:
+            cmake.definitions["USE_LD_GOLD"] = 'OFF'
 
         cmake.definitions["CMAKE_TOOLCHAIN_FILE"] = 'conan_paths.cmake'
 

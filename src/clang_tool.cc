@@ -46,7 +46,7 @@ void ClangTool::run(
 
   // convert |std::vector<std::string>| to |std::vector<const char*>|
   std::vector<
-    const char*   /// \note must manage pointer lifetime
+    const char* /// \note must manage pointer lifetime
     > args_vec;
   std::transform(
     args.begin()
@@ -63,7 +63,6 @@ void ClangTool::run(
       value.c_str();
     });
 
-  int args_arc = args_vec.size();
   DCHECK(args_vec.size() == args.size());
 
   CHECK(!args_vec.empty())
@@ -76,13 +75,16 @@ void ClangTool::run(
   // see http://llvm.org/docs/doxygen/html/classllvm_1_1cl_1_1OptionCategory.html
   llvm::cl::OptionCategory UseOverrideCategory("Use override options");
 
+  int args_arc
+    = static_cast<int>(args_vec.size());
+
   // parse the command-line args passed to your code
   // see http://clang.llvm.org/doxygen/classclang_1_1tooling_1_1CommonOptionsParser.html
-  clang::tooling::CommonOptionsParser op(
+  clang::tooling::CommonOptionsParser optionsParser(
     args_arc, args_argv, UseOverrideCategory);
 
   // log information about files what will be processed
-  for(const auto& it: op.getSourcePathList()) {
+  for(const auto& it: optionsParser.getSourcePathList()) {
     VLOG(9)
         << "added source file = "
         << (it.empty()
@@ -132,8 +134,8 @@ void ClangTool::run(
   // create a new Clang Tool instance (a LibTooling environment)
   // see http://clang.llvm.org/doxygen/classclang_1_1tooling_1_1ClangTool.html
   clang::tooling::ClangTool tool(
-    op.getCompilations()
-    , op.getSourcePathList()
+    optionsParser.getCompilations()
+    , optionsParser.getSourcePathList()
     );
 
   VLOG(9)

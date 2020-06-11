@@ -1,6 +1,8 @@
 # Note: COMMAND_EXPAND_LISTS is keyword is only available with CMake version >= 3.8
 cmake_minimum_required(VERSION 3.8)
 
+# ------------------------------- project settings --------------------------------------
+
 # project() must be before checks, see https://stackoverflow.com/a/26437667/10904212
 set(PROJECT_NAME "flextool")
 
@@ -25,13 +27,40 @@ project(${PROJECT_NAME}
   VERSION ${PROJECT_VERSION}
   LANGUAGES CXX C)
 
+if(NOT PROJECT_NAME)
+  message(FATAL_ERROR
+    "Project name must be specified!")
+endif(NOT PROJECT_NAME)
+
+message(STATUS
+  "PROJECT: ${CMAKE_PROJECT_NAME}")
+
 set(LIB_NAME ${PROJECT_NAME})
 
 set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+string(TOLOWER "${CMAKE_BUILD_TYPE}" cmake_build_type_tolower)
+
+# ------------------------- External CMake includes ----------------------------
+
+# CMake-provided scripts
+include(CPack)
+include(CTest)
+include(CheckCXXCompilerFlag)
+include(CheckSymbolExists)
+include(TestBigEndian)
+include(CheckIncludeFile)
+include(CheckLibraryExists)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 # Helper module for selecting option based on multiple values. Module help:
-# https://cmake.org/cmake/help/latest/module/CMakeDependentOption.html
+# https://cmake.org/cmake/help/v3.10/module/CMakeDependentOption.html
 include(CMakeDependentOption)
+
+# ------------------------------- Options --------------------------------------
+
+option(BUILD_DOXY_DOC
+  "build doxygen documentation" OFF)
 
 option(ENABLE_LWYU
   "Enable CMAKE_LINK_WHAT_YOU_USE" ON)
@@ -41,6 +70,10 @@ option(COMPILE_WITH_LLVM_TOOLS
 
 option(ENABLE_TESTS
   "Enable tests" OFF)
+
+# see https://gitlab.kitware.com/cmake/community/wikis/FAQ#can-i-do-make-uninstall-with-cmake
+option(ENABLE_UNINSTALL
+  "Enable uninstall (using install_manifest.txt)" OFF)
 
 option(ENABLE_CPPCHECK
   "Enable cppcheck" OFF)
@@ -64,6 +97,9 @@ option(ENABLE_IWYU
 
 option(ENABLE_CPPCLEAN
   "Enable cppclean" OFF)
+
+option(ENABLE_LTO
+  "Enable Link Time Optimization" OFF)
 
 # see https://github.com/Ericsson/codechecker/blob/master/tools/report-converter/README.md#undefined-behaviour-sanitizer
 # NOTE: Compile with -g and -fno-omit-frame-pointer
@@ -108,6 +144,15 @@ option(ENABLE_OCLINT
 # TODO: __do_global_dtors_aux, base::debug::CollectStackTrace
 option(ENABLE_VALGRIND_TESTS
   "Enable valgrind for unit tests" OFF)
+
+option(USE_LD_GOLD
+  "Use GNU gold linker" OFF)
+
+option(USE_CCACHE
+  "Use CCACHE" OFF)
+
+option(USE_COVERAGE
+  "Use CCACHE" OFF)
 
 if(ENABLE_LWYU)
   # Enable linker flags -r -u to create warnings for unused dependencies at link time.
@@ -208,7 +253,7 @@ if (CONAN_AUTO_INSTALL)
   set(CONAN_PROFILE
       "clang"
       CACHE STRING "Conan profile to use during installation")
-  if (NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
+  if (NOT cmake_build_type_tolower MATCHES "debug" )
     set(conan_build_type "Release")
   else()
     set(conan_build_type "Debug")
@@ -234,6 +279,8 @@ if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake")
 else()
   message (FATAL_ERROR "must use conan")
 endif()
+
+# ------------------------------- settings --------------------------------------
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
@@ -265,6 +312,10 @@ print_cmake_system_info() # from Utils.cmake
 check_supported_os() # from Utils.cmake
 
 find_package(cmake_helper_utils REQUIRED)
+
+force_latin_paths() # from cmake_helper_utils (conan package)
+
+validate_out_dirs() # from cmake_helper_utils (conan package)
 
 if(ENABLE_MSAN OR ENABLE_TSAN OR ENABLE_ASAN OR ENABLE_UBSAN)
   find_package(cmake_sanitizers REQUIRED)
@@ -311,24 +362,14 @@ if(NOT TARGET CONAN_PKG::corrade)
   message(FATAL_ERROR "Use corrade from conan")
 endif()
 
-find_package( X11 REQUIRED )
-message(STATUS "X11_LIBRARIES = ${X11_LIBRARIES}")
+#find_package( X11 REQUIRED )
+#message(STATUS "X11_LIBRARIES = ${X11_LIBRARIES}")
 
-find_package( EXPAT REQUIRED )
-message(STATUS "EXPAT_LIBRARIES = ${EXPAT_LIBRARIES}")
+#find_package( EXPAT REQUIRED )
+#message(STATUS "EXPAT_LIBRARIES = ${EXPAT_LIBRARIES}")
 
-find_package( ZLIB REQUIRED )
-message(STATUS "ZLIB_LIBRARIES = ${ZLIB_LIBRARIES}")
-
-#add_library( boost_outcome INTERFACE )
-#target_include_directories( boost_outcome SYSTEM INTERFACE "submodules/boost.outcome/include" )
-#get_target_property (BOOST_OUTCOME_IMPORTED_LOCATION boost_outcome INTERFACE_INCLUDE_DIRECTORIES)
-#message( STATUS "boost_outcome=${BOOST_OUTCOME_IMPORTED_LOCATION}" )
-#
-#add_library(microsoft_gsl INTERFACE)
-#target_include_directories(microsoft_gsl SYSTEM INTERFACE "submodules/GSL/include")
-#get_target_property (microsoft_gsl_IMPORTED_LOCATION microsoft_gsl INTERFACE_INCLUDE_DIRECTORIES)
-#message( STATUS "microsoft_gsl=${microsoft_gsl_IMPORTED_LOCATION}" )
+#find_package( ZLIB REQUIRED )
+#message(STATUS "ZLIB_LIBRARIES = ${ZLIB_LIBRARIES}")
 
 message(STATUS "CMAKE_DL_LIBS = ${CMAKE_DL_LIBS}")
 
@@ -345,22 +386,13 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectFiles.cmake)
 
 add_library(${LIB_NAME}-test-includes INTERFACE)
 
-# $<INSTALL_INTERFACE:...> is exported using install(EXPORT)
-# $<BUILD_INTERFACE:...> is exported using export(), or when the target is used by another target in the same buildsystem
-macro(add_relative_include_dir TARGET VISIBILITY_BUILD VISIBILITY_INSTALL NEW_ELEM)
-  target_include_directories(${TARGET}
-    ${VISIBILITY_BUILD} "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NEW_ELEM}>"
-    ${VISIBILITY_INSTALL} "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/${NEW_ELEM}>"
-  )
-  target_include_directories( ${LIB_NAME}-test-includes SYSTEM INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/${NEW_ELEM} )
-endmacro(add_relative_include_dir)
-
 configure_file(${flextool_include_DIR}/version.hpp.in
   ${flextool_include_DIR}/version.hpp)
 
 set_source_files_properties(${PROJECT_BINARY_DIR}/version.hpp
   PROPERTIES GENERATED 1)
+
+# -------------------------------- Executable ------------------------------------
 
 # Executable target definition. CMake-build-system documentation:
 # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html
@@ -372,11 +404,30 @@ add_executable(${LIB_NAME}
 
 # Alias target for the executable to be used outside of the project. Command:
 # https://cmake.org/cmake/help/latest/command/add_executable.html
-add_executable(flextool::exe ALIAS ${LIB_NAME})
+add_executable(flextool::exe
+  ALIAS ${LIB_NAME})
+
+# -------------------------------- Includes ------------------------------------
+
+# $<INSTALL_INTERFACE:...> is exported using install(EXPORT)
+# $<BUILD_INTERFACE:...> is exported using export(), or when the target is used by another target in the same buildsystem
+macro(add_relative_include_dir TARGET VISIBILITY_BUILD VISIBILITY_INSTALL NEW_ELEM)
+  target_include_directories(${TARGET}
+    ${VISIBILITY_BUILD} "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NEW_ELEM}>"
+    ${VISIBILITY_INSTALL} "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/${NEW_ELEM}>"
+  )
+  target_include_directories( ${LIB_NAME}-test-includes SYSTEM INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/${NEW_ELEM} )
+endmacro(add_relative_include_dir)
 
 #add_relative_include_dir(${LIB_NAME} PRIVATE PRIVATE "include/flextool")
 
 add_relative_include_dir(${LIB_NAME} PUBLIC PUBLIC "include")
+
+# ---------------------------------- Build -------------------------------------
+
+# startup target for MS Visual Studio IDE
+set_vs_startup_project(${LIB_NAME}) # from Utils.cmake
 
 list(APPEND USED_3DPARTY_LIBS
   ${base_LIB}
@@ -433,10 +484,10 @@ endif()
 
 set(USED_SYSTEM_LIBS
     Threads::Threads # pthread, https://cmake.org/cmake/help/v3.13/module/FindThreads.html
-    ${X11_LIBRARIES} # https://cmake.org/cmake/help/v3.13/module/FindX11.html
-    ${CMAKE_DL_LIBS} # https://cmake.org/cmake/help/v3.13/variable/CMAKE_DL_LIBS.html
-    EXPAT::EXPAT # https://cmake.org/cmake/help/v3.13/module/FindEXPAT.html
-    ZLIB::ZLIB # https://cmake.org/cmake/help/v3.13/module/FindZLIB.html
+    #${X11_LIBRARIES} # https://cmake.org/cmake/help/v3.13/module/FindX11.html
+    #${CMAKE_DL_LIBS} # https://cmake.org/cmake/help/v3.13/variable/CMAKE_DL_LIBS.html
+    #EXPAT::EXPAT # https://cmake.org/cmake/help/v3.13/module/FindEXPAT.html
+    #ZLIB::ZLIB # https://cmake.org/cmake/help/v3.13/module/FindZLIB.html
                # Custom libs
     stdc++fs # C++17 std::filesystem
     # @note: Order matters https://stackoverflow.com/a/10269201/10904212
@@ -529,30 +580,13 @@ if(ENABLE_CLANG_FROM_CONAN)
   )
 endif(ENABLE_CLANG_FROM_CONAN)
 
-target_compile_options(${LIB_NAME} PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:
-    /W3 # Set warning level
-    /Wall
-    /analyze
-  >
-  $<$<CXX_COMPILER_ID:GNU>:
-    -Wformat=2
-    -Wall
-    -W
-    -Wextra
-    -Wpedantic
-  >
-  $<$<CXX_COMPILER_ID:Clang>:
-    -Wformat=2
-    -Wall
-    -W
-    -Wextra
-    -Wpedantic
-    -Wdeprecated-register
-    # disable warning: designated initializers are a C99 feature
-    -Wno-c99-extensions
-  >
-)
+# see https://cmake.org/cmake/help/v3.0/module/TestBigEndian.html
+test_big_endian(${LIB_NAME}_IS_BIG_ENDIAN)
+
+if(${${LIB_NAME}_IS_BIG_ENDIAN})
+  list(APPEND flextool_PUBLIC_DEFINES
+    IS_BIG_ENDIAN=1)
+endif()
 
 target_compile_definitions(${LIB_NAME} PRIVATE
   ${flextool_PRIVATE_DEFINES}
@@ -594,6 +628,8 @@ add_custom_command( TARGET ${LIB_NAME} PRE_BUILD
     ${CMAKE_CURRENT_SOURCE_DIR}/resources/
     $<TARGET_FILE_DIR:${LIB_NAME}>/resources )
 
+# -------------------------------- Install -------------------------------------
+
 # install and export steps
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Exports.cmake)
 
@@ -620,10 +656,64 @@ set(entt_includes
 )
 message(STATUS "entt_includes=${entt_includes}")
 
+# It is always easier to navigate in an IDE when projects are organized in folders.
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+## ---------------------------- Link Time Optimization -------------------------------- ##
+
+if(ENABLE_LTO)
+  # Check for LTO support (needs to be after project(...) )
+  find_lto(CXX)
+
+  # enable lto if available for non-debug configurations
+  target_enable_lto(${LIB_NAME} optimized)
+else(ENABLE_LTO)
+  if(cmake_build_type_tolower MATCHES "release" )
+    message(WARNING "Enable LTO in Release builds")
+  endif()
+endif(ENABLE_LTO)
+
+## ---------------------------- warning level -------------------------------- ##
+
+target_compile_options(${LIB_NAME} PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:
+    /W3 # Set warning level
+    /Wall
+    /analyze
+  >
+  $<$<CXX_COMPILER_ID:GNU>:
+    -Wformat=2
+    -Wall
+    -W
+    -Wextra
+    -Wpedantic
+  >
+  $<$<CXX_COMPILER_ID:Clang>:
+    -Wformat=2
+    -Wall
+    -W
+    -Wextra
+    -Wpedantic
+    -Wdeprecated-register
+    # disable warning: designated initializers are a C99 feature
+    -Wno-c99-extensions
+  >
+)
+
+# # Helper that can set default warning flags for you
+target_set_warnings(${LIB_NAME}
+  ENABLE ALL
+  AS_ERROR ALL
+  DISABLE Annoying)
+
 ## ---------------------------- valgrind -------------------------------- ##
 
 if(ENABLE_VALGRIND)
   check_valgrind_config()
+
+  if(cmake_build_type_tolower MATCHES "release" )
+    message(WARNING "Disable valgrind in Release builds")
+  endif()
 endif()
 
 ## ---------------------------- cppcheck -------------------------------- ##
@@ -1060,6 +1150,10 @@ uncrustify_enabler(
 ## ---------------------------- sanitizers -------------------------------- ##
 
 if(ENABLE_MSAN OR ENABLE_TSAN OR ENABLE_ASAN OR ENABLE_UBSAN)
+  if(cmake_build_type_tolower MATCHES "release" )
+    message(WARNING "Disable sanitizers in Release builds")
+  endif()
+
   # use llvm_tools from conan
   find_program_helper(llvm-symbolizer
     PATHS
@@ -1106,11 +1200,71 @@ if(ENABLE_UBSAN)
   add_ubsan_flags(${LIB_NAME})
 endif(ENABLE_UBSAN)
 
+## ---------------------------- gold linker -------------------------------- ##
+
+# add_gold_linker
+if(USE_LD_GOLD)
+  add_gold_linker()
+endif(USE_LD_GOLD)
+
+## ---------------------------- ccache -------------------------------- ##
+
+if(USE_CCACHE)
+  add_ccache()
+  target_ccache_summary(${LIB_NAME})
+endif(USE_CCACHE)
+
+## ---------------------------- coverage -------------------------------- ##
+
+if(USE_COVERAGE)
+  add_coverage()
+endif(USE_COVERAGE)
+
+## ---------------------------- RULE_MESSAGES -------------------------------- ##
+
+# More logging when compiling.
+# RULE_MESSAGES: Specify whether to report a message for each make rule.
+# This property specifies whether Makefile generators
+# should add a progress message describing what each build rule does.
+# If the property is not set the default is ON.
+# Set the property to OFF to disable granular messages
+# and report only as each target completes.
+# This is intended to allow scripted builds
+# to avoid the build time cost of detailed reports.
+# If a CMAKE_RULE_MESSAGES cache entry exists its value
+# initializes the value of this property.
+# Non-Makefile generators currently ignore this property.
+set_target_properties(
+  ${LIB_NAME} PROPERTIES
+  # disable to avoid the build time cost of detailed reports
+  RULE_MESSAGES ON
+)
+
+## ---------------------------- docs -------------------------------- ##
+
+if(BUILD_DOXY_DOC)
+  add_subdirectory( docs )
+endif()
+
 ## ---------------------------- tests -------------------------------- ##
 
 if(ENABLE_TESTS)
   add_subdirectory( tests )
 endif()
+
+# --------------------------------- Benchmark ----------------------------------
+
+# TODO: https://github.com/jar-git/cmake-template/blob/b7fbb0d465fbbfd0a0e80977d9563f042314bbb3/example_app/CMakeLists.txt#L70
+# add_subdirectory(bench)
+
+## ---------------------------- Uninstall -------------------------------- ##
+
+if(ENABLE_UNINSTALL)
+  # add `uninstall` cmake target
+  addinstallManifest() # from cmake_helper_utils (conan package)
+endif()
+
+## ---------------------------- various files -------------------------------- ##
 
 # Create a dummy target to hold various files in the project root
 add_custom_target(RootFiles SOURCES

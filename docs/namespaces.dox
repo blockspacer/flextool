@@ -1,0 +1,60 @@
+/*
+ * Copyright (c) 2018 Denis Trofimov (den.a.trofimov@yandex.ru)
+ * Distributed under the MIT License.
+ * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+ */
+
+/** @dir gloer
+ * @brief Namespace @ref gloer (part of @ref building "gloer library")
+ */
+/** @namespace gloer
+@brief Root namespace
+
+This library is built as part of gloer by default. To use this library with
+CMake, you need to find the `gloer` package and link to the `gloer::gloer`
+target:
+
+@code{.cmake}
+find_package(gloer REQUIRED)
+
+# ...
+target_link_libraries(your-app gloer::gloer)
+@endcode
+
+See @ref building and @ref cmake for more information.
+*/
+
+/** @dir examples
+ * @brief gloer examples (part of @ref building "gloer library")
+ */
+
+/** @namespace file
+@brief file namespace
+
+This library is built as part of gloer by default. To use this library with
+CMake, you need to find the `gloer` package and link to the `gloer::gloer`
+target:
+
+@code{.cmake}
+find_package(gloer REQUIRED)
+
+# ...
+target_link_libraries(your-app gloer::gloer)
+@endcode
+*/
+
+/** @dir examples
+ * @brief fghgffg
+ */
+
+/** @dir examples/simple
+ * @brief sdfsdfsdf
+ */
+
+/** @dir examples/simple/src
+ * @brief fghfghfghfgfhgfh
+ */
+
+/** @file examples/simple/src/file_read_simple
+ * @brief jhkjhkhjkhjkjhk
+ */

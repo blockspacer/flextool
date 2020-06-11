@@ -217,12 +217,12 @@ ScopedAppEnvironment::~ScopedAppEnvironment()
       trace_buffer.SetOutputCallback(
         base::Bind(
           []
-            (base::File& output_file
+            (base::File& _output_file
             , const std::string& data)
           {
-            output_file.WriteAtCurrentPos(
+            _output_file.WriteAtCurrentPos(
               data.c_str()
-              , data.length());
+              , static_cast<int>(data.length()));
           }
           , std::ref(output_file)
           )
@@ -237,19 +237,19 @@ ScopedAppEnvironment::~ScopedAppEnvironment()
       base::trace_event::TraceLog::GetInstance()->Flush(
         base::Bind(
           []
-            (base::File& output_file
+            (base::File& _output_file
             , base::Closure quit_closure
-            , base::trace_event::TraceResultBuffer* trace_buffer
+            , base::trace_event::TraceResultBuffer* in_trace_buffer
             , const scoped_refptr<base::RefCountedString>&
             json_events_str
             , bool has_more_events)
           {
-            DCHECK(trace_buffer);
-            trace_buffer->AddFragment(json_events_str->data());
+            DCHECK(in_trace_buffer);
+            in_trace_buffer->AddFragment(json_events_str->data());
             if (!has_more_events) {
               quit_closure.Run();
             } else {
-              output_file.WriteAtCurrentPos(",", 1);
+              _output_file.WriteAtCurrentPos(",", 1);
             }
           },
           std::ref(output_file)

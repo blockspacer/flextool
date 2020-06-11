@@ -33,10 +33,10 @@ UnergisteredOption::
 }
 
 UnergisteredOption::UnergisteredOption(
-  const std::string& key
-  , const std::vector<std::string>& values)
-  : key(key) /// \note copy
-  , values(values) /// \note copy
+  const std::string& _key
+  , const std::vector<std::string>& _values)
+  : key(_key) /// \note copy
+  , values(_values) /// \note copy
 {}
 
 UnergisteredOption::UnergisteredOption(

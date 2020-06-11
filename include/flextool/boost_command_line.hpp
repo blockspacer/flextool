@@ -27,14 +27,10 @@ public:
 
   UnergisteredOption(UnergisteredOption&& other);
 
-  /// \note you must manage lifetime!
-  const std::string key;// = nullptr;
+  const std::string key;
 
-  /// \note you must manage lifetime!
-  const std::vector<std::string> values;// = nullptr;
+  const std::vector<std::string> values;
 
-  /// \note base::StringPiece points to a sized piece of memory
-  /// you must manage lifetime!
   /// \note combines key with SINGLE value
   std::string KVToSting(
     const size_t value_index
