@@ -58,6 +58,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "enable_msan=False",
         "enable_tsan=False",
         "enable_valgrind=False",
+        "enable_clang_from_conan=False",
         # boost
         "boost:without_atomic=True",
         "boost:without_chrono=True",
