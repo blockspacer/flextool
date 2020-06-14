@@ -2,23 +2,24 @@
 
 #include "flexlib/ToolPlugin.hpp"
 
-#include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/Pointer.h>
+#include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/PluginManager/Manager.h>
-#include <Corrade/PluginManager/PluginMetadata.h>
-#include <Corrade/Utility/Arguments.h>
 #include <Corrade/Utility/Configuration.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
-#include <Corrade/Utility/Debug.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 
-#include <base/files/file.h>
-#include <base/files/file_enumerator.h>
 #include <base/files/file_path.h>
 #include <base/files/file_util.h>
 #include <base/logging.h>
 #include <base/trace_event/trace_event.h>
+
+#include <entt/signal/dispatcher.hpp>
+#include <entt/signal/sigh.hpp>
+
+#include <algorithm>
+#include <initializer_list>
+#include <ostream>
+#include <utility>
 
 #ifdef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
 #error \
@@ -33,7 +34,7 @@ void PluginManager::connect_to_dispatcher(
 {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  TRACE_EVENT0("toplevel", "PluginManager::connect_to_dispatcher()");
+  TRACE_EVENT0("toplevel", "PluginManager::connect_to_dispatcher()")
 
   events_dispatcher.sink<Events::Startup>()
     .connect<&PluginManager::startup>(this);
@@ -46,7 +47,7 @@ void PluginManager::connect_plugins_to_dispatcher(
 {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  TRACE_EVENT0("toplevel", "PluginManager::connect_to_dispatcher()");
+  TRACE_EVENT0("toplevel", "PluginManager::connect_to_dispatcher()")
 
   for(PluginPtr& loaded_plugin : loaded_plugins_) {
     DCHECK(loaded_plugin);
@@ -54,12 +55,12 @@ void PluginManager::connect_plugins_to_dispatcher(
   }
 }
 
-/// \todo long method
+/// \todo refactor long method
 void PluginManager::startup(const Events::Startup& event)
 {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
-  TRACE_EVENT0("toplevel", "PluginManager::startup()");
+  TRACE_EVENT0("toplevel", "PluginManager::startup()")
 
   VLOG(9) << "(PluginManager) startup";
 

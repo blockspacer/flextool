@@ -41,7 +41,7 @@ find_program(CONAN_PATH conan
              HINTS ${CONAN_DIR}
                    /usr/bin
                    /usr/local/bin
-                   $PATH
+                   $ENV{PATH}
                    CMAKE_SYSTEM_PROGRAM_PATH)
 
 if(NOT CONAN_PATH)
@@ -49,7 +49,7 @@ if(NOT CONAN_PATH)
 endif() # NOT CONAN_PATH
 
 macro(cmake_remove_directory DIR_PATH)
-    message(STATUS "running `git clone` for ${PATH_URI}")
+    message(STATUS "running `cmake_remove_directory` for ${PATH_URI}")
     execute_process(
       COMMAND
         ${COLORED_OUTPUT_ENABLER}
@@ -61,7 +61,7 @@ macro(cmake_remove_directory DIR_PATH)
       ${OUTPUT_VARS} # may create `stdout` variable
     )
     if(NOT "${retcode}" STREQUAL "0")
-      message( FATAL_ERROR "(cmake_remove_directory)
+      message( FATAL_ERROR "(cmake_remove_directory ${DIR_PATH})
         Bad exit status ${retcode} ${stdout} ${stderr}")
     endif()
 endmacro(cmake_remove_directory)

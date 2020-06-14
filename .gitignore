@@ -143,3 +143,4 @@ thirdparty/
 *.gdb_history
 /conan_imports_manifest.txt
 /tests/data/asset_complete.json
+/package-lock.json

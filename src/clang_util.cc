@@ -1,9 +1,31 @@
 #include "flextool/clang_util.hpp" // IWYU pragma: associated
 
+#include "flextool/boost_command_line.hpp"
+
+#include <base/base_paths.h>
+#include <base/files/file_path.h>
 #include <base/files/file_util.h>
+#include <base/logging.h>
 #include <base/path_service.h>
-#include <base/sequenced_task_runner.h>
-#include <base/trace_event/trace_event.h>
+#include <base/stl_util.h>
+#include <base/strings/string_piece.h>
+#include <base/strings/string_util.h>
+
+#include <clang/Basic/FileManager.h>
+#include <clang/Basic/SourceManager.h>
+#include <clang/Rewrite/Core/RewriteBuffer.h>
+#include <clang/Rewrite/Core/Rewriter.h>
+
+#include <llvm/ADT/StringRef.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/raw_ostream.h>
+
+#include <stddef.h>
+#include <algorithm>
+#include <iterator>
+#include <ostream>
+#include <system_error>
+#include <type_traits>
 
 // __has_include is currently supported by GCC and Clang. However GCC 4.9 may have issues and
 // returns 1 for 'defined( __has_include )', while '__has_include' is actually not supported:
@@ -19,6 +41,10 @@ namespace fs = std::filesystem;
 #else
 namespace fs = std::experimental::filesystem;
 #endif // __has_include
+
+namespace clang {
+class FileID;
+} // namespace clang
 
 namespace {
 
@@ -138,7 +164,7 @@ const char kClangArgPrefix[] = "-";
 // extern
 const char kClingArgPrefix[] = "-";
 
-/// \todo long method
+/// \todo refactor long method
 /**
  * Clang provides some options out-of-the-box:
  *
@@ -342,10 +368,11 @@ base::Optional<std::string> clangArgToClingArg(
   arg_without_prefix.CopyToString(&combined_for_cling);
 
   return
-    combined_for_cling;
+    base::Optional<std::string>{
+      std::move(combined_for_cling)};
 }
 
-/// \todo long method
+/// \todo refactor long method
 bool populateClangArguments(
   const base::FilePath& clangBuildPath
   , std::vector<std::string>& args_storage

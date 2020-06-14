@@ -1,20 +1,27 @@
 #pragma once
 
-#include <base/files/file_path.h>
+#include <base/logging.h>
 #include <base/macros.h>
-#include <base/sequenced_task_runner.h>
-#include <base/stl_util.h>
+#include <base/sequence_checker.h>
+#include <base/strings/string_piece.h>
+#include <base/strings/string_piece_forward.h>
 #include <base/strings/string_split.h>
-#include <base/trace_event/trace_event.h>
 
-#include <boost/optional.hpp>
-#include <boost/optional/optional_io.hpp>
-#include <boost/program_options.hpp>
-#include <boost/program_options/option.hpp>
-#include <boost/utility/in_place_factory.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
 
+#include <map>
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
+#include <stddef.h>
+
+namespace boost {
+namespace program_options {
+template <class charT> class basic_parsed_options;
+} // namespace program_options
+} // namespace boost
 
 namespace cmd {
 

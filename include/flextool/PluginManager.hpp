@@ -5,17 +5,21 @@
 // Corrade/Containers/Pointer
 #include "flexlib/ToolPlugin.hpp"
 
-#include <entt/entity/group.hpp>
-#include <entt/entity/helper.hpp>
-#include <entt/entity/registry.hpp>
-#include <entt/entt.hpp>
-
 #include <base/macros.h>
-#include <base/sequenced_task_runner.h>
-#include <base/trace_event/trace_event.h>
+#include <base/files/file_path.h>
+#include <base/logging.h>
+#include <base/sequence_checker.h>
 
 #include <Corrade/Containers/Pointer.h>
 #include <Corrade/PluginManager/Manager.h>
+
+#include <stddef.h>
+#include <string>
+#include <vector>
+
+namespace entt {
+  class dispatcher;
+} // namespace entt
 
 /// \todo hide impl details
 //namespace Corrade {

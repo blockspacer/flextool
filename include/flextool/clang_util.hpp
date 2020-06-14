@@ -1,24 +1,26 @@
 #pragma once
 
-#include "boost_command_line.hpp"
-
-#include <base/files/file_path.h>
 #include <base/macros.h>
-
-#include <clang/AST/ASTContext.h>
-#include <clang/ASTMatchers/ASTMatchFinder.h>
-#include <clang/ASTMatchers/ASTMatchers.h>
-#include <clang/ASTMatchers/ASTMatchersMacros.h>
-#include <clang/Basic/SourceManager.h>
-#include <clang/Frontend/ASTConsumers.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Frontend/FrontendActions.h>
-#include <clang/Rewrite/Core/Rewriter.h>
-#include <clang/Tooling/CommonOptionsParser.h>
-#include <clang/Tooling/Tooling.h>
 
 #include <string>
 #include <vector>
+
+#include <base/optional.h>
+#include <base/strings/string_piece_forward.h>
+
+namespace base {
+  class FilePath;
+} // namespace base
+
+namespace clang {
+  class FileEntry;
+  class FileID;
+  class Rewriter;
+} // namespace clang
+
+namespace cmd {
+  class BoostCmd;
+} // namespace cmd
 
 namespace clang_util {
 

@@ -1,6 +1,26 @@
 #include "flextool/app_cmd_options.hpp" // IWYU pragma: associated
 
+#include "flextool/boost_command_line.hpp"
+#include "flextool/command_line_constants.hpp"
+
+#include <base/base_paths.h>
 #include <base/base_switches.h>
+#include <base/files/file.h>
+#include <base/files/file_util.h>
+#include <base/logging.h>
+#include <base/path_service.h>
+#include <base/strings/string_piece.h>
+
+#include <build/build_config.h>
+
+#include <boost/none.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/program_options/errors.hpp>
+#include <boost/program_options/value_semantic.hpp>
+
+#include <algorithm>
+#include <limits>
+#include <ostream>
 
 #define LOG_PATH_NOT_EXIST(severity, path) \
   LOG(severity) \
@@ -262,7 +282,7 @@ int AppCmdOptions::cmdKeyToInt(
   if(value.is_initialized()) {
     result = value.value();
   } else {
-    VLOG_NOT_INITIALIZED(9, key);
+    VLOG_NOT_INITIALIZED(9, key)
   }
 
   return
@@ -294,7 +314,7 @@ base::FilePath AppCmdOptions::getAsPath(
   if(value.is_initialized() && !value.value().empty()) {
     result = base::FilePath{value.value()};
   } else {
-    VLOG_NOT_INITIALIZED(9, key);
+    VLOG_NOT_INITIALIZED(9, key)
   }
 
   return
@@ -325,14 +345,14 @@ base::FilePath AppCmdOptions::cmdKeyToDirectory(
     << dirPath;
 
   if (!base::PathExists(dirPath)) {
-    LOG_PATH_NOT_EXIST(WARNING, dirPath);
+    LOG_PATH_NOT_EXIST(WARNING, dirPath)
     return
       base::FilePath{};
   }
 
   // we expect dir, NOT file
   if(!base::DirectoryExists(dirPath)) {
-    LOG_PATH_NOT_DIRECTORY(WARNING, dirPath);
+    LOG_PATH_NOT_DIRECTORY(WARNING, dirPath)
     return
       base::FilePath{};
   }
@@ -365,14 +385,14 @@ base::FilePath AppCmdOptions::cmdKeyToFile(
     << filePath;
 
   if (!base::PathExists(filePath)) {
-    LOG_PATH_NOT_EXIST(WARNING, filePath);
+    LOG_PATH_NOT_EXIST(WARNING, filePath)
     return
       base::FilePath{};
   }
 
   // we expect file, NOT dir
   if (base::DirectoryExists(filePath)) {
-    LOG_PATH_MUST_BE_NOT_DIRECTORY(WARNING, filePath);
+    LOG_PATH_MUST_BE_NOT_DIRECTORY(WARNING, filePath)
     return
       base::FilePath{};
   }

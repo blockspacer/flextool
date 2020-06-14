@@ -1,40 +1,26 @@
 #include "flextool/clang_tool.hpp" // IWYU pragma: associated
 
-#include <clang/AST/ASTContext.h>
-#include <clang/ASTMatchers/ASTMatchFinder.h>
-#include <clang/ASTMatchers/ASTMatchers.h>
-#include <clang/ASTMatchers/ASTMatchersMacros.h>
-#include <clang/Basic/SourceManager.h>
-#include <clang/Frontend/ASTConsumers.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Frontend/FrontendActions.h>
-#include <clang/Rewrite/Core/Rewriter.h>
+#include <flexlib/matchers/annotation_matcher.hpp>
+
+#include <base/files/file.h>
+#include <base/files/file_path.h>
+#include <base/files/file_util.h>
+#include <base/logging.h>
+
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 
-#include <base/files/file_util.h>
-#include <base/path_service.h>
-#include <base/sequenced_task_runner.h>
-#include <base/trace_event/trace_event.h>
+#include <llvm/ADT/ArrayRef.h>
+#include <llvm/ADT/StringRef.h>
+#include <llvm/Support/CommandLine.h>
 
-// __has_include is currently supported by GCC and Clang. However GCC 4.9 may have issues and
-// returns 1 for 'defined( __has_include )', while '__has_include' is actually not supported:
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=63662
-#if __has_include(<filesystem>)
-#include <filesystem>
-#else
-#include <experimental/filesystem>
-#endif // __has_include
-
-#if __has_include(<filesystem>)
-namespace fs = std::filesystem;
-#else
-namespace fs = std::experimental::filesystem;
-#endif // __has_include
+#include <algorithm>
+#include <iterator>
+#include <ostream>
 
 namespace flextool {
 
-/// \todo long method
+/// \todo refactor long method
 void ClangTool::run(
   const std::vector<std::string>& args
   , scoped_refptr<clang_utils::AnnotationMatchOptions>

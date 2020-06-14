@@ -2,8 +2,12 @@
 
 #include <base/files/file_util.h>
 #include <base/path_service.h>
-#include <base/sequenced_task_runner.h>
-#include <base/trace_event/trace_event.h>
+#include <base/base_paths.h>
+#include <base/files/file_path.h>
+#include <base/logging.h>
+
+#include <ostream>
+#include <string>
 
 namespace flextool {
 

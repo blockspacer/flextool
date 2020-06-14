@@ -1,5 +1,15 @@
 #include "flextool/boost_command_line.hpp" // IWYU pragma: associated
 
+#include <boost/program_options/cmdline.hpp>
+#include <boost/program_options/errors.hpp>
+#include <boost/program_options/option.hpp>
+#include <boost/program_options/parsers.hpp>
+
+#include <algorithm>
+#include <exception>
+#include <iterator>
+#include <sstream>
+
 namespace po = boost::program_options;
 
 namespace {

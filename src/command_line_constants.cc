@@ -1,5 +1,7 @@
 #include "flextool/command_line_constants.hpp" // IWYU pragma: associated
 
+#include <boost/program_options/errors.hpp>
+
 namespace po = boost::program_options;
 
 namespace cmd {

@@ -42,6 +42,8 @@ Main project page: https://blockspacer.github.io/flex_docs/
 
 - conan packages
 
+NOTE: cling with LLVM build may take couple of hours.
+
 We use `buildConanThirdparty.cmake` script to download and install conan packages.
 
 ```bash
@@ -49,6 +51,22 @@ We use `buildConanThirdparty.cmake` script to download and install conan package
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 cmake -DEXTRA_CONAN_OPTS="--profile;clang;-s;build_type=Debug;-s;cling_conan:build_type=Release;--build;missing" -P tools/buildConanThirdparty.cmake
 ```
+
+- llvm_tools package
+
+NOTE: `llvm_tools` package is optional, you can skip it using `enable_llvm_tools=False` like so: `-e flextool:enable_llvm_tools=False -e basis:enable_llvm_tools=False -e chromium_base:enable_llvm_tools=False`
+
+NOTE: LLVM build may take couple of hours.
+
+You can install `llvm_tools` like so:
+
+```bash
+git clone https://github.com/blockspacer/llvm_tools.git
+cd llvm_tools
+conan create . conan/stable -s build_type=Release --profile clang --build missing
+```
+
+See for up-to-date instructions [https://github.com/blockspacer/llvm_tools](https://github.com/blockspacer/llvm_tools)
 
 ## Installation
 
@@ -570,30 +588,84 @@ GIT_SSL_NO_VERIFY=true \
       -s build_type=Release
 ```
 
-Run cppcheck via cmake:
+Usage (runs cmake with `-DENABLE_CPPCHECK=ON`):
 
 ```bash
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build
-
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_CPPCHECK=ON
-cmake .. \
-  -DENABLE_CPPCHECK=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug
-
-cmake -E time cmake --build . \
-  --target flextool_run_cppcheck
+# NOTE: -DCLEAN_OLD="OFF" to keep generated html report
+cmake -DCPPCHECK="ON" -DCLEAN_OLD="OFF" -P tools/run_tool.cmake
 ```
 
-Open 'flextool_report/index.html' to see the results.
+```bash
+# `index.html` must exist
+# find $PWD -name index.html
+```
+
+Open 'index.html' to see the results.
+
+## For contibutors: vue ui
+
+Desktop application that provides a single context to manage and run multiple scripts.
+
+Simplifies setup of local dev environment. Allows to avoid opening a lot of shell terminals.
+
+You can add custom commands in `package.json` or `plugin/vue-cli-plugin/ui.js`
+
+```bash
+# Before: Install Latest Node.js and NPM
+# see https://tecadmin.net/install-latest-nodejs-npm-on-ubuntu/
+node --version
+npm --version
+```
+
+Build your project via npm:
+
+```bash
+npm install
+```
+
+```bash
+sudo npm install -g @vue/cli
+sudo vue ui --dev --port 8061
+```
+
+Open `http://localhost:8061/`
+
+Import project directory.
+
+Select `Tasks`, like build/test...
+
+Tasks may be changed in `package.json`
+
+NOTE: We use `package.json` only for tasks. Conan is controlled by a file called conanfile.txt.
+
+Useful links:
+
+- https://cli.vuejs.org/dev-guide/ui-api.html#ui-files
+- https://github.com/Dewep/GCE
+- https://github.com/supnate/command-pad
+
+## For contibutors: gdbinit
+
+We use `.gdbinit` add 'add-auto-load-safe-path .'
+
+Read for more details about `.gdbinit` [https://metricpanda.com/tips-for-productive-debugging-with-gdb](https://metricpanda.com/tips-for-productive-debugging-with-gdb)
+
+Read for more details about `gdb` [http://www.yolinux.com/TUTORIALS/GDB-Commands.html](http://www.yolinux.com/TUTORIALS/GDB-Commands.html)
+
+GDB debugging session can be automated like so:
+
+```bash
+# see https://gist.github.com/williballenthin/8bd6e29ad8504b9cb308039f675ee889
+gdb \
+  -ex "run" \
+  -ex "set pagination off" \
+  -ex "bt" \
+  -ex "set confirm off" \
+  -ex "quit" \
+  --args \
+  ${APP_EXE} \
+  ${APP_CMD_ARGS}
+```
 
 ## For contibutors: valgrind
 
@@ -714,27 +786,10 @@ sudo apt-get install clang-tidy  # Ubuntu, Debian, etc.
 sudo yum install clang-tidy  # RHEL, CentOS, Fedora, etc.
 ```
 
-Run clang-tidy via cmake:
+Usage (runs cmake with `-DENABLE_CLANG_TIDY=ON`):
 
 ```bash
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build
-
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_CLANG_TIDY=ON
-cmake .. \
-  -DENABLE_CLANG_TIDY=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug
-
-cmake -E time cmake --build . \
-  --target flextool_run_clang_tidy
+cmake -DCLANG_TIDY="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
 ## For contibutors: scan-build
@@ -859,27 +914,10 @@ Installation:
 pip install --index-url=https://pypi.python.org/simple/ --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade cppclean
 ```
 
-Usage (`-DENABLE_CPPCLEAN=ON`):
+Usage (runs cmake with `-DENABLE_CPPCLEAN=ON`):
 
 ```bash
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build
-
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_CPPCLEAN=ON
-cmake .. \
-  -DENABLE_CPPCLEAN=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug
-
-cmake -E time cmake --build . \
-  --target flextool_run_cppclean
+cmake -DCPPCLEAN="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
 NOTE: cppclean requires file encoding to be: `UTF-8 without BOM` (ascii)
@@ -894,40 +932,76 @@ It will calculate the required headers and add and remove includes as appropriat
 
 See for details [https://include-what-you-use.org/](https://include-what-you-use.org/)
 
-Usage (`-DENABLE_IWYU=ON`):
+Usage (runs cmake with `-DENABLE_IWYU=ON`):
 
 ```bash
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build
-
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_IWYU=ON
-cmake .. \
-  -DENABLE_IWYU=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug
-
-# remove old build artifacts
-rm -rf flextool
-rm -rf bin
-find . -iname '*.o' -exec rm {} \;
-find . -iname '*.a' -exec rm {} \;
-find . -iname '*.dll' -exec rm {} \;
-find . -iname '*.lib' -exec rm {} \;
-
-# no custom target, uses CXX_INCLUDE_WHAT_YOU_USE
-cmake -E time cmake --build .
+cmake -DIWYU="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
 CODESTYLE: use `// IWYU pragma: associated` in C++ source files.
 
 NOTE: Read about IWYU Pragmas [https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md)
+
+NOTE: don`t use "bits/" or "/details/*" includes, add them to mappings file (.imp)
+
+See for details:
+
+* https://llvm.org/devmtg/2010-11/Silverstein-IncludeWhatYouUse.pdf
+* https://github.com/include-what-you-use/include-what-you-use/tree/master/docs
+* https://github.com/hdclark/Ygor/blob/master/artifacts/20180225_include-what-you-use/iwyu_how-to.txt
+
+## For contibutors: ccache
+
+Use `-DUSE_CCACHE=ON`
+
+```bash
+gcc -v
+export CC=gcc
+export CXX=g++
+# NOTE: -DUSE_CCACHE=ON
+cmake .. \
+  -DUSE_CCACHE=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+```
+
+See for details [https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/](https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/)
+
+## For contibutors: GOLD linker
+
+Installation:
+
+```bash
+sudo apt-get install ccache
+
+# On OS X use homebrew:
+# brew install ccache
+
+ccache --version
+```
+
+Use `-DUSE_LD_GOLD=ON`
+
+```bash
+gcc -v
+export CC=gcc
+export CXX=g++
+# NOTE: -DUSE_LD_GOLD=ON
+cmake .. \
+  -DUSE_LD_GOLD=ON \
+  -DENABLE_TESTS=FALSE \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug
+```
+
+See for details [https://cristianadam.eu/20170709/speeding-up-cmake/](https://cristianadam.eu/20170709/speeding-up-cmake/)
+
+NOTE: gold not threaded by default, configure with "--enable-threads"
+
+NOTE: lld threaded by default, may be faster than gold
 
 ## For contibutors: oclint
 
@@ -949,28 +1023,14 @@ export PATH=$OCLINT_HOME/bin:$PATH
 oclint -version
 ```
 
-Usage (`-DENABLE_OCLINT=ON`):
+Usage (runs cmake with `-DENABLE_OCLINT=ON`):
 
 ```bash
-cd ~/flextool
+# NOTE: -DCLEAN_OLD="OFF" to keep generated html report
+cmake -DOCLINT="ON" -DCLEAN_OLD="OFF" -P tools/run_tool.cmake
+```
 
-# see section about `conan editable mode`
-cd local_build
-
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_OCLINT=ON
-cmake .. \
-  -DENABLE_OCLINT=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug
-
-cmake -E time cmake --build . \
-  --target flextool_run_oclint
-
+```bash
 # `report.html` must exist
 # find $PWD -name report.html
 ```
@@ -987,35 +1047,10 @@ NOTE: you can suppress oclint warnings [http://docs.oclint.org/en/stable/howto/s
 
 See for details [https://clang.llvm.org/docs/ClangFormat.html](https://clang.llvm.org/docs/ClangFormat.html)
 
-Usage (`-DENABLE_CLANG_FORMAT=ON`):
+Usage (runs cmake with `-DENABLE_CLANG_FORMAT=ON`):
 
 ```bash
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build
-
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_IWYU=ON
-cmake .. \
-  -DENABLE_CLANG_FORMAT=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug
-
-# remove old build artifacts
-rm -rf flextool
-rm -rf bin
-find . -iname '*.o' -exec rm {} \;
-find . -iname '*.a' -exec rm {} \;
-find . -iname '*.dll' -exec rm {} \;
-find . -iname '*.lib' -exec rm {} \;
-
-cmake -E time cmake --build . \
-  --target flextool_run_clang_format
+cmake -DCLANG_FORMAT="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
 We use `.clang-format` file. See for details [https://clang.llvm.org/docs/ClangFormatStyleOptions.html](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)
@@ -1047,35 +1082,10 @@ export PATH=$UNCRUSTIFY_HOME:$PATH
 uncrustify -version
 ```
 
-Usage (`-DENABLE_UNCRUSTIFY=ON`):
+Usage (runs cmake with `-DENABLE_UNCRUSTIFY=ON`):
 
 ```bash
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build
-
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_IWYU=ON
-cmake .. \
-  -DENABLE_UNCRUSTIFY=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug
-
-# remove old build artifacts
-rm -rf flextool
-rm -rf bin
-find . -iname '*.o' -exec rm {} \;
-find . -iname '*.a' -exec rm {} \;
-find . -iname '*.dll' -exec rm {} \;
-find . -iname '*.lib' -exec rm {} \;
-
-cmake -E time cmake --build . \
-  --target flextool_run_uncrustify
+cmake -DUNCRUSTIFY="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
 We use `uncrustify.cfg` file. See for details [https://patrickhenson.com/2018/06/07/uncrustify-configuration.html](https://patrickhenson.com/2018/06/07/uncrustify-configuration.html)
@@ -1206,7 +1216,7 @@ cd local_build
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
-# NOTE: -DENABLE_IWYU=ON
+# NOTE: -DENABLE_TSAN=ON
 cmake .. \
   -DENABLE_TSAN=ON \
   -DENABLE_TESTS=FALSE \
@@ -1234,6 +1244,11 @@ NOTE: you can create blacklist file, see:
 * [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
 
 ## For contibutors: Address Sanitizer
+
+See for details:
+
+* [http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/](http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/)
+* [https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/](https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/)
 
 Set env. var.:
 
@@ -1323,7 +1338,7 @@ cd local_build
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
-# NOTE: -DENABLE_IWYU=ON
+# NOTE: -DENABLE_ASAN=ON
 cmake .. \
   -DENABLE_ASAN=ON \
   -DENABLE_TESTS=FALSE \
@@ -1449,7 +1464,7 @@ cd local_build
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
-# NOTE: -DENABLE_IWYU=ON
+# NOTE: -DENABLE_MSAN=ON
 cmake .. \
   -DENABLE_MSAN=ON \
   -DENABLE_TESTS=FALSE \
@@ -1584,7 +1599,7 @@ cd local_build
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
-# NOTE: -DENABLE_IWYU=ON
+# NOTE: -DENABLE_UBSAN=ON
 cmake .. \
   -DENABLE_UBSAN=ON \
   -DENABLE_TESTS=FALSE \
@@ -1672,6 +1687,83 @@ GIT_SSL_NO_VERIFY=true \
 conan build . \
   --build-folder local_build
 ```
+
+## For contibutors: doxygen
+
+```bash
+cd ~
+
+git clone https://github.com/mosra/m.css.git
+
+sudo apt-get install doxygen
+
+sudo apt install python3-pip
+
+# /usr/bin/python must point to python3
+/usr/bin/python --version
+
+# NOTE: switch to python3 for doxygen or use -DPYTHON_EXECUTABLE=/usr/bin/python3
+alias python='/usr/bin/python3'
+
+# You may need sudo here
+pip3 install jinja2 Pygments
+
+sudo apt install \
+    texlive-base \
+    texlive-latex-extra \
+    texlive-fonts-extra \
+    texlive-fonts-recommended
+```
+
+use cmake build with '--target doxyDoc' and `-DBUILD_DOXY_DOC=ON`
+
+```bash
+gcc -v
+export CC=gcc
+export CXX=g++
+cmake -E remove_directory build
+cmake -E make_directory build
+cmake -E chdir examples/simple conan install --build=missing --profile gcc .
+cmake -E chdir build cmake -E time cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_DOXY_DOC=ON -DPYTHON_EXECUTABLE=/usr/bin/python3 ..
+cmake -E chdir build cmake -E time cmake --build . --target doxyDoc_notheme --config Debug -- -j8
+cmake -E chdir build cmake -E time cmake --build . --config Debug -- -j8
+cmake -E chdir build cmake -E time cmake --build . --target doxyDoc --config Debug -- -j8
+# Use to find index.html
+find build -name *.html
+```
+
+open ./build/doxyDoc/html/index.html
+
+NOTE: Document namespaces in docs/namespaces.dox
+
+NOTE: [Files, directories and symbols with no documentation are not present in the output at all](https://mcss.mosra.cz/doxygen/#troubleshooting)
+
+Used [comments style](https://mcss.mosra.cz/doxygen/):
+
+```bash
+/**
+ * @brief Path utils
+ *
+ * Example usage:
+ *
+ * @code{.cpp}
+ * const ::fs::path workdir = gloer::storage::getThisBinaryDirectoryPath();
+ * @endcode
+ **/
+```
+
+See:
+
+- [doxygen cheatsheet](http://www.agapow.net/programming/tools/doxygen-cheatsheet/)
+- [doxygen coding style](https://doc.magnum.graphics/magnum/coding-style.html#coding-style-documentation)
+
+## For contibutors: Fuzzing
+
+Fuzzing is a Black Box software testing technique, which basically consists in finding implementation bugs using malformed/semi-malformed data injection in an automated fashion.
+
+See for details:
+* https://github.com/Dor1s/libfuzzer-workshop/blob/master/lessons/01/Modern_Fuzzing_of_C_C%2B%2B_projects_slides_1-23.pdf
+* https://github.com/hbowden/nextgen/blob/master/CMakeLists.txt#L92
 
 ## LICENSE for open source components
 

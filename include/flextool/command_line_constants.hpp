@@ -1,18 +1,5 @@
 #pragma once
 
-#include <base/files/file_path.h>
-#include <base/macros.h>
-#include <base/sequenced_task_runner.h>
-#include <base/trace_event/trace_event.h>
-
-#include <boost/optional.hpp>
-#include <boost/optional/optional_io.hpp>
-#include <boost/program_options.hpp>
-#include <boost/utility/in_place_factory.hpp>
-
-#include <string>
-#include <vector>
-
 namespace cmd {
 
 // start tracing at application start

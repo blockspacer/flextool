@@ -290,7 +290,7 @@ ScopedAppEnvironment::~ScopedAppEnvironment()
   }
 }
 
-/// \todo long method
+/// \todo refactor long method
 bool ScopedAppEnvironment::init(int argc, char* argv[])
 {
   DCHECK(argc > 0);

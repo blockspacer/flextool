@@ -1,6 +1,16 @@
 #include "flextool/app_environment.hpp"
 #include "flextool/clang_tool.hpp"
 
+#include <flexlib/matchers/annotation_matcher.hpp>
+
+#include <base/logging.h>
+#include <base/memory/scoped_refptr.h>
+
+#include <stdlib.h>
+#include <ostream>
+#include <string>
+#include <vector>
+
 int main(int argc, char* argv[])
 {
   DCHECK(argc > 1);
