@@ -2,7 +2,8 @@
 
 if(ENABLE_MSAN OR ENABLE_TSAN OR ENABLE_ASAN OR ENABLE_UBSAN)
   if(cmake_build_type_tolower MATCHES "release" )
-    message(WARNING "Disable sanitizers in Release builds")
+    message(WARNING
+      "Disable sanitizers in Release builds")
   endif()
 
   # use llvm_tools from conan
@@ -30,23 +31,39 @@ endif()
 if(ENABLE_MSAN)
   message(STATUS "enabling MSAN on ${LIB_NAME}")
   add_msan_static_link(${LIB_NAME})
-  add_msan_flags(${LIB_NAME})
+  add_msan_definitions(${LIB_NAME})
+  add_msan_flags()
+else(ENABLE_MSAN)
+  message(STATUS
+    "Disabled ENABLE_MSAN")
 endif(ENABLE_MSAN)
 
 if(ENABLE_TSAN)
   message(STATUS "enabling TSAN on ${LIB_NAME}")
   add_tsan_static_link(${LIB_NAME})
-  add_tsan_flags(${LIB_NAME})
+  add_tsan_definitions(${LIB_NAME})
+  add_tsan_flags()
+else(ENABLE_TSAN)
+  message(STATUS
+    "Disabled ENABLE_TSAN")
 endif(ENABLE_TSAN)
 
 if(ENABLE_ASAN)
   message(STATUS "enabling ASAN on ${LIB_NAME}")
   add_asan_static_link(${LIB_NAME})
-  add_asan_flags(${LIB_NAME})
+  add_asan_definitions(${LIB_NAME})
+  add_asan_flags()
+else(ENABLE_ASAN)
+  message(STATUS
+    "Disabled ENABLE_ASAN")
 endif(ENABLE_ASAN)
 
 if(ENABLE_UBSAN)
   message(STATUS "enabling UBSAN on ${LIB_NAME}")
   add_ubsan_static_link(${LIB_NAME})
-  add_ubsan_flags(${LIB_NAME})
+  add_ubsan_definitions(${LIB_NAME})
+  add_ubsan_flags()
+else(ENABLE_UBSAN)
+  message(STATUS
+    "Disabled ENABLE_UBSAN")
 endif(ENABLE_UBSAN)

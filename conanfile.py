@@ -45,13 +45,18 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "enable_msan": [True, False],
         "enable_tsan": [True, False],
         "enable_valgrind": [True, False],
-        "enable_gold_linker": [True, False]
+        "enable_gold_linker": [True, False],
+        # see https://lcamtuf.coredump.cx/afl/
+        "enable_fuzz_afl": [True, False],
+        # see http://llvm.org/docs/LibFuzzer.html
+        "enable_fuzz_libfuzzer": [True, False]
     }
 
     default_options = (
         #"*:shared=False",
-        "enable_ubsan=False",
         "enable_gold_linker=False",
+        "enable_fuzz_afl=False",
+        "enable_fuzz_libfuzzer=False",
         "use_system_boost=False",
         "enable_ubsan=False",
         "enable_asan=False",
@@ -182,13 +187,15 @@ class flextoolConan(conan_build_helper.CMakePackage):
 
     def configure(self):
         lower_build_type = str(self.settings.build_type).lower()
-        if lower_build_type != "debug" and self._is_llvm_tools_enabled():
-            raise ConanInvalidConfiguration("llvm_tools is compatible only with Debug builds")
+
         if lower_build_type != "release" and not self._is_llvm_tools_enabled():
             self.output.warn('enable llvm_tools for Debug builds')
 
+        if self._is_iwyu_enabled() and (not self._is_llvm_tools_enabled() or not self.options['llvm_tools'].include_what_you_use):
+            raise ConanInvalidConfiguration("iwyu requires llvm_tools enabled and -o llvm_tools:include_what_you_use=True")
+
         if self._is_compile_with_llvm_tools_enabled() and not self._is_llvm_tools_enabled():
-            raise ConanInvalidConfiguration("llvm_tools must be enabled")
+            raise ConanInvalidConfiguration("to compile with llvm_tools you must be enable llvm_tools")
 
         if self.options.enable_valgrind:
             self.options["flexlib"].enable_valgrind = True
@@ -243,7 +250,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
     def requirements(self):
         if self._is_tests_enabled():
             self.requires("catch2/[>=2.1.0]@bincrafters/stable")
-            self.requires("gtest/[>=1.8.0]@bincrafters/stable")
+            #self.requires("gtest/[>=1.8.0]@bincrafters/stable")
+            self.requires("conan_gtest/release-1.10.0@conan/stable")
             self.requires("FakeIt/[>=2.0.4]@gasuketsu/stable")
 
         self.requires("chromium_icu/master@conan/stable")
@@ -347,6 +355,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
         self.add_cmake_option(cmake, "ENABLE_CPPCLEAN", self._is_cppclean_enabled())
 
         self.add_cmake_option(cmake, "ENABLE_LTO", self._is_lto_enabled())
+
+        self.add_cmake_option(cmake, "COMPILE_WITH_LLVM_TOOLS", self._is_compile_with_llvm_tools_enabled())
 
         cmake.definitions["CONAN_AUTO_INSTALL"] = 'OFF'
 

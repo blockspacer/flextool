@@ -212,6 +212,8 @@ endif()
 
 cmake_make_dir("${CURRENT_SCRIPT_DIR}/.tmp")
 
+# conan_build_helper
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper"
       "http://github.com/blockspacer/conan_build_helper.git"
@@ -222,6 +224,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper" # target to build
   ALWAYS_BUILD)
+
+# cmake_platform_detection_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cmake_platform_detection_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cmake_platform_detection_conan"
@@ -234,6 +238,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_platform_detection_conan" # target to build
   ALWAYS_BUILD)
 
+# cmake_build_options_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cmake_build_options_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cmake_build_options_conan"
       "http://github.com/blockspacer/cmake_build_options_conan.git"
@@ -244,6 +250,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_build_options_conan" # target to build
   ALWAYS_BUILD)
+
+# cmake_helper_utils_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cmake_helper_utils_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cmake_helper_utils_conan"
@@ -256,6 +264,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_helper_utils_conan" # target to build
   ALWAYS_BUILD)
 
+# cmake_sanitizers_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cmake_sanitizers_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cmake_sanitizers_conan"
       "http://github.com/blockspacer/cmake_sanitizers_conan.git"
@@ -266,6 +276,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_sanitizers_conan" # target to build
   ALWAYS_BUILD)
+
+# chromium_build_util_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_build_util_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_build_util_conan"
@@ -278,6 +290,21 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_build_util_conan" # target to build
   ALWAYS_BUILD)
 
+# conan_gtest
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_gtest")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_gtest"
+      "http://github.com/blockspacer/conan_gtest.git"
+      "")
+endif()
+conan_build_target_if(
+  "conan_gtest" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_gtest" # target to build
+  ALWAYS_BUILD)
+
+# conan_zlib
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_zlib")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_zlib"
       "http://github.com/blockspacer/conan_zlib.git"
@@ -288,6 +315,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_zlib" # target to build
   ALWAYS_BUILD)
+
+# conan_openssl
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_openssl")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_openssl"
@@ -300,6 +329,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_openssl" # target to build
   ALWAYS_BUILD)
 
+# conan_libevent
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_libevent")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_libevent"
       "http://github.com/blockspacer/conan_libevent.git"
@@ -311,16 +342,7 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_libevent" # target to build
   ALWAYS_BUILD)
 
-if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libevent_conan")
-  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_libevent_conan"
-      "http://github.com/blockspacer/chromium_libevent_conan.git"
-      "")
-endif()
-conan_build_target_if(
-  "chromium_libevent" # target to clean
-  "conan/stable"
-  "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libevent_conan" # target to build
-  ALWAYS_BUILD)
+# chromium_libevent_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libevent_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_libevent_conan"
@@ -332,6 +354,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libevent_conan" # target to build
   ALWAYS_BUILD)
+
+# chromium_dynamic_annotations_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_dynamic_annotations_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_dynamic_annotations_conan"
@@ -344,6 +368,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_dynamic_annotations_conan" # target to build
   ALWAYS_BUILD)
 
+# chromium_tcmalloc_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_tcmalloc_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_tcmalloc_conan"
       "http://github.com/blockspacer/chromium_tcmalloc_conan.git"
@@ -354,6 +380,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_tcmalloc_conan" # target to build
   ALWAYS_BUILD)
+
+# chromium_xdg_user_dirs_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_user_dirs_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_user_dirs_conan"
@@ -366,6 +394,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_user_dirs_conan" # target to build
   ALWAYS_BUILD)
 
+# chromium_xdg_mime_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_mime_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_mime_conan"
       "http://github.com/blockspacer/chromium_xdg_mime_conan.git"
@@ -376,6 +406,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_mime_conan" # target to build
   ALWAYS_BUILD)
+
+# chromium_modp_b64_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_modp_b64_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_modp_b64_conan"
@@ -388,6 +420,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_modp_b64_conan" # target to build
   ALWAYS_BUILD)
 
+# chromium_icu_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_icu_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_icu_conan"
       "http://github.com/blockspacer/chromium_icu_conan.git"
@@ -398,6 +432,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_icu_conan" # target to build
   ALWAYS_BUILD)
+
+# chromium_compact_enc_det_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_compact_enc_det_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_compact_enc_det_conan"
@@ -410,6 +446,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_compact_enc_det_conan" # target to build
   ALWAYS_BUILD)
 
+# cobalt_starboard_headers_only
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_headers_only")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_headers_only"
       "http://github.com/blockspacer/cobalt_starboard_headers_only.git"
@@ -420,6 +458,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_headers_only" # target to build
   ALWAYS_BUILD)
+
+# chromium_zlib_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_zlib_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_zlib_conan"
@@ -432,6 +472,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_zlib_conan" # target to build
   ALWAYS_BUILD)
 
+# cobalt_glm_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_glm_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cobalt_glm_conan"
       "http://github.com/blockspacer/cobalt_glm_conan.git"
@@ -442,6 +484,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_glm_conan" # target to build
   ALWAYS_BUILD)
+
+# chromium_libxml_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libxml_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_libxml_conan"
@@ -454,6 +498,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libxml_conan" # target to build
   ALWAYS_BUILD)
 
+# conan_bzip2
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_bzip2")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_bzip2"
       "http://github.com/blockspacer/conan_bzip2.git"
@@ -464,6 +510,8 @@ conan_build_target_if(
   "dev/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_bzip2" # target to build
   ALWAYS_BUILD)
+
+# conan_boost
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_boost")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_boost"
@@ -476,6 +524,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_boost" # target to build
   ALWAYS_BUILD)
 
+# cobalt_starboard_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_conan"
       "http://github.com/blockspacer/cobalt_starboard_conan.git"
@@ -486,6 +536,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_conan" # target to build
   ALWAYS_BUILD)
+
+# chromium_base_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_base_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/chromium_base_conan"
@@ -498,6 +550,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_base_conan" # target to build
   ALWAYS_BUILD)
 
+# clang_folly_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/clang_folly_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/clang_folly_conan"
       "http://github.com/blockspacer/clang_folly_conan.git"
@@ -509,9 +563,7 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/clang_folly_conan" # target to build
   ALWAYS_BUILD)
 
-if(EXISTS "${CURRENT_SCRIPT_DIR}/.tmp")
-  cmake_remove_directory("${CURRENT_SCRIPT_DIR}/.tmp")
-endif()
+# corrade
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/corrade")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/corrade"
@@ -524,6 +576,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/corrade" # target to build
   ALWAYS_BUILD)
 
+# type_safe
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/type_safe")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/type_safe"
       "http://github.com/foonathan/type_safe.git"
@@ -534,6 +588,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/type_safe" # target to build
   ALWAYS_BUILD)
+
+# basis
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/basis")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/basis"
@@ -546,6 +602,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/basis" # target to build
   ALWAYS_BUILD)
 
+# cling_conan
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cling_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cling_conan"
       "https://github.com/blockspacer/cling_conan.git"
@@ -556,6 +614,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cling_conan" # target to build
   ALWAYS_BUILD)
+
+# flexlib
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flexlib")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flexlib"
@@ -568,6 +628,8 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/flexlib" # target to build
   ALWAYS_BUILD)
 
+# flex_support_headers
+
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers"
       "https://github.com/blockspacer/flex_support_headers.git"
@@ -578,6 +640,8 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers" # target to build
   ALWAYS_BUILD)
+
+# conan-cppcheck_installer
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer"

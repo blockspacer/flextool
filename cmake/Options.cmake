@@ -13,7 +13,7 @@ option(ENABLE_LWYU
   "Enable CMAKE_LINK_WHAT_YOU_USE" ON)
 
 option(COMPILE_WITH_LLVM_TOOLS
-  "Enable clnag from llvm_tools (conan package)" OFF)
+  "Enable clang from llvm_tools (conan package)" OFF)
 
 option(ENABLE_TESTS
   "Enable tests" OFF)

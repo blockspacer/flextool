@@ -126,7 +126,7 @@ endif()
 
 if(COMPILE_WITH_LLVM_TOOLS)
   # force change CMAKE_*_COMPILER and CMAKE_LINKER to clang from conan
-  compile_with_llvm_tools()
+  compile_with_llvm_tools() # from cmake_helper_utils (conan package)
 endif(COMPILE_WITH_LLVM_TOOLS)
 
 # Keep symbols for JIT resolution
@@ -395,20 +395,20 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_sanitizers.cmake)
 
 # add_gold_linker
 if(USE_LD_GOLD)
-  add_gold_linker()
+  add_gold_linker() # from cmake_helper_utils (conan package)
 endif(USE_LD_GOLD)
 
 ## ---------------------------- ccache -------------------------------- ##
 
 if(USE_CCACHE)
   add_ccache()
-  target_ccache_summary(${LIB_NAME})
+  target_ccache_summary(${LIB_NAME}) # from cmake_helper_utils (conan package)
 endif(USE_CCACHE)
 
 ## ---------------------------- coverage -------------------------------- ##
 
 if(USE_COVERAGE)
-  add_coverage()
+  add_coverage() # from cmake_helper_utils (conan package)
 endif(USE_COVERAGE)
 
 ## ---------------------------- RULE_MESSAGES property -------------------------------- ##

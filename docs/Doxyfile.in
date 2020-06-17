@@ -658,7 +658,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = README.md @DOXY_DOC_INPUT_ROOT_DIRS@ @DOXY_ROOT_DIR@/src @DOXY_ROOT_DIR@/examples @DOXY_ROOT_DIR@/src/algo
+INPUT                  = README.md @DOXY_DOC_INPUT_ROOT_DIRS@ @DOXY_ROOT_DIR@/src
 
 # If the value of the INPUT tag contains directories, you can use the
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp

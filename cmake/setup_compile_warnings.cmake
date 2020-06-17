@@ -26,7 +26,8 @@ target_compile_options(${LIB_NAME} PRIVATE
 )
 
 # # Helper that can set default warning flags for you
-target_set_warnings(${LIB_NAME}
+target_set_warnings( # from cmake_helper_utils (conan package)
+  ${LIB_NAME}
   ENABLE ALL
   AS_ERROR ALL
   DISABLE Annoying)

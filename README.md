@@ -1126,6 +1126,8 @@ You can integrate `uncrustify` with IDE:
 
 NOTE: Libc/libstdc++ static linking is not supported.
 
+NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+
 NOTE: Non-position-independent executables are not supported.
 Therefore, the fsanitize=thread flag will cause Clang to act as though the -fPIE flag had been supplied if compiling without -fPIC, and as though the -pie flag had been supplied if linking an executable.
 
@@ -1250,11 +1252,13 @@ See for details:
 * [http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/](http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/)
 * [https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/](https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/)
 
+NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+
 Set env. var.:
 
 ```bash
 # see https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
-export ASAN_OPTIONS="fast_unwind_on_malloc=0:check_initialization_order=true:symbolize=1:handle_segv=0:detect_leaks=1:detect_stack_use_after_return=1:disable_coredump=0:abort_on_error=1"
+export ASAN_OPTIONS="fast_unwind_on_malloc=0:strict_init_order=1:check_initialization_order=true:symbolize=1:handle_segv=0:detect_leaks=1:detect_stack_use_after_return=1:disable_coredump=0:abort_on_error=1"
 # you can also set LSAN_OPTIONS=suppressions=suppr.txt
 
 # make sure that env. var. ASAN_SYMBOLIZER_PATH points to llvm-symbolizer
@@ -1371,6 +1375,8 @@ NOTE: MemorySanitizer requires that all program code is instrumented.
 This also includes any libraries that the program depends on, even libc. Failing to achieve this may result in false reports.
 For the same reason you may need to replace all inline assembly code that writes to memory with a pure C/C++ code.
 
+NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+
 Set env. var.:
 
 ```bash
@@ -1391,15 +1397,20 @@ Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
   -e flextool:enable_llvm_tools=True
 ```
 
-If you want MemorySanitizer to work properly and not produce any false positives, you must ensure that all the code in your program and in libraries it uses is instrumented (i.e. built with -fsanitize=memory).
+If you want MemorySanitizer to work properly and not produce any false positives, you must ensure that all the code in your program and in libraries it uses is instrumented (i.e. built with `-fsanitize=memory`).
 In particular, you would need to link against MSan-instrumented C++ standard library. See [https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo](https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo)
 You need to re-build both C++ standard library and googletest (and other dependencies) with MemorySanitizer.
 
-NOTE: re-build some deps with custom MSan-instrumented C++ standard library. For that you can add to `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`: `-fsanitize=memory -stdlib=libc++ -L/usr/src/libcxx_msan/lib -lc++abi -I/usr/src/libcxx_msan/include -I/usr/src/libcxx_msan/include/c++/v1` (replace paths to yours)
+Re-build all required projects with `-o llvm_tools:enable_msan=True`, `enable_llvm_tools=True`, `compile_with_llvm_tools=True` and `llvm_tools:build_type=Release` to use MSan-instrumented C++ standard library.
+
+NOTE: re-build some deps with custom MSan-instrumented C++ standard library. For that you can add to `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`: `-fsanitize=memory -stdlib=libc++ -L/usr/src/libcxx_msan/lib -lc++abi -I/usr/src/libcxx_msan/include -I/usr/src/libcxx_msan/include/c++/v1` (replace paths to yours). Usually dependency will have option like `-o *:enable_msan=True` to achieve same effect.
 
 You must build project and some deps with `enable_msan=True`:
 
 ```bash
+# NOTE: Re-build all deps with MSan-instrumented C++ standard library.
+# Usually it may be achieved using `*:compile_with_llvm_tools=True` and `-o llvm_tools:enable_msan=True`.
+
 CONAN_REVISIONS_ENABLED=1 \
 CONAN_VERBOSE_TRACEBACK=1 \
 CONAN_PRINT_RUN_COMMANDS=1 \
@@ -1411,7 +1422,16 @@ GIT_SSL_NO_VERIFY=true \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
+    -s compiler=clang \
+    -s compiler.version=10 \
+    -s compiler.libcxx=libstdc++11 \
+    -s llvm_tools:compiler=clang \
+    -s llvm_tools:compiler.version=6.0 \
+    -s llvm_tools:compiler.libcxx=libstdc++11 \
     --profile clang \
+        -o llvm_tools:enable_msan=True \
+        -o llvm_tools:include_what_you_use=False \
+        -e flextool:compile_with_llvm_tools=True \
         -e flextool:enable_tests=True \
         -e flextool:enable_llvm_tools=True \
         -o flextool:enable_msan=True \
@@ -1491,7 +1511,31 @@ NOTE: you can create blacklist file, see:
 * [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
 * [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
 
+FAQ:
+
+* How to use MemorySanitizer (MSAN) with `syscall(SYS_getrandom, ..., ..., ...)`?
+  Use __msan_unpoison:
+  ```cpp
+  #if defined(__has_feature)
+  #if __has_feature(memory_sanitizer)
+          /* MemorySanitizer (MSAN) does not support syscall(SYS_getrandom, ..., ..., ...):
+           * Use __msan_unpoison to make MSAN understand how many bytes that have been
+           * written to ent32.
+           *
+           * __msan_unpoison does not change the actual memory content, but only MSAN's
+           * perception of the memory content.
+           *
+           * See https://github.com/google/sanitizers/issues/852 ("memory sanitizer: not
+           * tracking memory initialization with getrandom") for details.
+           */
+          __msan_unpoison(ent32, rv);
+  #endif
+  #endif
+  ```
+
 ## For contibutors: Undefined Behavior Sanitizer
+
+NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
 
 Set env. var.:
 
@@ -1633,7 +1677,9 @@ Requires `enable_llvm_tools=True` and `compile_with_llvm_tools=True` and `llvm_t
 ```bash
 -s llvm_tools:build_type=Release \
   -e flextool:enable_llvm_tools=True \
-  -e flextool:compile_with_llvm_tools=True
+  -e flextool:compile_with_llvm_tools=True \
+  -o llvm_tools:include_what_you_use=True \
+  ...
 ```
 
 * `enable_llvm_tools` installs clang 10 from conan
@@ -1664,10 +1710,14 @@ GIT_SSL_NO_VERIFY=true \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
+    -s llvm_tools:compiler=clang \
+    -s llvm_tools:compiler.version=6.0 \
+    -s llvm_tools:compiler.libcxx=libstdc++11 \
     --profile clang \
         -e flextool:enable_tests=True \
         -e flextool:enable_llvm_tools=True \
         -e flextool:compile_with_llvm_tools=True \
+        -o llvm_tools:include_what_you_use=True \
         -s compiler=clang \
         -s compiler.version=10 \
         -s compiler.libcxx=libstdc++11
@@ -1690,10 +1740,20 @@ conan build . \
 
 ## For contibutors: doxygen
 
+`MCSS_ROOT_DIR_FOR_DOCS` must point to `m.css` sources like below:
+
 ```bash
 cd ~
 
 git clone https://github.com/mosra/m.css.git
+
+pip3 install jinja2 Pygments
+
+sudo apt install \
+    texlive-base \
+    texlive-latex-extra \
+    texlive-fonts-extra \
+    texlive-fonts-recommended
 
 sudo apt-get install doxygen
 
@@ -1715,24 +1775,55 @@ sudo apt install \
     texlive-fonts-recommended
 ```
 
-use cmake build with '--target doxyDoc' and `-DBUILD_DOXY_DOC=ON`
+Use cmake build with '--target doxyDoc' and `-DBUILD_DOXY_DOC=ON`
 
 ```bash
-gcc -v
-export CC=gcc
-export CXX=g++
-cmake -E remove_directory build
-cmake -E make_directory build
-cmake -E chdir examples/simple conan install --build=missing --profile gcc .
-cmake -E chdir build cmake -E time cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_DOXY_DOC=ON -DPYTHON_EXECUTABLE=/usr/bin/python3 ..
-cmake -E chdir build cmake -E time cmake --build . --target doxyDoc_notheme --config Debug -- -j8
-cmake -E chdir build cmake -E time cmake --build . --config Debug -- -j8
-cmake -E chdir build cmake -E time cmake --build . --target doxyDoc --config Debug -- -j8
+cd ~/flextool
+
+# see section about `conan editable mode`
+cd local_build
+
+# remove old CMakeCache
+(rm CMakeCache.txt || true)
+
+# remove old build artifacts
+rm -rf flextool
+rm -rf bin
+find . -iname '*.o' -exec rm {} \;
+find . -iname '*.a' -exec rm {} \;
+find . -iname '*.dll' -exec rm {} \;
+find . -iname '*.lib' -exec rm {} \;
+
+# remove old build docs
+rm -rf doc-mcss
+rm -rf docs
+
+cmake -E make_directory "doc-mcss"
+
+# NOTE: you can change python version like so: -DPYTHON_EXECUTABLE=/usr/bin/python3
+cmake .. \
+  -DMCSS_ROOT_DIR_FOR_DOCS=$HOME/m.css \
+  -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+  -DENABLE_TESTS=TRUE \
+  -DBUILD_DOXY_DOC=ON \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCONAN_AUTO_INSTALL=OFF \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DDOXY_ROOT_DIR=$PWD/doc-mcss \
+  -DDOXY_DOC_COMMON_IMG_PATH=$PWD/.. \
+  -DPROJECT_SOURCES_DIR_FOR_DOCS=$PWD/../src
+
+cmake -E time cmake --build . \
+  --target doxyDoc_notheme
+
+cmake -E time cmake --build . \
+  --target doxyDoc
+
 # Use to find index.html
-find build -name *.html
+find $PWD -name *.html
 ```
 
-open ./build/doxyDoc/html/index.html
+open doxyDoc/html/index.html
 
 NOTE: Document namespaces in docs/namespaces.dox
 
@@ -1747,7 +1838,7 @@ Used [comments style](https://mcss.mosra.cz/doxygen/):
  * Example usage:
  *
  * @code{.cpp}
- * const ::fs::path workdir = gloer::storage::getThisBinaryDirectoryPath();
+ * const ::fs::path workdir = storage::getThisBinaryDirectoryPath();
  * @endcode
  **/
 ```
@@ -1757,13 +1848,340 @@ See:
 - [doxygen cheatsheet](http://www.agapow.net/programming/tools/doxygen-cheatsheet/)
 - [doxygen coding style](https://doc.magnum.graphics/magnum/coding-style.html#coding-style-documentation)
 
-## For contibutors: Fuzzing
+## For contibutors: Fuzzing with AFL
 
-Fuzzing is a Black Box software testing technique, which basically consists in finding implementation bugs using malformed/semi-malformed data injection in an automated fashion.
+See for details [https://afl-1.readthedocs.io/en/latest/index.html](https://afl-1.readthedocs.io/en/latest/index.html)
+
+NOTE: prefer github.com/google/AFL or aflplus.plus to not updated AFL from `lcamtuf.coredump.cx/afl`
+
+Fuzzing is a Black Box software testing technique.
+
+Fuzzing consists in finding implementation bugs using malformed/semi-malformed data injection in an automated fashion.
+
+Fuzzer tries to modify the input so that it can reach as much lines of the program code as possible.
+
+Therefore, fuzzing allows the discovery of vulnerabilities lying in code paths that are hard to reach by normal usage.
+
+Install compiling the source code using following commands:
+
+```bash
+# optional
+# sudo apt-get update
+
+# optional
+# sudo apt-get -y install autoconf automake bison build-essential \
+ca-certificates llvm-dev libtool libtool-bin \
+libglib2.0-dev make nasm wget
+
+# Tested with clang 6.0 and gcc 7
+sudo apt-get -y install clang-6.0 g++-7 gcc-7
+
+export CXX=g++-7
+export CC=gcc-7
+export PATH=/usr/bin/:$PATH
+$CC -v
+
+
+# llvm-config binary that coresponds to the same clang you are using to compile
+export LLVM_CONFIG=/usr/bin/llvm-config-6.0
+$LLVM_CONFIG --cxxflags
+
+cd ~
+git clone -b v2.56b https://github.com/google/AFL.git --recursive
+
+# NOTE: original AFL not updated since November 2017,
+# so prefer `google/AFL.git` to `lcamtuf.coredump.cx/afl`
+# wget http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz
+# tar -xf afl-latest.tgz
+# rm afl-latest.tgz
+# cd afl*
+
+cd AFL
+make
+# build llvm using the sample compiler as afl code uses
+# see https://groups.google.com/forum/#!topic/afl-users/1WqZpGXvYY0
+make \
+  -C llvm_mode \
+  LLVM_CONFIG=$LLVM_CONFIG \
+  CC=clang-6.0 \
+  CXX=clang++-6.0
+#
+# optional
+# cd qemu_mode
+# ./build_qemu_support.sh
+# cd ..
+#
+make \
+  -C libdislocator
+make \
+  -C libtokencap
+sudo make install
+
+# OR add to PATH via export PATH=$PATH:...
+
+# do not forget to reset CC and LLVM_CONFIG
+unset CXX
+unset CC
+unset LLVM_CONFIG
+```
+
+We compile code using the AFL compiler using `-DCMAKE_C_COMPILER=afl-clang-fast`, `-DCMAKE_CXX_COMPILER=afl-clang-fast++`, `-DCMAKE_LINKER=afl-clang-fast`.
+
+You can verify if binary uses the AFL compiler using `nm BINARY_PATH | grep afl`
+
+Build application with some sanitizers and debug information enabled (`-DENABLE_ASAN=ON` etc.):
+
+NOTE: There are some things to consider when using Address Sanitizer. Even if ASan finds a memory access violation it doesn't automatically crash the application. This is a problem when using automated fuzzing tools, because they usually try to detect segfaults by checking the return code. We can however force ASan to crash software when an error happens with the environment variable ASAN_OPTIONS like this before fuzzing: `export ASAN_OPTIONS='abort_on_error=1'`
+
+NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+
+```bash
+# see https://afl-1.readthedocs.io/en/latest/instrumenting.html
+
+# Setting AFL_HARDEN automatically adds code hardening options
+# when invoking the downstream compiler.
+# This includes -D_FORTIFY_SOURCE=2 and -fstack-protector-all.
+# NOTE: _FORTIFY_SOURCE not compatible with ASAN
+# export AFL_HARDEN=1
+
+# see https://aflplus.plus/docs/env_variables/
+export AFL_EXIT_WHEN_DONE=1
+
+# By default, the wrapper appends -O3 to optimize builds.
+export AFL_DONT_OPTIMIZE=1
+
+# or AFL_USE_MSAN, etc.
+# READ https://aflplus.plus/docs/notes_for_asan/
+NOTE: if you run several slaves only one should run the
+# target compiled with ASAN (and UBSAN, CFISAN),
+# the others should run the target with no sanitizers compiled in.
+export AFL_USE_UBSAN=1
+export AFL_USE_ASAN=1
+
+# AFL_PRELOAD causes AFL to set LD_PRELOAD for the target binary
+# without disrupting the afl-fuzz process itself.
+# This is useful, among other things, for bootstrapping libdislocator.so.
+
+# see __AFL_LOOP
+# export AFL_PERSISTENT=1
+
+# make sure you compile app with `-fsanitize=address` or `-fsanitize=memory` etc.
+```
+
+NOTE: Use `AFL_DONT_OPTIMIZE=1`, read http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html
+
+See for details `Using ASAN with AFL` at [https://afl-1.readthedocs.io/en/latest/notes_for_asan.html](https://afl-1.readthedocs.io/en/latest/notes_for_asan.html)
+
+Before fuzzing the program, we may require switching to root user to arrange the core_pattern. Login as root and type the following command
+
+```bash
+# see https://afl-1.readthedocs.io/en/latest/tips.html#check-os-configuration
+sudo su
+# disable core dumps and CPU frequency scaling on your system (AFL will warn you if you should do this)
+echo core >/proc/sys/kernel/core_pattern
+# afl-fuzz will usually complain that you should change your `CPUFREQ` settings to performance because the automatic frequency scaling by the Linux kernel doesn't work well with afl.
+echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+exit
+```
+
+NOTE: Do not run the fuzzer with root access
+
+NOTE: Get a solid environment for the fuzzer, never run the fuzzer on low configured hypervisors
+
+`afl-fuzz` is used to run AFL, the actual syntax is as follows
+
+```bash
+# see https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries
+# -i is a directory of files to use as fuzz input "seeds"
+# -o is a directory to write the results (including inputs that provoke crashes or hangs)
+# -m is the memory allowed to use. Example: -m500
+# You can use -m none to disable memory limit
+# -t is the maximum time that a run is allowed to take before being declared a "hang"
+# Timeout of 10 seconds:  -t 10000
+# @@ is fuzzer input file name
+# if you skip @@ it will pass the fuzzed file on the standard input
+AFL_PERSISTENT=1 afl-fuzz -i [TESTCASE DIR] -o [RESULT_DIR] [TARGET_BINARY] [BINARY_PARAMS] @@
+
+# Example 1: runs `tar` with arguments `xfJ @@ -C fuzz-garbage/ --force-local`
+# where @@ is fuzzer input file name
+ ./afl-1.56b/afl-fuzz -i fuzz-input/ -o fuzz-state/ -t 10000 ~/tar-1.28/src/tar xfJ @@ -C fuzz-garbage/ --force-local
+
+# Example 2: server is dual core, so we can run one AFL instance per core
+AFL_PERSISTENT=1 afl-fuzz -i inputs -o multi_sync -M master ./fuzz_capstone
+# In another terminal
+AFL_PERSISTENT=1 afl-fuzz -i inputs -o multi_sync -S slave1 ./fuzz_capstone
+```
+
+To understand AFL status screen read [https://afl-1.readthedocs.io/en/latest/user_guide.html#status-screen](https://afl-1.readthedocs.io/en/latest/user_guide.html#status-screen)
+
+NOTE: If `total paths` stays at 1 you probably have set up something wrong.
+
+NOTE: Prefer `-m none`. We use AddressSanitizer that maps a lot of pages for the shadow memory so we have to remove the memory limit to have it up and running.
+
+NOTE: With `-m none` your fuzzed software may actually try to really allocate and use a lot of memory due to your fuzzed samples. This may lead to random crashes in your system. You shouldn't do any important work while doing so.
+
+NOTE: you can try `ASAN_OPTIONS=hard_rss_limit_mb=2000` to avoid `-m none`. See https://countuponsecurity.com/category/fuzzing/
+
+You can write custom binary that will run using `afl-fuzz`. It may wrap function that you want to test like so:
+
+```cpp
+// harness is simply a C program that makes use of certain methods from
+// a library, allowing you to indirectly fuzz it
+
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <iostream>
+#include <ifstream>
+
+int main(int argc, char *argv[]) {
+{
+  // init resources here
+  if (argc > 1) {
+    std::ifstream fin;
+    fin.open(argv[1]);
+    parse(fin); // custom logic
+  } else {
+    /// \note requires AFL_PERSISTENT=1
+    // __AFL_LOOP is the way that we have to tell AFL
+    // that we want persistent mode.
+    // Each fuzzing iteration,
+    // instead of to fork and re-execute the target with a different input,
+    // is just an execution of this loop.
+    // Force AFL to run 1000 times,
+    // with 1000 different inputs fed to the library.
+    // After that, the process is restarted by AFL.
+    // This ensures we regularly replace the process to avoid memory leaks.
+    // see https://toastedcornflakes.github.io/articles/fuzzing_capstone_with_afl.html
+    while (__AFL_LOOP(1000)) {
+      parse(std::cin); // custom logic
+    }
+  }
+  // free resources here
+  return 0;
+}
+```
+
+NOTE: __AFL_LOOP(), allows AFL to perform the fuzzing of the binary in process through some memory wizardry, as opposed to starting up a new process for every new testcase we want to test. Requires `AFL_PERSISTENT=1`.
+
+By default, AFL forks a process every time it tests a different input. We can control AFL to run multiple fuzz cases in a single instance of the program, rather than reverting the program state back for every test sample. This will reduce the time spent in the kernel space and improve the fuzzing speed. This is called AFL_PERSISTENT mode. We can do that by including the __AFL_LOOP(1000) macro within our test harness.
+
+NOTE: you may be interested in __AFL_INIT, see for details [https://robertheaton.com/2019/07/08/how-to-write-an-afl-wrapper-for-any-language/](https://robertheaton.com/2019/07/08/how-to-write-an-afl-wrapper-for-any-language/)
+
+Let the fuzzer run for few hours or days as it generates maximum code execution paths based on the test cases provided.
+
+Stop fuzzing issuing `ctrl+c’ observing `total paths` and `uniq crashes` in the section `overall results` of AFL statistics screen.
+
+Create dictionary that takes all of the constants and strings found in the program binary and adds them to the dictionary. See for script code [http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html](http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html)
+
+```bash
+#!/bin/bash
+
+# see http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html
+
+objdump -d "${1}" | grep -Eo '\$0x[0-9a-f]+' | cut -c 2- | sort -u | while read const; do echo $const | python -c 'import sys, struct; sys.stdout.write("".join(struct.pack("<I" if len(l) <= 11 else "<Q", int(l,0)) for l in sys.stdin.readlines()))' > testcases/$const; done
+i=0; strings "${1}"| while read line; do echo -n "$line" > testcases/string_${i} ; i=$[ $i + 1 ] ; done
+```
+
+You need to create a dictionary in one of the two formats discussed in dictionaries/README.dictionaries; and then point the fuzzer to it via the -x option in the command line. Read [https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries](https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries) and [https://github.com/mirrorer/afl/blob/master/dictionaries/README.dictionaries](https://github.com/mirrorer/afl/blob/master/dictionaries/README.dictionaries)
+
+You can also use `libtokencap` to create a dictionary, see [https://github.com/mirrorer/afl/blob/master/libtokencap/README.tokencap](https://github.com/mirrorer/afl/blob/master/libtokencap/README.tokencap)
+
+We can find the test cases which cause the crash, in the `results’ folder which we have created. On navigating to the folder `results`, we observe few folders gets generated
+
+NOTE: Keep the input data files small. Under 1 kB is ideal
+
+Use `afl-cmin` to minimize number of input data files.
+
+Use `afl-tmin` to minimize each input data file (removes any bytes that do not affect the code paths taken).
+
+Use `afl-ptmin` to run `afl-tmin` in parallel. See for details [https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/](https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/)
+
+To reproduce found crash you can use `crashwalk` (it is gdb plugin), see [https://ritcsec.wordpress.com/2018/05/10/vulnerability-discovery-by-fuzzing/](https://ritcsec.wordpress.com/2018/05/10/vulnerability-discovery-by-fuzzing/)
+
+```bash
+apt-get install gdb golang
+mkdir src
+cd src
+git clone https://github.com/jfoote/exploitable.git
+cd && mkdir go
+export GOPATH=~/go
+# crashwalk installed in $GOPATH/bin/
+go get -u github.com/bnagy/crashwalk/cmd/...
+
+# USAGE
+~/go/bin/cwtriage -root syncdir/fuzzer1/crashes/ -match id -- ~/parse @@
+```
+
+When you can not reproduce a crash found by afl-fuzz, the most likely cause is that you are not setting the same memory limit as used by the tool. Read [https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries](https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries)
+
+NOTE: You can use `afl-cov` to quantify how well you are exercising the available code paths in the binary. See for details [https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/](https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/)
+
+NOTE: putting the AFL working directory on a RAM disk, you can potentially gain some additional speed and avoid wearing out the disks at the same time. See for details [https://bananamafia.dev/post/gb-fuzz/](https://bananamafia.dev/post/gb-fuzz/)
+
+```bash
+# Fuzzing involves billions of reads and writes to the filesystem (!!!)
+# Use RAMdisks for input since, we don't want to destroy harddrives
+# Make a 1GB ramdisk file from which AFL can read input
+sudo mkdir -p /mnt/inputfiles
+sudo chown -R $USER:$(id -gn $USER) /mnt/inputfiles
+sudo mount -t tmpfs -o size=1024M tmpfs /mnt/inputfiles/
+```
+
+NOTE: `-fvisibility-inlines-hidden` flag MAY BREAK AFL INSTRUMENTATION
+
+AFL provides a crash exploration script in `experimental/crash_triage/triage_crashes.sh`
+
+When run the triage script will cycle through each crash file in /out/crashes directory and print the resulting crash data to the screen.
+
+`triage_crashes` usage: `./triage_crashes.sh ~/targets/out/ ~/targets/target-app/target-app_binary` See for details [https://research.aurainfosec.io/hunting-for-bugs-101/](https://research.aurainfosec.io/hunting-for-bugs-101/)
+
+NOTE: Instrument with AFL just the libraries you actually want to stress-test right now, one at a time. Let the program use system-wide, non-instrumented libraries for any functionality you don’t actually want to fuzz.
+
+NOTE: you can enable `crash exploration mode` via `-C`, see https://lcamtuf.blogspot.com/2014/11/afl-fuzz-crash-exploration-mode.html
+
+NOTE: AFL detects faults by checking for the first spawned process dying due to a signal (SIGSEGV, SIGABRT, etc). Programs that install custom handlers for these signals may need to have the relevant code commented out
 
 See for details:
+
+* https://www.loginsoft.com/blog/2018/02/02/discovering-vulnerabilities-with-afl-fuzzer/
+* https://www.youtube.com/watch?v=vzfhHjnycnE
+* https://gamozolabs.github.io/fuzzing/2018/09/16/scaling_afl.html
+* https://ritcsec.wordpress.com/2018/05/10/vulnerability-discovery-by-fuzzing/
 * https://github.com/Dor1s/libfuzzer-workshop/blob/master/lessons/01/Modern_Fuzzing_of_C_C%2B%2B_projects_slides_1-23.pdf
 * https://github.com/hbowden/nextgen/blob/master/CMakeLists.txt#L92
+* https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/
+* https://cs.anu.edu.au/courses/csprojects/19S1/reports/u6759601_report.pdf
+* https://www.fastly.com/blog/how-fuzz-server-american-fuzzy-lop
+## For contibutors: Fuzzing with libFuzzer
+
+libFuzzer is part of the LLVM compiler infrastructure project and comes built-in with the clang compiler.
+
+Then libFuzzer can be linked to the desired driver by passing in `-fsanitize=fuzzer` during the linking stage.
+
+NOTE: `-fsanitize=fuzzer` links in the libFuzzer’s main() symbol.
+
+NOTE: In most cases you may want to combine libFuzzer with AddressSanitizer (ASAN), UndefinedBehaviorSanitizer (UBSAN), or both. You can also build with MemorySanitizer (MSAN), but support is experimental: `-fsanitize=undefined,address,fuzzer`.
+
+Executable repeatedly calls function:
+
+```cpp
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+  // DoStuffWithYourAPI(Data, Size);
+  return 0;
+}
+```
+
+Use `-fsanitize=address,fuzzer`. Note that you can change sanitizer (address, memory, thread, etc.)
+
+NOTE: if you suspect memory leaks in your target you should run libFuzzer with `-runs=N` or `-max_total_time=N`. If your target has massive leaks you will eventually run out of RAM. To protect your machine from OOM death you may use e.g. `ASAN_OPTIONS=hard_rss_limit_mb=2000` (with AddressSanitizer).
+
+See for details:
+
+* https://llvm.org/docs/LibFuzzer.html
+* https://medium.com/@levwalkin/compile-llvm-clang-libfuzzer-b61e82718430
+* [https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md)
+
 
 ## LICENSE for open source components
 
@@ -1848,3 +2266,29 @@ See LICENSE for the full content of the licenses.
 
 - Software Engineer
 - [github](https://github.com/yvesmh)
+
+## TODOs
+
+```bash
+        # TODO: CPack https://github.com/mzdun/dashcam-gps/blob/3f6187acf66c16d1ce17db83fa328909e1dfbd68/cmake/packing.cmake
+        # TODO: travis / github actions / Jenkinsfile
+        # TODO: zzuf https://fuzzing-project.org/tutorial1.html
+        # TODO: -fsanitize=fuzzer
+        # TODO: Windows support via clang-cl
+        # TODO: http://klee.github.io/
+        # TODO: Manul https://hakin9.org/manul-fuzzer-for-open-source-and-blackbox-binaries-on-windows-linux-and-macos/
+        # TODO: https://github.com/akumuli/Akumuli/tree/master/fuzzers
+        # TODO: Dr Memory
+        # TODO: bench
+        # TODO: codacy.com
+        # TODO: coveralls.io
+        # TODO: scan.coverity.com
+        # TODO: git-update-ghpages to upload the documentation to gh-pages
+        # TODO: https://github.com/skywinder/gitlab-changelog-generator
+        # TODO: Probot for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
+        # TODO: Travis for continuous integration on Linux
+        # TODO: lcov integration
+        # TODO: Bloaty McBloatface
+        # TODO: https://github.com/TheLartians/PackageProject.cmake
+        # TODO: https://lefticus.gitbooks.io/cpp-best-practices/content/02-Use_the_Tools_Available.html
+```
