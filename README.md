@@ -137,7 +137,8 @@ GIT_SSL_NO_VERIFY=true \
     conan source . --source-folder local_build
 
 conan build . \
-  --build-folder local_build
+  --build-folder local_build \
+  --source-folder local_build
 
 conan package . \
   --build-folder local_build \
@@ -157,7 +158,8 @@ After change source in folder local_build (run commands in source package folder
 
 ```
 conan build . \
-  --build-folder local_build
+  --build-folder local_build \
+  --source-folder local_build
 
 conan package . \
   --build-folder local_build \
@@ -1187,7 +1189,8 @@ GIT_SSL_NO_VERIFY=true \
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build
+  --build-folder local_build \
+  --source-folder local_build
 
 # you can run some tests to check sanitizers
 ./local_build/bin/Debug/tests/flextool-gmock \
@@ -1311,7 +1314,8 @@ GIT_SSL_NO_VERIFY=true \
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build
+  --build-folder local_build \
+  --source-folder local_build
 
 # you can run some tests to check sanitizers
 ./local_build/bin/Debug/tests/flextool-gmock \
@@ -1454,7 +1458,8 @@ GIT_SSL_NO_VERIFY=true \
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build
+  --build-folder local_build \
+  --source-folder local_build
 
 # you can run some tests to check sanitizers
 ./local_build/bin/Debug/tests/flextool-gmock \
@@ -1595,7 +1600,8 @@ GIT_SSL_NO_VERIFY=true \
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build
+  --build-folder local_build \
+  --source-folder local_build
 
 # you can run some tests to check sanitizers
 ./local_build/bin/Debug/tests/flextool-gmock \
@@ -1735,7 +1741,8 @@ GIT_SSL_NO_VERIFY=true \
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build
+  --build-folder local_build \
+  --source-folder local_build
 ```
 
 ## For contibutors: doxygen
@@ -2144,6 +2151,7 @@ NOTE: AFL detects faults by checking for the first spawned process dying due to 
 
 See for details:
 
+* https://github.com/mykter/afl-training
 * https://www.loginsoft.com/blog/2018/02/02/discovering-vulnerabilities-with-afl-fuzzer/
 * https://www.youtube.com/watch?v=vzfhHjnycnE
 * https://gamozolabs.github.io/fuzzing/2018/09/16/scaling_afl.html
@@ -2153,6 +2161,7 @@ See for details:
 * https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/
 * https://cs.anu.edu.au/courses/csprojects/19S1/reports/u6759601_report.pdf
 * https://www.fastly.com/blog/how-fuzz-server-american-fuzzy-lop
+
 ## For contibutors: Fuzzing with libFuzzer
 
 libFuzzer is part of the LLVM compiler infrastructure project and comes built-in with the clang compiler.
@@ -2176,12 +2185,34 @@ Use `-fsanitize=address,fuzzer`. Note that you can change sanitizer (address, me
 
 NOTE: if you suspect memory leaks in your target you should run libFuzzer with `-runs=N` or `-max_total_time=N`. If your target has massive leaks you will eventually run out of RAM. To protect your machine from OOM death you may use e.g. `ASAN_OPTIONS=hard_rss_limit_mb=2000` (with AddressSanitizer).
 
+libFuzzer requires seed corpus, see for details [https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md)
+
 See for details:
 
 * https://llvm.org/docs/LibFuzzer.html
 * https://medium.com/@levwalkin/compile-llvm-clang-libfuzzer-b61e82718430
+* https://github.com/Dor1s/libfuzzer-workshop
 * [https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md)
 
+## For contibutors: Prefer Clang To GCC
+
+* Clang supports thread safety annotations (GUARDED_BY)
+  1. Enable `-Wthread-safety`
+  2. Use `base/thread_annotations.h` https://github.com/chromium/chromium/blob/master/base/thread_annotations.h
+  See for details:
+  - http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
+  - see https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf
+  - https://insights.sei.cmu.edu/sei_blog/2014/10/thread-safety-analysis-in-c-and-c.html
+
+* Clang fas first-class support sanitizers
+  See details about MSAN, ASAN, TSAN, etc. in docs.
+
+* Clang can be build with lifetime profile:
+  1. Build special branch of Clang https://github.com/mgehre/llvm-project
+  2. Enable `-Wlifetime`
+  See for details:
+  - https://pspdfkit.com/blog/2020/the-cpp-lifetime-profile/
+  - https://herbsutter.com/2018/09/20/lifetime-profile-v1-0-posted/
 
 ## LICENSE for open source components
 
@@ -2270,6 +2301,8 @@ See LICENSE for the full content of the licenses.
 ## TODOs
 
 ```bash
+        # TODO: https://github.com/opcm/pcm
+        # TODO: https://github.com/dekimir/RamFuzz
         # TODO: CPack https://github.com/mzdun/dashcam-gps/blob/3f6187acf66c16d1ce17db83fa328909e1dfbd68/cmake/packing.cmake
         # TODO: travis / github actions / Jenkinsfile
         # TODO: zzuf https://fuzzing-project.org/tutorial1.html
@@ -2279,10 +2312,22 @@ See LICENSE for the full content of the licenses.
         # TODO: Manul https://hakin9.org/manul-fuzzer-for-open-source-and-blackbox-binaries-on-windows-linux-and-macos/
         # TODO: https://github.com/akumuli/Akumuli/tree/master/fuzzers
         # TODO: Dr Memory
+        # TODO: http://sandsoftwaresound.net/perf/perf-tutorial-hot-spots/
         # TODO: bench
         # TODO: codacy.com
         # TODO: coveralls.io
+        # TODO: gperftools with tcmalloc
+        # TODO: gprof
+        # TODO: cachegrind and KCachegrind
+        # TODO: Massif-Visualizer
+        # TODO: pprof https://github.com/google/pprof
+        # TODO: Tools for tracing syscalls and libc library calls: strace and ltrace
         # TODO: scan.coverity.com
+        # TODO: https://github.com/KDAB/hotspot/
+        # TODO: https://oscarforner.com/blog/rr-debugger-and-improvement-over-gdb/
+        # TODO: https://github.com/lally/ppt
+        # TODO: http://www.brendangregg.com/linuxperf.html
+        # TODO: https://github.com/KDE/heaptrack
         # TODO: git-update-ghpages to upload the documentation to gh-pages
         # TODO: https://github.com/skywinder/gitlab-changelog-generator
         # TODO: Probot for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
