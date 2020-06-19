@@ -142,7 +142,8 @@ conan build . \
 
 conan package . \
   --build-folder local_build \
-  --package-folder local_build/package_dir
+  --package-folder local_build/package_dir \
+  --source-folder local_build
 ```
 
 Set package to editable mode:
@@ -163,7 +164,8 @@ conan build . \
 
 conan package . \
   --build-folder local_build \
-  --package-folder local_build/package_dir
+  --package-folder local_build/package_dir \
+  --source-folder local_build
 ```
 
 Build your test project
@@ -2303,6 +2305,7 @@ See LICENSE for the full content of the licenses.
 ```bash
         # TODO: https://github.com/opcm/pcm
         # TODO: https://github.com/dekimir/RamFuzz
+        # TODO: https://mull.readthedocs.io/en/latest/HelloWorld.html
         # TODO: CPack https://github.com/mzdun/dashcam-gps/blob/3f6187acf66c16d1ce17db83fa328909e1dfbd68/cmake/packing.cmake
         # TODO: travis / github actions / Jenkinsfile
         # TODO: zzuf https://fuzzing-project.org/tutorial1.html
@@ -2333,7 +2336,10 @@ See LICENSE for the full content of the licenses.
         # TODO: Probot for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
         # TODO: Travis for continuous integration on Linux
         # TODO: lcov integration
-        # TODO: Bloaty McBloatface
+        # TODO: https://www.sourcemeter.com/
+        # TODO: Bloaty McBloatface https://github.com/google/bloaty
+        # TODO: https://metrixplusplus.github.io/home.html
         # TODO: https://github.com/TheLartians/PackageProject.cmake
+        # TODO: https://github.com/namhyung/uftrace
         # TODO: https://lefticus.gitbooks.io/cpp-best-practices/content/02-Use_the_Tools_Available.html
 ```

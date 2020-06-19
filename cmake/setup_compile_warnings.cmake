@@ -52,6 +52,7 @@ list(APPEND GCCAndClangWarningFlags
   -Wdeprecated-copy
   # disable warning: designated initializers are a C99 feature
   -Wno-c99-extensions
+  -Wno-error=c99-extensions
   # see https://kristerw.blogspot.com/2017/09/useful-gcc-warning-options-not-enabled.html
   -Wduplicated-cond
   # see https://kristerw.blogspot.com/2017/09/useful-gcc-warning-options-not-enabled.html
@@ -133,5 +134,4 @@ target_compile_options(${LIB_NAME} PRIVATE
 target_set_warnings( # from cmake_helper_utils (conan package)
   ${LIB_NAME}
   ENABLE ALL
-  AS_ERROR ALL
   DISABLE Annoying)
