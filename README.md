@@ -49,7 +49,16 @@ We use `buildConanThirdparty.cmake` script to download and install conan package
 ```bash
 # NOTE: don't forget to re-run `conan install` or `conan create` after command below
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
-cmake -DEXTRA_CONAN_OPTS="--profile;clang;-s;build_type=Debug;-s;cling_conan:build_type=Release;--build;missing" -P tools/buildConanThirdparty.cmake
+cmake \
+  -DEXTRA_CONAN_OPTS=\
+"--profile;clang\
+;-s;build_type=Debug\
+;-s;cling_conan:build_type=Release\
+;-s;llvm_tools:build_type=Release\
+;--build;missing" \
+  -DENABLE_LLVM_TOOLS=FALSE \
+  -DENABLE_CLING=TRUE \
+  -P tools/buildConanThirdparty.cmake
 ```
 
 - llvm_tools package

@@ -25,6 +25,8 @@ endif(PRINT_TO_STDOUT)
 # TODO: refactor CACHE BOOL (TRUE/FALSE) to option (ON/OFF)
 
 set(ALWAYS_BUILD TRUE CACHE BOOL "ALWAYS_BUILD")
+set(ENABLE_LLVM_TOOLS FALSE CACHE BOOL "ENABLE_LLVM_TOOLS")
+set(ENABLE_CLING TRUE CACHE BOOL "ENABLE_CLING")
 
 # --- includes ---
 # WHY CMAKE_CURRENT_LIST_DIR? see https://stackoverflow.com/a/12854575/10904212
@@ -127,7 +129,7 @@ macro(conan_remove_target TARGET_NAME)
   endif()
 endmacro(conan_remove_target)
 
-macro(conan_install_target TARGET_PATH)
+macro(conan_install_target TARGET_PATH EXTRA_TARGET_OPTS)
   #
   if(NOT EXISTS "${TARGET_PATH}/conanfile.py" AND NOT EXISTS "${TARGET_PATH}/conanfile.txt")
     message(FATAL_ERROR "(conan_install_target)
@@ -145,7 +147,7 @@ macro(conan_install_target TARGET_PATH)
     COMMAND
       ${COLORED_OUTPUT_ENABLER}
         ${CMAKE_COMMAND} "-E" "time"
-          "${CONAN_PATH}" "install" "." ${EXTRA_CONAN_OPTS}
+          "${CONAN_PATH}" "install" "." ${EXTRA_CONAN_OPTS} ${EXTRA_TARGET_OPTS}
     WORKING_DIRECTORY ${TARGET_PATH}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -158,7 +160,7 @@ macro(conan_install_target TARGET_PATH)
   endif()
 endmacro(conan_install_target)
 
-macro(conan_create_target TARGET_PATH TARGET_CHANNEL)
+macro(conan_create_target TARGET_PATH TARGET_CHANNEL EXTRA_TARGET_OPTS)
   #
   if(NOT EXISTS "${TARGET_PATH}/conanfile.py" AND NOT EXISTS "${TARGET_PATH}/conanfile.txt")
     message(FATAL_ERROR "(conan_create_target)
@@ -176,7 +178,7 @@ macro(conan_create_target TARGET_PATH TARGET_CHANNEL)
     COMMAND
       ${COLORED_OUTPUT_ENABLER}
         ${CMAKE_COMMAND} "-E" "time"
-          "${CONAN_PATH}" "create" "." "${TARGET_CHANNEL}" ${EXTRA_CONAN_OPTS}
+          "${CONAN_PATH}" "create" "." "${TARGET_CHANNEL}" ${EXTRA_CONAN_OPTS} ${EXTRA_TARGET_OPTS}
     WORKING_DIRECTORY ${TARGET_PATH}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -189,7 +191,7 @@ macro(conan_create_target TARGET_PATH TARGET_CHANNEL)
   endif()
 endmacro(conan_create_target)
 
-macro(conan_build_target_if TARGET_NAME TARGET_CHANNEL TARGET_PATH OPTION_NAME)
+macro(conan_build_target_if TARGET_NAME TARGET_CHANNEL TARGET_PATH OPTION_NAME EXTRA_TARGET_OPTS)
   if(NOT ${OPTION_NAME})
     message(STATUS "(conan_build_target_if)
       DISABLED: ${OPTION_NAME}")
@@ -199,8 +201,8 @@ macro(conan_build_target_if TARGET_NAME TARGET_CHANNEL TARGET_PATH OPTION_NAME)
     if(CLEAN_BUILD)
       conan_remove_target(${TARGET_NAME})
     endif(CLEAN_BUILD)
-    conan_install_target(${TARGET_PATH})
-    conan_create_target(${TARGET_PATH} ${TARGET_CHANNEL})
+    conan_install_target(${TARGET_PATH} "${EXTRA_TARGET_OPTS}")
+    conan_create_target(${TARGET_PATH} ${TARGET_CHANNEL} "${EXTRA_TARGET_OPTS}")
   endif(${OPTION_NAME})
 endmacro(conan_build_target_if)
 
@@ -223,7 +225,8 @@ conan_build_target_if(
   "cmake_platform_detection" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cmake_platform_detection_conan
 
@@ -236,7 +239,8 @@ conan_build_target_if(
   "cmake_platform_detection" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_platform_detection_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cmake_build_options_conan
 
@@ -249,7 +253,8 @@ conan_build_target_if(
   "cmake_build_options" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_build_options_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cmake_helper_utils_conan
 
@@ -262,7 +267,8 @@ conan_build_target_if(
   "cmake_helper_utils" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_helper_utils_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cmake_sanitizers_conan
 
@@ -275,7 +281,8 @@ conan_build_target_if(
   "cmake_sanitizers" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cmake_sanitizers_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_build_util_conan
 
@@ -288,7 +295,22 @@ conan_build_target_if(
   "chromium_build_util" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_build_util_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
+
+# llvm_tools
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/llvm_tools")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/llvm_tools"
+      "http://github.com/blockspacer/llvm_tools.git"
+      "")
+endif()
+conan_build_target_if(
+  "llvm_tools" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/llvm_tools" # target to build
+  ENABLE_LLVM_TOOLS
+  ";-s;llvm_tools:build_type=Release")
 
 # conan_gtest
 
@@ -301,7 +323,8 @@ conan_build_target_if(
   "conan_gtest" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_gtest" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # conan_zlib
 
@@ -314,7 +337,8 @@ conan_build_target_if(
   "zlib" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_zlib" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # conan_openssl
 
@@ -327,7 +351,8 @@ conan_build_target_if(
   "openssl" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_openssl" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # conan_libevent
 
@@ -340,7 +365,8 @@ conan_build_target_if(
   "libevent" # target to clean
   "dev/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_libevent" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_libevent_conan
 
@@ -353,7 +379,8 @@ conan_build_target_if(
   "chromium_libevent" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libevent_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_dynamic_annotations_conan
 
@@ -366,7 +393,8 @@ conan_build_target_if(
   "chromium_dynamic_annotations" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_dynamic_annotations_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_tcmalloc_conan
 
@@ -379,7 +407,8 @@ conan_build_target_if(
   "chromium_tcmalloc" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_tcmalloc_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_xdg_user_dirs_conan
 
@@ -392,7 +421,8 @@ conan_build_target_if(
   "chromium_xdg_user_dirs" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_user_dirs_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_xdg_mime_conan
 
@@ -405,7 +435,8 @@ conan_build_target_if(
   "chromium_xdg_mime" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_xdg_mime_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_modp_b64_conan
 
@@ -418,7 +449,8 @@ conan_build_target_if(
   "chromium_modp_b64" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_modp_b64_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_icu_conan
 
@@ -431,7 +463,8 @@ conan_build_target_if(
   "chromium_icu" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_icu_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_compact_enc_det_conan
 
@@ -444,7 +477,8 @@ conan_build_target_if(
   "chromium_compact_enc_det" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_compact_enc_det_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cobalt_starboard_headers_only
 
@@ -457,7 +491,8 @@ conan_build_target_if(
   "cobalt_starboard_headers_only" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_headers_only" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_zlib_conan
 
@@ -470,7 +505,8 @@ conan_build_target_if(
   "chromium_zlib" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_zlib_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cobalt_glm_conan
 
@@ -483,7 +519,8 @@ conan_build_target_if(
   "cobalt_glm" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_glm_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_libxml_conan
 
@@ -496,7 +533,8 @@ conan_build_target_if(
   "chromium_libxml" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_libxml_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # conan_bzip2
 
@@ -509,7 +547,8 @@ conan_build_target_if(
   "bzip2" # target to clean
   "dev/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_bzip2" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # conan_boost
 
@@ -522,7 +561,8 @@ conan_build_target_if(
   "boost" # target to clean
   "dev/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_boost" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cobalt_starboard_conan
 
@@ -535,7 +575,8 @@ conan_build_target_if(
   "cobalt_starboard" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # chromium_base_conan
 
@@ -548,7 +589,8 @@ conan_build_target_if(
   "chromium_base" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/chromium_base_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # clang_folly_conan
 
@@ -561,7 +603,8 @@ conan_build_target_if(
   "clang_folly_conan" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/clang_folly_conan" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # corrade
 
@@ -574,7 +617,8 @@ conan_build_target_if(
   "corrade" # target to clean
   "magnum/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/corrade" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # type_safe
 
@@ -587,7 +631,8 @@ conan_build_target_if(
   "type_safe" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/type_safe" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # basis
 
@@ -600,7 +645,8 @@ conan_build_target_if(
   "basis" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/basis" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # cling_conan
 
@@ -613,7 +659,8 @@ conan_build_target_if(
   "cling_conan" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cling_conan" # target to build
-  ALWAYS_BUILD)
+  ENABLE_CLING
+  ";-s;cling_conan:build_type=Release")
 
 # flexlib
 
@@ -626,7 +673,8 @@ conan_build_target_if(
   "flexlib" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/flexlib" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # flex_support_headers
 
@@ -639,7 +687,8 @@ conan_build_target_if(
   "flex_support_headers" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/flex_support_headers" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
 
 # conan-cppcheck_installer
 
@@ -652,4 +701,5 @@ conan_build_target_if(
   "conan-cppcheck_installer" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer" # target to build
-  ALWAYS_BUILD)
+  ALWAYS_BUILD
+  "")
