@@ -17,6 +17,14 @@ list(APPEND flextool_SOURCES
   ${flextool_include_DIR}/clang_util.hpp
   ${flextool_src_DIR}/clang_tool.cc
   ${flextool_include_DIR}/clang_tool.hpp
-  ${flextool_src_DIR}/app_environment.cc
-  ${flextool_include_DIR}/app_environment.hpp
+  ${flextool_src_DIR}/base_environment.cc
+  ${flextool_include_DIR}/base_environment.hpp
+  ${flextool_src_DIR}/cmd_environment.cc
+  ${flextool_include_DIR}/cmd_environment.hpp
+  ${flextool_src_DIR}/plugin_environment.cc
+  ${flextool_include_DIR}/plugin_environment.hpp
+  ${flextool_src_DIR}/clang_environment.cc
+  ${flextool_include_DIR}/clang_environment.hpp
+  ${flextool_src_DIR}/cling_environment.cc
+  ${flextool_include_DIR}/cling_environment.hpp
 )

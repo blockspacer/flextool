@@ -72,7 +72,11 @@ You can install `llvm_tools` like so:
 ```bash
 git clone https://github.com/blockspacer/llvm_tools.git
 cd llvm_tools
-conan create . conan/stable -s build_type=Release --profile clang --build missing
+conan create . \
+  conan/stable \
+  -s build_type=Release \
+  --profile clang \
+  --build missing
 ```
 
 See for up-to-date instructions [https://github.com/blockspacer/llvm_tools](https://github.com/blockspacer/llvm_tools)
@@ -604,6 +608,7 @@ GIT_SSL_NO_VERIFY=true \
 Usage (runs cmake with `-DENABLE_CPPCHECK=ON`):
 
 ```bash
+# creates local build in separate folder and runs cmake targets
 # NOTE: -DCLEAN_OLD="OFF" to keep generated html report
 cmake -DCPPCHECK="ON" -DCLEAN_OLD="OFF" -P tools/run_tool.cmake
 ```
@@ -802,6 +807,7 @@ sudo yum install clang-tidy  # RHEL, CentOS, Fedora, etc.
 Usage (runs cmake with `-DENABLE_CLANG_TIDY=ON`):
 
 ```bash
+# creates local build in separate folder and runs cmake targets
 cmake -DCLANG_TIDY="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
@@ -930,6 +936,7 @@ pip install --index-url=https://pypi.python.org/simple/ --trusted-host pypi.org 
 Usage (runs cmake with `-DENABLE_CPPCLEAN=ON`):
 
 ```bash
+# creates local build in separate folder and runs cmake targets
 cmake -DCPPCLEAN="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
@@ -948,6 +955,7 @@ See for details [https://include-what-you-use.org/](https://include-what-you-use
 Usage (runs cmake with `-DENABLE_IWYU=ON`):
 
 ```bash
+# creates local build in separate folder and runs cmake targets
 cmake -DIWYU="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
@@ -1040,6 +1048,7 @@ Usage (runs cmake with `-DENABLE_OCLINT=ON`):
 
 ```bash
 # NOTE: -DCLEAN_OLD="OFF" to keep generated html report
+# creates local build in separate folder and runs cmake targets
 cmake -DOCLINT="ON" -DCLEAN_OLD="OFF" -P tools/run_tool.cmake
 ```
 
@@ -1063,6 +1072,7 @@ See for details [https://clang.llvm.org/docs/ClangFormat.html](https://clang.llv
 Usage (runs cmake with `-DENABLE_CLANG_FORMAT=ON`):
 
 ```bash
+# creates local build in separate folder and runs cmake targets
 cmake -DCLANG_FORMAT="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
@@ -1092,12 +1102,13 @@ export UNCRUSTIFY_HOME=~/uncrustify/build
 export PATH=$UNCRUSTIFY_HOME:$PATH
 # OR sudo make install
 
-uncrustify -version
+uncrustify --version
 ```
 
 Usage (runs cmake with `-DENABLE_UNCRUSTIFY=ON`):
 
 ```bash
+# creates local build in separate folder and runs cmake targets
 cmake -DUNCRUSTIFY="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 

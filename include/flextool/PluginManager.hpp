@@ -18,20 +18,8 @@
 #include <vector>
 
 namespace entt {
-  class dispatcher;
+class dispatcher;
 } // namespace entt
-
-/// \todo hide impl details
-//namespace Corrade {
-//
-//namespace PluginManager {
-//
-//template<class T>
-//class Manager;
-//
-//} // namespace Corrade
-//
-//} // namespace Corrade
 
 namespace backend {
 

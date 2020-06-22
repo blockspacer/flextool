@@ -155,10 +155,7 @@ if(UNCRUSTIFY)
               -e flexlib:enable_llvm_tools=True
               -o flexlib:enable_clang_from_conan=False
               -o chromium_tcmalloc:use_alloc_shim=False
-              --build chromium_base
-              --build chromium_tcmalloc
-              --build basis
-              --build flexlib
+              --build missing
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -175,6 +172,7 @@ if(UNCRUSTIFY)
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake ../../..
         -DENABLE_UNCRUSTIFY=ON
+        -DENABLE_LWYU=FALSE
         -DENABLE_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DCONAN_AUTO_INSTALL=OFF
@@ -236,10 +234,7 @@ if(CLANG_FORMAT)
               -e flexlib:enable_llvm_tools=True
               -o flexlib:enable_clang_from_conan=False
               -o chromium_tcmalloc:use_alloc_shim=False
-              --build chromium_base
-              --build chromium_tcmalloc
-              --build basis
-              --build flexlib
+              --build missing
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -256,6 +251,7 @@ if(CLANG_FORMAT)
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake ../../..
         -DENABLE_CLANG_FORMAT=ON
+        -DENABLE_LWYU=FALSE
         -DENABLE_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DCONAN_AUTO_INSTALL=OFF
@@ -317,10 +313,7 @@ if(OCLINT)
               -e flexlib:enable_llvm_tools=True
               -o flexlib:enable_clang_from_conan=False
               -o chromium_tcmalloc:use_alloc_shim=False
-              --build chromium_base
-              --build chromium_tcmalloc
-              --build basis
-              --build flexlib
+              --build missing
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -337,6 +330,7 @@ if(OCLINT)
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake ../../..
         -DENABLE_OCLINT=ON
+        -DENABLE_LWYU=FALSE
         -DENABLE_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DCONAN_AUTO_INSTALL=OFF
@@ -398,10 +392,7 @@ if(IWYU)
               -e flexlib:enable_llvm_tools=True
               -o flexlib:enable_clang_from_conan=False
               -o chromium_tcmalloc:use_alloc_shim=False
-              --build chromium_base
-              --build chromium_tcmalloc
-              --build basis
-              --build flexlib
+              --build missing
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -418,6 +409,7 @@ if(IWYU)
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake ../../..
         -DENABLE_IWYU=ON
+        -DENABLE_LWYU=FALSE
         -DENABLE_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DCONAN_AUTO_INSTALL=OFF
@@ -480,10 +472,7 @@ if(CPPCLEAN)
               -e flexlib:enable_llvm_tools=True
               -o flexlib:enable_clang_from_conan=False
               -o chromium_tcmalloc:use_alloc_shim=False
-              --build chromium_base
-              --build chromium_tcmalloc
-              --build basis
-              --build flexlib
+              --build missing
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -500,6 +489,7 @@ if(CPPCLEAN)
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake ../../..
         -DENABLE_CPPCLEAN=ON
+        -DENABLE_LWYU=FALSE
         -DENABLE_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DCONAN_AUTO_INSTALL=OFF
@@ -561,10 +551,7 @@ if(CLANG_TIDY)
               -e flexlib:enable_llvm_tools=True
               -o flexlib:enable_clang_from_conan=False
               -o chromium_tcmalloc:use_alloc_shim=False
-              --build chromium_base
-              --build chromium_tcmalloc
-              --build basis
-              --build flexlib
+              --build missing
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -581,6 +568,7 @@ if(CLANG_TIDY)
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake ../../..
         -DENABLE_CLANG_TIDY=ON
+        -DENABLE_LWYU=FALSE
         -DENABLE_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DCONAN_AUTO_INSTALL=OFF
@@ -642,10 +630,7 @@ if(CPPCHECK)
               -e flexlib:enable_llvm_tools=True
               -o flexlib:enable_clang_from_conan=False
               -o chromium_tcmalloc:use_alloc_shim=False
-              --build chromium_base
-              --build chromium_tcmalloc
-              --build basis
-              --build flexlib
+              --build missing
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
@@ -662,6 +647,7 @@ if(CPPCHECK)
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake ../../..
         -DENABLE_CPPCHECK=ON
+        -DENABLE_LWYU=FALSE
         -DENABLE_TESTS=FALSE
         -DBUILD_SHARED_LIBS=FALSE
         -DCONAN_AUTO_INSTALL=OFF

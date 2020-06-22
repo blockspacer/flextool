@@ -9,17 +9,17 @@
 #include <base/strings/string_piece_forward.h>
 
 namespace base {
-  class FilePath;
+class FilePath;
 } // namespace base
 
 namespace clang {
-  class FileEntry;
-  class FileID;
-  class Rewriter;
+class FileEntry;
+class FileID;
+class Rewriter;
 } // namespace clang
 
 namespace cmd {
-  class BoostCmd;
+class BoostCmd;
 } // namespace cmd
 
 namespace clang_util {

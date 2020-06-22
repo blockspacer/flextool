@@ -10,7 +10,7 @@ option(BUILD_DOXY_DOC
   "build doxygen documentation" OFF)
 
 option(ENABLE_LWYU
-  "Enable CMAKE_LINK_WHAT_YOU_USE" ON)
+  "Enable CMAKE_LINK_WHAT_YOU_USE" OFF)
 
 option(COMPILE_WITH_LLVM_TOOLS
   "Enable clang from llvm_tools (conan package)" OFF)

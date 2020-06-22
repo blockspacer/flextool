@@ -25,7 +25,7 @@ iwyu_enabler(
     # -Xiwyu --transitive_includes_only
     # pch_in_code: The file has an important header first
     # -Xiwyu --pch_in_code
-    # no_comments: Don�t add notes to the output
+    # no_comments: Do not add notes to the output
     -Xiwyu --no_comments
     # mapping_file: lookup file
     -Xiwyu --mapping_file=${IWYU_IMP}

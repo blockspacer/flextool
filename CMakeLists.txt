@@ -443,4 +443,7 @@ endif()
 ## ---------------------------- various files -------------------------------- ##
 
 # Create a dummy target to hold various files in the project root (for IDE)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_misc_files.cmake)
+if (CONAN_AUTO_INSTALL)
+  # NOTE: enable only when project is open in IDE
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_misc_files.cmake)
+endif (CONAN_AUTO_INSTALL)

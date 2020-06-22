@@ -1,7 +1,5 @@
 #include "flextool/PluginManager.hpp" // IWYU pragma: associated
 
-#include "flexlib/ToolPlugin.hpp"
-
 #include <Corrade/PluginManager/AbstractManager.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/Utility/Configuration.h>
