@@ -1,9 +1,6 @@
 #pragma once
 
-#include "PluginManager.hpp"
-#include "app_cmd_options.hpp"
-#include "boost_command_line.hpp"
-#include "clang_util.hpp"
+#include <flexlib/ToolPlugin.hpp>
 
 #include <base/at_exit.h>
 #include <base/files/file_path.h>
@@ -11,6 +8,7 @@
 #include <base/memory/scoped_refptr.h>
 #include <base/message_loop/message_loop.h>
 
+#include <basis/PluginManager.hpp>
 #include <basis/scoped_log_run_time.hpp>
 
 #include <string>
@@ -33,6 +31,7 @@ public:
   ~ScopedPluginEnvironment();
 
   // init with provided settings
+  [[nodiscard]] /* do not ignore return value */
   bool init(
     int argc
     , char* argv[]
@@ -44,7 +43,7 @@ public:
 public:
   base::FilePath dir_exe_{};
 
-  backend::PluginManager plug_mgr{};
+  backend::PluginManager<::plugin::ToolPlugin> plug_mgr{};
 
   /// \note dispatcher must be thread-safe,
   /// so use entt after patch https://github.com/skypjack/entt/issues/449

@@ -286,10 +286,11 @@ export CXX=clang++-6.0
 export CC=clang-6.0
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
-build_type=Debug
+export build_type=Debug
 
 # optional
-# rm CMakeCache.txt
+# remove old CMakeCache
+(rm CMakeCache.txt || true)
 
 # configure via cmake
 cmake -E time cmake . \
@@ -336,6 +337,8 @@ For example, you can not have in each project target with same name like "test".
 Because `CMAKE_BINARY_DIR` will point to folder created by `conan workspace install` - make sure that you prefer `CMAKE_CURRENT_BINARY_DIR` to `CMAKE_BINARY_DIR` etc.
 
 ## For contibutors: conan workspace with plugins
+
+Before installation: plugins require pre-built flextool (in same workspace). You must build workspace without plugins, only then you will be able to re-build it with plugins.
 
 add plugins to yml file:
 
@@ -513,10 +516,11 @@ export CXX=clang++-6.0
 export CC=clang-6.0
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
-build_type=Debug
+export build_type=Debug
 
 # optional
-# rm CMakeCache.txt
+# remove old CMakeCache
+(rm CMakeCache.txt || true)
 
 # configure via cmake
 cmake -E time cmake . \
@@ -742,6 +746,7 @@ cd ~/flextool
 # see section about `conan editable mode`
 cd local_build
 
+# optional
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
@@ -861,8 +866,9 @@ export CXX=clang++-6.0
 export CC=clang-6.0
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
-build_type=Debug
+export build_type=Debug
 
+# optional
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
@@ -1240,6 +1246,7 @@ cd ~/flextool
 # see section about `conan editable mode`
 cd local_build
 
+# optional
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
@@ -1365,6 +1372,7 @@ cd ~/flextool
 # see section about `conan editable mode`
 cd local_build
 
+# optional
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
@@ -1508,6 +1516,7 @@ cd ~/flextool
 # see section about `conan editable mode`
 cd local_build
 
+# optional
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
@@ -1668,6 +1677,7 @@ cd ~/flextool
 # see section about `conan editable mode`
 cd local_build
 
+# optional
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
@@ -1812,6 +1822,7 @@ cd ~/flextool
 # see section about `conan editable mode`
 cd local_build
 
+# optional
 # remove old CMakeCache
 (rm CMakeCache.txt || true)
 
@@ -2362,4 +2373,31 @@ See LICENSE for the full content of the licenses.
         # TODO: https://github.com/TheLartians/PackageProject.cmake
         # TODO: https://github.com/namhyung/uftrace
         # TODO: https://lefticus.gitbooks.io/cpp-best-practices/content/02-Use_the_Tools_Available.html
+///\todo flextool will save file with all source code transformations applied,
+/// including `rewriter.InsertText`.
+/// flextool will save file with `.generated` extention,
+/// but user can provide >>>> custom path for each generated file <<<<
+///\todo allow per-plugin generation of cmake script with list of generated files
+///\todo use cling to change file path to generated file
+/// $exec(
+///   generated(path = ./src/filename.cpp.gen);
+/// )
+///\todo support plugins that change default generator behavior (change .generated postfix in filename)
+/// plugin must use flexlib file save pipeline (it is vector<pair<function>,datasource>)
+/// other plugin can change flexlib file save pipeline (add .datetime postfix after .generated postfix)
+///\todo support per-file metadata, pass to plugin load event
+///\todo support in config file for ordered file path list with per-file rules (infile/outfile-may be same as infile or without prefix/json metadata)
+///\todo allow plugins to hook into file parsing pipeline, have custom cmd args, change main loop to `watcher`
+///\todo allow plugins to use `localstorage` to save arbitrary KV data. Remove $export
+///\todo refactor typeclass
+/// file parsing order must be set in conf file
+/// plugin hooks in parsed event, filtered by pipeline rule "typeclass"
+/// AFTER rule "typeclass" parsed, plugin can save libtooling output into member vars
+/// AFTER rule "typeclass_instance" parsed, plugin can use libtooling output stored in member vars
+/// if no data in member vars - error
+///\todo allow plugins to use parser cache. Add plugin to cache libtooling matchresult with some KV storage
+/// cache:
+/// $(make_reflect;localCache("typeclassCache","key1;somedata;");after_make_reflect;localCache("typeclassCache","key2;somedata;"))
+/// plugin may register cache observer with key "typeclassCache"
+/// plugin may register cache observer for any key
 ```

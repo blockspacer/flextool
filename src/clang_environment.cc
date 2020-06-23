@@ -1,22 +1,20 @@
 #include "flextool/clang_environment.hpp" // IWYU pragma: associated
 
-#include <boost/program_options/options_description.hpp>
 #include <entt/signal/dispatcher.hpp>
 
-#include "flextool/PluginManager.hpp"
 #include "flextool/app_cmd_options.hpp"
-#include "flextool/boost_command_line.hpp"
 #include "flextool/clang_util.hpp"
 #include "flextool/command_line_constants.hpp"
-#include "flextool/path_provider.hpp"
 #include "flextool/version.hpp"
 
+#include <basis/boost_command_line.hpp>
 #include <basis/cmd_util.hpp>
 #include <basis/i18n.hpp>
 #include <basis/icu_util.hpp>
 #include <basis/log_util.hpp>
 #include <basis/thread_pool_util.hpp>
 #include <basis/tracing_util.hpp>
+#include <basis/PluginManager.hpp>
 
 #include <base/process/memory.h>
 #include <base/base_paths.h>
@@ -90,11 +88,14 @@ namespace flextool {
 
 ScopedClangEnvironment::ScopedClangEnvironment()
 {
+  DETACH_FROM_SEQUENCE(sequence_checker_);
+
   DCHECK(base::MessageLoop::current()->task_runner());
 }
 
 ScopedClangEnvironment::~ScopedClangEnvironment()
 {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 }
 
 /// \todo refactor long method
@@ -109,7 +110,7 @@ bool ScopedClangEnvironment::init(
       clangBuildPath
       , args_storage
       , cling_extra_args
-      , cmd_env.boostCmd);
+      , cmd_env.boostCmdParser);
     if(!ok) {
       LOG(ERROR)
         << "unable to populate Clang arguments";
@@ -123,8 +124,8 @@ bool ScopedClangEnvironment::init(
         << args_storage;
   }
 
-  if (cmd_env.appCmd.hasHelp()) {
-    LOG(INFO) << cmd_env.boostCmd.optionsToString();
+  if (cmd_env.appCmd.count(cmd::kHelp)) {
+    LOG(INFO) << cmd_env.boostCmdParser.optionsToString();
 
     args_storage.push_back(kClangHelpFlag);
     /// \note continue to forward help to clang libtooling

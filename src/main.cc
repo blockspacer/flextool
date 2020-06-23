@@ -1,17 +1,20 @@
-#include "flextool/base_environment.hpp"
 #include "flextool/cmd_environment.hpp"
 #include "flextool/plugin_environment.hpp"
 #include "flextool/clang_environment.hpp"
 #include "flextool/cling_environment.hpp"
 #include "flextool/clang_tool.hpp"
 #include "flextool/version.hpp"
+#include "flextool/command_line_constants.hpp"
 
 #include <flexlib/ToolPlugin.hpp>
 #include <flexlib/clangPipeline.hpp>
 
 #include <base/logging.h>
+#include <base/threading/thread_restrictions.h>
 #include <base/memory/scoped_refptr.h>
 #include <base/optional.h>
+
+#include <basis/base_environment.hpp>
 
 #include <stdlib.h>
 #include <ostream>
@@ -22,24 +25,29 @@
 
 namespace {
 
+static const base::FilePath::CharType kIcuDataFileName[]
+  = FILE_PATH_LITERAL("./resources/icu/optimal/icudt64l.dat");
+
+static const base::FilePath::CharType kTraceReportFileName[]
+  = FILE_PATH_LITERAL("trace_report.json");
+
 const char kStringCommandDelim[]
   = "/";
 
-const char kVersionStringCommand[]
-  = "version";
-
 // init application systems,
 // initialization order matters!
+[[nodiscard]] /* do not ignore return value */
 base::Optional<int> initEnv(
   int argc
   , char* argv[]
   , flextool::ScopedCmdEnvironment& cmd_env
-  , flextool::ScopedBaseEnvironment& base_env
+  , basis::ScopedBaseEnvironment& base_env
   , flextool::ScopedPluginEnvironment& plugin_env
   , flextool::ScopedClangEnvironment& clang_env
   , flextool::ScopedClingEnvironment& cling_env
   )
 {
+  // ScopedCmdEnvironment
   {
     const bool envCreated
       = cmd_env.init(argc, argv);
@@ -51,14 +59,17 @@ base::Optional<int> initEnv(
     }
   }
 
+  // ScopedBaseEnvironment
   {
     const bool envCreated
       = base_env.init(
           argc
           , argv
-          , cmd_env.appCmd.hasAutoStartTracer()
+          , cmd_env.appCmd.count(cmd::kAutoStartTracer)
           , cmd_env.appCmd.tracingCategories()
           , cmd_env.appCmd.outDir()
+          , kIcuDataFileName
+          , kTraceReportFileName
           , cmd_env.appCmd.threadsNum()
           );
     if(!envCreated) {
@@ -69,6 +80,7 @@ base::Optional<int> initEnv(
     }
   }
 
+  // ScopedPluginEnvironment
   {
     const bool envCreated
       = plugin_env.init(
@@ -86,7 +98,7 @@ base::Optional<int> initEnv(
     }
   }
 
-  // clang env
+  // ScopedClangEnvironment
   {
     {
       const bool envCreated
@@ -98,27 +110,9 @@ base::Optional<int> initEnv(
           EXIT_FAILURE;
       }
     }
-
-    /// \note allow plugins to process commands before pre-built logic
-    {
-      VLOG(9)
-        << "sending"
-        " plugin::ToolPlugin::Events::RegisterAnnotationMethods";
-      DCHECK(clang_env.annotationMethods);
-      DCHECK(clang_env.sourceTransformPipeline);
-      plugin_env.main_events_dispatcher->trigger<
-        plugin::ToolPlugin::Events::RegisterAnnotationMethods>(
-        plugin::ToolPlugin::Events::RegisterAnnotationMethods{
-          .annotationMethods
-            = clang_env.annotationMethods.get()
-            , .sourceTransformPipeline
-            = clang_env.sourceTransformPipeline.get()
-        }
-        );
-    }
   }
 
-  // cling env
+  // ScopedClingEnvironment
   {
     {
       const bool envCreated
@@ -133,19 +127,56 @@ base::Optional<int> initEnv(
       }
     }
 
-    /// \note allow plugins to process commands before pre-built logic
+    /// \note allow plugins to process commands before
+    /// pre-built logic
     {
       VLOG(9)
         << "creating"
-        " plugin::ToolPlugin::Events::RegisterClingInterpreter";
+        " plugin::ToolPlugin::Events"
+        "::RegisterClingInterpreter";
       DCHECK(cling_env.clingInterpreter);
       DCHECK(plugin_env.main_events_dispatcher);
+
+      using RegisterClingInterpreter
+        = plugin::ToolPlugin::Events::RegisterClingInterpreter;
+
+      RegisterClingInterpreter eventData{
+        cling_env.clingInterpreter.get()
+      };
+
+      plugin_env.main_events_dispatcher
+        ->trigger<RegisterClingInterpreter>(
+        std::move(eventData)
+        );
+    }
+  }
+
+  // continue setup of ScopedClingEnvironment,
+  // depends on Cling
+  {
+    DCHECK(cling_env.clingInterpreter);
+
+    /// \note allow plugins to process commands before
+    /// pre-built logic
+    {
+      VLOG(9)
+        << "sending"
+        " plugin::ToolPlugin::Events"
+        "::RegisterAnnotationMethods";
+      DCHECK(clang_env.annotationMethods);
+      DCHECK(clang_env.sourceTransformPipeline);
+
+      using RegisterAnnotationMethods
+        = plugin::ToolPlugin::Events::RegisterAnnotationMethods;
+
+      RegisterAnnotationMethods eventData{
+        clang_env.annotationMethods.get()
+        , clang_env.sourceTransformPipeline.get()
+      };
+
       plugin_env.main_events_dispatcher->trigger<
-        plugin::ToolPlugin::Events::RegisterClingInterpreter>(
-        plugin::ToolPlugin::Events::RegisterClingInterpreter{
-          .clingInterpreter
-            = cling_env.clingInterpreter.get()
-        }
+        RegisterAnnotationMethods>(
+        std::move(eventData)
         );
     }
   }
@@ -153,42 +184,62 @@ base::Optional<int> initEnv(
   return base::nullopt;
 }
 
+// handle command-line argument: `--version`
+[[nodiscard]] /* do not ignore return value */
+base::Optional<int> handleVersionCmd(
+  flextool::ScopedPluginEnvironment& plugin_env)
+{
+  LOG(INFO)
+    << "tool version: "
+    << flextool_VERSION;
+
+  /// \note allow plugins to process commands before
+  /// pre-built logic
+  {
+    DCHECK(plugin_env.main_events_dispatcher);
+    VLOG(9)
+      << "sending"
+      " plugin::ToolPlugin::Events"
+      "::StringCommand";
+
+    using StringCommand
+      = plugin::ToolPlugin::Events::StringCommand;
+
+    StringCommand eventData{
+      // raw_cmd
+      /*copy*/
+      std::string(kStringCommandDelim) + cmd::kVersion
+      , // split_parts
+      /*copy*/
+      std::vector<std::string>{cmd::kVersion}
+    };
+
+    plugin_env.main_events_dispatcher
+      ->trigger<StringCommand>(
+      std::move(eventData)
+      );
+  }
+
+  // nothing after version printing
+  // stop app execution with EXIT_SUCCESS
+  return
+    EXIT_SUCCESS;
+}
+
 // handle command-line arguments, such as `--version`
-base::Optional<int> handleCmd(
-  int argc
-  , char* argv[]
-  , flextool::ScopedCmdEnvironment& cmd_env
-  , flextool::ScopedBaseEnvironment& base_env
+[[nodiscard]] /* do not ignore return value */
+base::Optional<int> handleCmdOptions(
+  flextool::ScopedCmdEnvironment& cmd_env
   , flextool::ScopedPluginEnvironment& plugin_env
   )
 {
-  if (cmd_env.appCmd.hasVersion())
+  if (cmd_env.appCmd.count(cmd::kVersion))
   {
-    LOG(INFO)
-        << "tool version: "
-        << flextool_VERSION;
-
-    /// \note allow plugins to process commands before pre-built logic
-    {
-      DCHECK(plugin_env.main_events_dispatcher);
-      /// \todo remove plugin::ToolPlugin::Events::StringCommand
-      plugin_env.main_events_dispatcher->trigger<
-        plugin::ToolPlugin::Events::StringCommand>(
-        plugin::ToolPlugin::Events::StringCommand{
-          .raw_cmd =
-            /*copy*/
-            std::string(kStringCommandDelim) + kVersionStringCommand
-          , .split_parts =
-            /*copy*/
-            std::vector<std::string>{kVersionStringCommand}
-        }
-        );
-    }
-
-    // nothing after version printing
-    // stop app execution with EXIT_SUCCESS
-    return
-      EXIT_SUCCESS;
+    DVLOG(9)
+        << "processing command-line argument: "
+        << cmd::kVersion;
+    return handleVersionCmd(
+      plugin_env);
   }
 
   return base::nullopt;
@@ -204,7 +255,7 @@ int main(int argc, char* argv[])
   flextool::ScopedCmdEnvironment cmd_env;
 
   // setup basic requirements, like thread pool, logging, etc.
-  flextool::ScopedBaseEnvironment base_env;
+  basis::ScopedBaseEnvironment base_env;
 
   // setup ::Corrade::PluginManager
   flextool::ScopedPluginEnvironment plugin_env;
@@ -227,19 +278,21 @@ int main(int argc, char* argv[])
       , clang_env
       , cling_env);
     if(exit_code.has_value()) {
+      LOG(WARNING)
+        << "exited during environment creation";
       return exit_code.value();
     }
   }
 
   // handle command-line arguments, such as `--version`
   {
-    base::Optional<int> exit_code = handleCmd(
-      argc
-      , argv
-      , cmd_env
-      , base_env
+    base::Optional<int> exit_code = handleCmdOptions(
+      cmd_env
       , plugin_env);
     if(exit_code.has_value()) {
+      DVLOG(9)
+        << "exited after handling of"
+        " command-line arguments";
       return exit_code.value();
     }
   }
@@ -260,9 +313,15 @@ int main(int argc, char* argv[])
       );
   }
 
+  // during teardown we need to be able to perform IO.
+  base::ThreadRestrictions::SetIOAllowed(true);
+
   /// \note it is safe to destroy
-  /// ScopedBaseEnvironment, ScopedClingEnvironment, etc.
-  /// in any order after |ClangTool.run| finished
+  /// ScopedBaseEnvironment, Scoped*Environment, etc.
+  /// in any order after application finished
+  LOG(INFO)
+    << "performing shutdown...";
+
   return
     EXIT_SUCCESS;
 }

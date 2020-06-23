@@ -1,16 +1,14 @@
 #include "flextool/cmd_environment.hpp" // IWYU pragma: associated
 
-#include <boost/program_options/options_description.hpp>
 #include <entt/signal/dispatcher.hpp>
 
-#include "flextool/PluginManager.hpp"
 #include "flextool/app_cmd_options.hpp"
-#include "flextool/boost_command_line.hpp"
 #include "flextool/clang_util.hpp"
 #include "flextool/command_line_constants.hpp"
-#include "flextool/path_provider.hpp"
 #include "flextool/version.hpp"
 
+#include <basis/PluginManager.hpp>
+#include <basis/boost_command_line.hpp>
 #include <basis/cmd_util.hpp>
 #include <basis/i18n.hpp>
 #include <basis/icu_util.hpp>
@@ -69,40 +67,22 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif // __has_include
 
-namespace {
-
-static const base::FilePath::CharType kIcuDataFileName[]
-  = FILE_PATH_LITERAL("./resources/icu/optimal/icudt64l.dat");
-
-static const base::FilePath::CharType kTraceReportFileName[]
-  = FILE_PATH_LITERAL("trace_report.json");
-
-/// \todo code repeat
-template<class T>
-std::ostream& operator<<(
-  std::ostream& stream, const std::vector<T>& data)
-{
-  std::copy(data.begin(), data.end(),
-            std::ostream_iterator<T>(stream, " "));
-  return
-    stream;
-}
-
-} // namespace
-
 namespace flextool {
 
 ScopedCmdEnvironment::ScopedCmdEnvironment()
-  : appCmd(boostCmd)
+  : appCmd(boostCmdParser)
 {
+  DETACH_FROM_SEQUENCE(sequence_checker_);
 }
 
 ScopedCmdEnvironment::~ScopedCmdEnvironment()
 {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 }
 
 /// \todo refactor long method
-bool ScopedCmdEnvironment::init(int argc, char* argv[])
+bool ScopedCmdEnvironment::init(
+  int argc, char* argv[])
 {
   DCHECK(argc > 0);
 
@@ -128,15 +108,18 @@ bool ScopedCmdEnvironment::init(int argc, char* argv[])
     }
   }
 
-  // set application command-line arguments
+  // set description for command-line arguments
   {
-    boost::program_options::options_description_easy_init&
-    options = boostCmd.options();
+    using boost::program_options::options_description_easy_init;
+
+    options_description_easy_init& options
+      = boostCmdParser.options();
     options = appCmd.registerOptions(options);
   }
 
+  // set parser for command-line arguments
   {
-    bool initOk = boostCmd.init(argc, argv);
+    bool initOk = boostCmdParser.init(argc, argv);
     if(!initOk)
     {
       LOG(ERROR)

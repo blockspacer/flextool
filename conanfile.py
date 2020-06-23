@@ -38,7 +38,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
                        "third_party/*", "flexlib/*")
 
     options = {
-        "use_system_boost": [True, False],
         "enable_clang_from_conan": [True, False],
         "enable_ubsan": [True, False],
         "enable_asan": [True, False],
@@ -57,7 +56,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "enable_gold_linker=False",
         "enable_fuzz_afl=False",
         "enable_fuzz_libfuzzer=False",
-        "use_system_boost=False",
         "enable_ubsan=False",
         "enable_asan=False",
         "enable_msan=False",
@@ -259,8 +257,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
         # TODO: support doctest
         #self.requires("doctest/[>=2.3.8]")
 
-        if not self.options.use_system_boost:
-            self.requires("boost/1.71.0@dev/stable")
+        self.requires("boost/1.71.0@dev/stable")
 
         self.requires("chromium_build_util/master@conan/stable")
 

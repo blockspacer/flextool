@@ -20,57 +20,10 @@
 
 namespace flextool {
 
-/// \todo refactor long method
-void ClangTool::run(
-  const std::vector<std::string>& args
-  , scoped_refptr<clang_utils::AnnotationMatchOptions>
-  annotationMatchOptions
-  ){
-  CHECK(!args.empty())
-    << "You must provide at least one argument"
-    " to clang";
-
-  // convert |std::vector<std::string>| to |std::vector<const char*>|
-  std::vector<
-    const char* /// \note must manage pointer lifetime
-    > args_vec;
-  std::transform(
-    args.begin()
-    , args.end()
-    , std::back_inserter(args_vec)
-    , [](const std::string& value)
-    {
-      VLOG(9)
-        << "added command-line argument for clang: "
-        << value;
-      DCHECK(!value.empty());
-      /// \note must manage pointer lifetime
-      return
-      value.c_str();
-    });
-
-  DCHECK(args_vec.size() == args.size());
-
-  CHECK(!args_vec.empty())
-    << "You must provide at least one argument"
-    " to clang";
-  DCHECK(args_vec[0]);
-  const char **args_argv = &(args_vec[0]);
-  DCHECK(args_argv);
-
-  // see http://llvm.org/docs/doxygen/html/classllvm_1_1cl_1_1OptionCategory.html
-  llvm::cl::OptionCategory UseOverrideCategory("Use override options");
-
-  int args_arc
-    = static_cast<int>(args_vec.size());
-
-  // parse the command-line args passed to your code
-  // see http://clang.llvm.org/doxygen/classclang_1_1tooling_1_1CommonOptionsParser.html
-  clang::tooling::CommonOptionsParser optionsParser(
-    args_arc, args_argv, UseOverrideCategory);
-
-  // log information about files what will be processed
-  for(const auto& it: optionsParser.getSourcePathList()) {
+static void logSourcePathList(
+  const std::vector<std::string>& sourcePathList)
+{
+  for(const auto& it: sourcePathList) {
     VLOG(9)
         << "added source file = "
         << (it.empty()
@@ -116,6 +69,60 @@ void ClangTool::run(
         << absolutePath;
     }
   } // for
+}
+
+void ClangTool::run(
+  const std::vector<std::string>& args
+  , scoped_refptr<clang_utils::AnnotationMatchOptions>
+  annotationMatchOptions
+  )
+{
+  CHECK(!args.empty())
+    << "You must provide at least one argument"
+    " to clang";
+
+  // convert |std::vector<std::string>| to |std::vector<const char*>|
+  std::vector<
+    const char* /// \note must manage pointer lifetime
+    > args_vec;
+  std::transform(
+    args.begin()
+    , args.end()
+    , std::back_inserter(args_vec)
+    , [](const std::string& value)
+    {
+      VLOG(9)
+        << "added command-line argument for clang: "
+        << value;
+      DCHECK(!value.empty());
+      /// \note must manage pointer lifetime
+      return
+      value.c_str();
+    });
+
+  DCHECK(args_vec.size() == args.size());
+
+  CHECK(!args_vec.empty())
+    << "You must provide at least one argument"
+    " to clang";
+  DCHECK(args_vec[0]);
+  const char **args_argv = &(args_vec[0]);
+  DCHECK(args_argv);
+
+  // see http://llvm.org/docs/doxygen/html/classllvm_1_1cl_1_1OptionCategory.html
+  llvm::cl::OptionCategory UseOverrideCategory(
+    "Use override options");
+
+  int args_arc
+    = static_cast<int>(args_vec.size());
+
+  // parse the command-line args passed to your code
+  // see http://clang.llvm.org/doxygen/classclang_1_1tooling_1_1CommonOptionsParser.html
+  clang::tooling::CommonOptionsParser optionsParser(
+    args_arc, args_argv, UseOverrideCategory);
+
+  // log information about files what will be processed
+  logSourcePathList(optionsParser.getSourcePathList());
 
   // create a new Clang Tool instance (a LibTooling environment)
   // see http://clang.llvm.org/doxygen/classclang_1_1tooling_1_1ClangTool.html

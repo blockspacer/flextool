@@ -31,17 +31,7 @@ const char kPluginsDir[] = "plugins_dir";
 const char kPluginsConfFile[] = "plugins_config";
 
 // extern
-//const char kClangIncludeDirs[] = "clang_includes_dir";
-
-// extern
-//const char kClingIncludeDirs[] = "cling_includes_dir";
-
-// extern
 const char kThreadNum[] = "threads,J";
-
-/// \todo remove
-// extern
-//const char kScriptDirs[] = "ctp_scripts_paths,C";
 
 // extern
 const char kScriptFiles[] = "cling_scripts";

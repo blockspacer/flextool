@@ -1,15 +1,12 @@
 #include "flextool/cling_environment.hpp" // IWYU pragma: associated
 
-#include <boost/program_options/options_description.hpp>
 #include <entt/signal/dispatcher.hpp>
 
-#include "flextool/PluginManager.hpp"
 #include "flextool/app_cmd_options.hpp"
-#include "flextool/boost_command_line.hpp"
 #include "flextool/command_line_constants.hpp"
-#include "flextool/path_provider.hpp"
 #include "flextool/version.hpp"
 
+#include <basis/PluginManager.hpp>
 #include <basis/cmd_util.hpp>
 #include <basis/i18n.hpp>
 #include <basis/icu_util.hpp>
@@ -87,11 +84,14 @@ namespace flextool {
 
 ScopedClingEnvironment::ScopedClingEnvironment()
 {
+  DETACH_FROM_SEQUENCE(sequence_checker_);
+
   DCHECK(base::MessageLoop::current()->task_runner());
 }
 
 ScopedClingEnvironment::~ScopedClingEnvironment()
 {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 }
 
 bool ScopedClingEnvironment::init(

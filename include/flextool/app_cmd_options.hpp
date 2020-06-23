@@ -15,7 +15,7 @@ template <class T> class optional;
 } // namespace boost
 
 namespace cmd {
-class BoostCmd;
+class BoostCmdParser;
 } // namespace cmd
 
 namespace cmd {
@@ -25,10 +25,6 @@ constexpr int kDefaultThreadNum = 2;
 constexpr int kMinThreadNum = 1;
 
 constexpr int kMaxThreadNum = 100;
-
-extern const char kDefaultPluginsDir[];
-
-extern const char kDefaultPluginsConfig[];
 
 //extern const char kHelpArg[];
 
@@ -40,12 +36,14 @@ extern const char kDefaultPluginsConfig[];
 // (like clamp command-line argument between some values)
 class AppCmdOptions {
 public:
-  // Unprocessed command-line arguments, usually std::string.
-  // Use |AppCmdOptions| to convert std::string to base::FilePath etc.
-  struct BoostCmdOptions {
-    /// \todo use it
-    //static boost::optional<std::string> log_config;
+  using options_init
+    = boost::program_options::options_description_easy_init;
 
+  // Unprocessed command-line arguments,
+  // usually std::string.
+  // Use |AppCmdOptions| to convert std::string
+  // to base::FilePath etc.
+  struct CmdOptions {
     static boost::optional<std::string> tracing_categories_arg;
 
     static boost::optional<std::string> srcdir_arg;
@@ -61,18 +59,22 @@ public:
 
     static std::vector<std::string> cling_scripts;
 
-    /// \todo use it
-    //static std::vector<std::string> ctp_scripts_search_paths;
-
     static std::vector<std::string> pathsToExtraPluginFiles;
   };
 
-  AppCmdOptions(BoostCmd& boostCmd);
+  AppCmdOptions(
+    BoostCmdParser& BoostCmdParser);
 
   ~AppCmdOptions();
 
+  [[nodiscard]] /* do not ignore return value */
   int threadsNum();
 
+  [[nodiscard]] /* do not ignore return value */
+  size_t count(
+    const base::StringPiece& key);
+
+  [[nodiscard]] /* do not ignore return value */
   base::FilePath inDir();
 
   // outdir can contain `compile_commands.json`.
@@ -81,57 +83,62 @@ public:
   // or
   // set_target_properties(... ENABLE_EXPORTS 1)
   // see https://releases.llvm.org/9.0.0/tools/clang/docs/LibTooling.html
+  [[nodiscard]] /* do not ignore return value */
   base::FilePath outDir();
 
+  [[nodiscard]] /* do not ignore return value */
   base::FilePath pluginsDir();
 
   base::FilePath pluginsConfigFile();
 
+  [[nodiscard]] /* do not ignore return value */
   std::vector<base::FilePath> scriptFiles();
 
+  [[nodiscard]] /* do not ignore return value */
   std::vector<base::FilePath> pathsToExtraPluginFiles();
 
+  [[nodiscard]] /* do not ignore return value */
   std::string tracingCategories();
-
-  bool hasAutoStartTracer();
-
-  bool hasHelp();
-
-  bool hasVersion();
 
   // converts command-line argument to ABSOLUTE path
   /// \note returns empty base::FilePath{} if path
   /// is NOT valid directory
+  [[nodiscard]] /* do not ignore return value */
   base::FilePath cmdKeyToDirectory(
     const char key[]);
 
   // converts command-line argument to ABSOLUTE path
   /// \note returns empty base::FilePath{} if path
   /// is NOT valid file
+  [[nodiscard]] /* do not ignore return value */
   base::FilePath cmdKeyToFile(
     const char key[]);
 
   /// \note returns std::numeric_limits<int>::max() if
   /// command-line argument is NOT specified or NOT convertable
   /// to int
+  [[nodiscard]] /* do not ignore return value */
   int cmdKeyToInt(
     const base::StringPiece& key);
 
   // converts command-line argument to path
   // path may be NOT absolute
-  /// \note returns empty base::FilePath{} if command-line argument
+  /// \note returns empty base::FilePath{}
+  /// if command-line argument
   /// is NOT specified or NOT valid
+  [[nodiscard]] /* do not ignore return value */
   base::FilePath getAsPath(
     const base::StringPiece& key);
 
-  boost::program_options::options_description_easy_init
+  [[nodiscard]] /* do not ignore return value */
+  options_init
   registerOptions(
-    boost::program_options::options_description_easy_init& options);
+    options_init& options);
 
 private:
-  BoostCmd& boostCmd_;
+  BoostCmdParser& boostCmdParser_;
 
-  BoostCmdOptions boostCmdOptions{};
+  CmdOptions cmdOptions_{};
 
   // we expect that |dir_exe_| will not be changed
   base::FilePath dir_exe_;

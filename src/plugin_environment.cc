@@ -1,16 +1,8 @@
 #include "flextool/plugin_environment.hpp" // IWYU pragma: associated
 
-#include <boost/program_options/options_description.hpp>
-#include <entt/signal/dispatcher.hpp>
+#include <flexlib/ToolPlugin.hpp>
 
-#include "flextool/PluginManager.hpp"
-#include "flextool/app_cmd_options.hpp"
-#include "flextool/boost_command_line.hpp"
-#include "flextool/clang_util.hpp"
-#include "flextool/command_line_constants.hpp"
-#include "flextool/path_provider.hpp"
-#include "flextool/version.hpp"
-
+#include <basis/PluginManager.hpp>
 #include <basis/cmd_util.hpp>
 #include <basis/i18n.hpp>
 #include <basis/icu_util.hpp>
@@ -47,6 +39,8 @@
 #include <base/trace_event/trace_event.h>
 #include <base/trace_event/trace_log.h>
 
+#include <entt/signal/dispatcher.hpp>
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -77,15 +71,18 @@ ScopedPluginEnvironment::ScopedPluginEnvironment()
   DCHECK(base::MessageLoop::current()->task_runner());
 }
 
+/// \note destroy dispatcher before plugin manager
+/// see https://github.com/skypjack/entt/issues/103
 ScopedPluginEnvironment::~ScopedPluginEnvironment()
 {
-  {
-    DCHECK(main_events_dispatcher);
-    VLOG(9)
-      << "PluginManager shutdown...";
-    main_events_dispatcher->trigger<
-      backend::PluginManager::Events::Shutdown>();
-  }
+  DCHECK(main_events_dispatcher);
+  VLOG(9)
+    << "PluginManager shutdown...";
+
+  using Shutdown
+    = backend::PluginManagerEvents::Shutdown;
+
+  main_events_dispatcher->trigger<Shutdown>();
 }
 
 /// \todo refactor long method
@@ -116,65 +113,71 @@ bool ScopedPluginEnvironment::init(
       << "creating"
       " plugin::ToolPlugin::Events::Init";
     DCHECK(main_events_dispatcher);
-    main_events_dispatcher->trigger<
-      plugin::ToolPlugin::Events::Init>(
-      plugin::ToolPlugin::Events::Init{
-        argc
-        , argv
-      }
+
+    using Init
+      = plugin::ToolPlugin::Events::Init;
+
+    Init eventData{
+      argc
+      , argv
+    };
+
+    main_events_dispatcher->trigger<Init>(
+      std::move(eventData)
       );
   }
 
+  // sanity check
   {
-    // sanity check
-    {
-      base::FilePath curDir;
-      base::GetCurrentDirectory(&curDir);
-      CHECK(curDir == outDir);
-    }
+    base::FilePath curDir;
+    base::GetCurrentDirectory(&curDir);
+    CHECK(curDir == outDir);
+  }
 
-    {
-      VLOG(9)
-        << "running"
-        " backend::PluginManager::Events::Startup";
-      DCHECK(main_events_dispatcher);
-      // must have default value
-      DCHECK(!pathToDirWithPlugins.empty());
-      // must have default value
-      DCHECK(!pathToPluginsConfFile.empty());
-      main_events_dispatcher->trigger<
-        backend::PluginManager::Events::Startup
-        >(backend::PluginManager::Events::Startup{
-            .pathToDirWithPlugins
-              = pathToDirWithPlugins
-              , .pathToPluginsConfFile
-              = pathToPluginsConfFile
-              , .pathsToExtraPluginFiles
-              =  pathsToExtraPluginFiles
-          }
-          );
-    }
+  {
+    VLOG(9)
+      << "running"
+      " backend::PluginManager::Events::Startup";
+    DCHECK(main_events_dispatcher);
+    // must have default value
+    DCHECK(!pathToDirWithPlugins.empty());
+    // must have default value
+    DCHECK(!pathToPluginsConfFile.empty());
 
-    /// \todo allow plugins to notify other plugins about
-    /// their startup with custom data
-    /// all you need is to store main_events_dispatcher in plugin
-    /// and send startup event via that main_events_dispatcher
-    /// other plugins must load special library or headers
-    /// to process that startup event with same main_events_dispatcher
-    // each loaded plugin must receive |connect_plugins_to_dispatcher|
-    if(!plug_mgr.countLoadedPlugins()) {
-      LOG(WARNING)
+    using Startup
+      = backend::PluginManagerEvents::Startup;
+
+    Startup eventData{
+      pathToDirWithPlugins
+      , pathToPluginsConfFile
+      , pathsToExtraPluginFiles
+    };
+
+    main_events_dispatcher->trigger<
+      Startup
+      >(std::move(eventData));
+  }
+
+  /// \todo allow plugins to notify other plugins about
+  /// their startup with custom data
+  /// all you need is to store main_events_dispatcher in plugin
+  /// and send startup event via that main_events_dispatcher
+  /// other plugins must load special library or headers
+  /// to process that startup event with same main_events_dispatcher
+  // each loaded plugin must receive |connect_plugins_to_dispatcher|
+  if(!plug_mgr.countLoadedPlugins()) {
+    LOG(WARNING)
         << "unable to find plugins in plugins directory: "
-        << dir_exe_.AppendASCII(cmd::kPluginsDir);
-    }
+        << pathToDirWithPlugins;
+  }
 
-    {
-      VLOG(9)
-        << "running"
-        " plug_mgr.connect_plugins_to_dispatcher";
-      DCHECK(main_events_dispatcher);
-      plug_mgr.connect_plugins_to_dispatcher(*main_events_dispatcher);
-    }
+  {
+    VLOG(9)
+      << "running"
+      " plug_mgr.connect_plugins_to_dispatcher";
+    DCHECK(main_events_dispatcher);
+    plug_mgr.connect_plugins_to_dispatcher(
+      *main_events_dispatcher);
   }
 
   return

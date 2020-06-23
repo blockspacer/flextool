@@ -1,7 +1,5 @@
 #include "flextool/clang_util.hpp" // IWYU pragma: associated
 
-#include "flextool/boost_command_line.hpp"
-
 #include <base/base_paths.h>
 #include <base/files/file_path.h>
 #include <base/files/file_util.h>
@@ -10,6 +8,8 @@
 #include <base/stl_util.h>
 #include <base/strings/string_piece.h>
 #include <base/strings/string_util.h>
+
+#include <basis/boost_command_line.hpp>
 
 #include <clang/Basic/FileManager.h>
 #include <clang/Basic/SourceManager.h>
@@ -67,6 +67,26 @@ static const char kClingIncludeFlag[] = "-I";
 
 static const char kClangBuildPathFlag[] = "-p=";
 
+static void addBoostDefines(
+  std::vector<std::string>& args
+  , const std::string& prefix)
+{
+  // see https://stackoverflow.com/a/30877725
+  args.push_back(
+    prefix + "-DBOOST_SYSTEM_NO_DEPRECATED");
+  args.push_back(
+    prefix + "-DBOOST_ERROR_CODE_HEADER_ONLY");
+}
+
+static void addWarningFlags(
+  std::vector<std::string>& args
+  , const std::string& prefix)
+{
+  args.push_back(
+    prefix + "-Wno-unused-command-line-argument");
+}
+
+[[nodiscard]] /* do not ignore return value */
 static bool add_default_clang_args(
   const base::FilePath clangBuildPath
   , std::vector<std::string>& args)
@@ -88,7 +108,8 @@ static bool add_default_clang_args(
 
   {
     /// \note must be first arg
-    CHECK(args.empty());
+    CHECK(args.empty())
+      << "clang arguments already populated";
     args.push_back(
       "clang_app"); // app name
   }
@@ -108,27 +129,18 @@ static bool add_default_clang_args(
     }
   }
 
-  //args.push_back("-extra-arg=-nostdinc");
+  const std::string prefixForClangFlag
+    = std::string(kExtraClangFlag) + "=";
+
+  addWarningFlags(args, prefixForClangFlag);
 
   args.push_back(
-    std::string(
-      kExtraClangFlag) + "=-Wno-unused-command-line-argument");
+    prefixForClangFlag + "-DCLANG_ENABLED=1");
 
   args.push_back(
-    std::string(kExtraClangFlag) + "=-DCLANG_ENABLED=1");
+    prefixForClangFlag + "-DCLANG_IS_ON=1");
 
-  args.push_back(
-    std::string(kExtraClangFlag) + "=-DCLANG_IS_ON=1");
-
-  // see https://stackoverflow.com/a/30877725
-  {
-    args.push_back(
-      std::string(kExtraClangFlag) +
-      "=-DBOOST_SYSTEM_NO_DEPRECATED");
-    args.push_back(
-      std::string(kExtraClangFlag) +
-      "=-DBOOST_ERROR_CODE_HEADER_ONLY");
-  }
+  addBoostDefines(args, prefixForClangFlag);
 
   // include paths
   {
@@ -138,11 +150,13 @@ static bool add_default_clang_args(
 
     args.push_back(
       kExtraIncludeFlag
+      /// \todo recieve from cmake as definition
+      /// \todo docs: why we need it here?
       + dir_exe.Append("./resources").value());
   }
 
   args.push_back(
-    std::string(kExtraClangFlag) + "=-std=c++17");
+    prefixForClangFlag + "-std=c++17");
 
   return
     true;
@@ -164,28 +178,6 @@ const char kClangArgPrefix[] = "-";
 // extern
 const char kClingArgPrefix[] = "-";
 
-/// \todo refactor long method
-/**
- * Clang provides some options out-of-the-box:
- *
- * Generic Options:
- *
- *   -help
- *     - Display available options (-help-hidden for more)
- *   -help-list
- *     - Display list of available options (-help-list-hidden for more)
- *   -version
- *     - Display the version of this program
- *
- * Use override options:
- *
- *   -extra-arg=<string>
- *     - Additional argument to append to the compiler command line
- *   -extra-arg-before=<string>
- *     - Additional argument to prepend to the compiler command line
- *   -p=<string>
- *     - Build path
- **/
 static bool isAllowedClangArgument(const base::StringPiece& arg)
 {
   CHECK(base::size(clang_util::kClangArgPrefix));
@@ -201,58 +193,46 @@ static bool isAllowedClangArgument(const base::StringPiece& arg)
       base::size(clang_util::kClangArgPrefix));
   }
 
-  if(base::StartsWith(
-       base::StringPiece{arg}
-       , base::StringPiece{"help"}
-       , base::CompareCase::INSENSITIVE_ASCII))
-  {
-    return
-      true;
-  }
+  // arguments that are built-in into clang libtooling
+  /**
+   * Clang provides some options out-of-the-box:
+   *
+   * Generic Options:
+   *
+   *   -help
+   *     - Display available options (-help-hidden for more)
+   *   -help-list
+   *     - Display list of available options (-help-list-hidden for more)
+   *   -version
+   *     - Display the version of this program
+   *
+   * Use override options:
+   *
+   *   -extra-arg=<string>
+   *     - Additional argument to append to the compiler command line
+   *   -extra-arg-before=<string>
+   *     - Additional argument to prepend to the compiler command line
+   *   -p=<string>
+   *     - Build path
+   **/
+  static const std::vector<std::string> allowedClangArguments{
+    "help"
+    , "help-list"
+    , "version"
+    , "extra-arg="
+    , "extra-arg-before="
+    , "p="
+  };
 
-  if(base::StartsWith(
-       base::StringPiece{arg}
-       , base::StringPiece{"help-list"}
-       , base::CompareCase::INSENSITIVE_ASCII))
-  {
-    return
-      true;
-  }
-
-  if(base::StartsWith(
-       base::StringPiece{arg}
-       , base::StringPiece{"version"}
-       , base::CompareCase::INSENSITIVE_ASCII))
-  {
-    return
-      true;
-  }
-
-  if(base::StartsWith(
-       base::StringPiece{arg}
-       , base::StringPiece{"extra-arg="}
-       , base::CompareCase::INSENSITIVE_ASCII))
-  {
-    return
-      true;
-  }
-
-  if(base::StartsWith(
-       base::StringPiece{arg}
-       , base::StringPiece{"extra-arg-before="}
-       , base::CompareCase::INSENSITIVE_ASCII))
-  {
-    return
-      true;
-  }
-
-  if(base::StartsWith(
-       base::StringPiece{arg}
-       , base::StringPiece{"p="}
-       , base::CompareCase::INSENSITIVE_ASCII))
-  {
-    return
-      true;
+  for(const auto& allowedArg: allowedClangArguments) {
+    if(base::StartsWith(
+         base::StringPiece{arg}
+         , base::StringPiece{allowedArg}
+         , base::CompareCase::INSENSITIVE_ASCII))
+    {
+      return
+        true;
+    }
   }
 
   // clang can accept file paths
@@ -282,26 +262,24 @@ bool add_default_cling_args(
 
   {
     /// \note must be first arg
-    CHECK(clingInterpreterArgs.empty());
+    CHECK(clingInterpreterArgs.empty())
+      << "cling arguments already populated";
     clingInterpreterArgs.push_back(
       "cling_app"); // app name
   }
 
-  //clingInterpreterArgs.push_back("-nostdinc");
-
-  clingInterpreterArgs.push_back(
-    "-Wno-unused-command-line-argument");
+  addWarningFlags(clingInterpreterArgs,
+                  "" // prefix
+                  );
 
   clingInterpreterArgs.push_back(
     "-DCLING_ENABLED=1");
   clingInterpreterArgs.push_back(
     "-DCLING_IS_ON=1");
 
-  // https://stackoverflow.com/a/30877725
-  clingInterpreterArgs.push_back(
-    "-DBOOST_SYSTEM_NO_DEPRECATED");
-  clingInterpreterArgs.push_back(
-    "-DBOOST_ERROR_CODE_HEADER_ONLY");
+  addBoostDefines(clingInterpreterArgs,
+                  "" // prefix
+                  );
 
   clingInterpreterArgs.push_back(
     "--std=c++17");
@@ -315,6 +293,8 @@ bool add_default_cling_args(
     clingInterpreterArgs.push_back(
       kClingIncludeFlag
       + dir_exe.Append(
+        /// \todo recieve from cmake as definition
+        /// \todo docs: why we need it here?
         "./resources").value());
   }
 
@@ -372,13 +352,78 @@ base::Optional<std::string> clangArgToClingArg(
       std::move(combined_for_cling)};
 }
 
+bool pipelineClangArgToCling(
+  const std::string& combined_for_clang
+  , const cmd::UnergisteredOption& unergisteredOption
+  , std::vector<std::string>& cling_extra_args)
+{
+  /// \note only arguments starting with `--extra-arg=`
+  /// will be forwarded
+  base::Optional<std::string> combined_for_cling
+    = clangArgToClingArg(combined_for_clang);
+  if(combined_for_cling.has_value())
+  {
+    if(combined_for_cling.value().empty()) {
+      CHECK(combined_for_clang == kExtraArgPrefix);
+      LOG(WARNING)
+        << "Empty argument:"
+        << kExtraArgPrefix;
+      return false;
+    }
+    // pipeline clang args to cling
+    {
+      VLOG(9)
+        << "pipelined clang argument to cling: "
+        << combined_for_cling.value();
+
+      /// \note argument without '-' prefix
+      /// example: extra-arg=-I/home/
+      // VALID: "extra-arg="
+      // NOT VALID: "-extra-arg="
+      if(base::StartsWith(
+           base::StringPiece{combined_for_cling.value()}
+           , base::StringPiece{kClingArgPrefix}
+           , base::CompareCase::INSENSITIVE_ASCII))
+      {
+        LOG(ERROR)
+            << "Command-line argument can not start with "
+            << kClingArgPrefix
+            << " Error in argument: "
+            << combined_for_cling.value();
+        return false;
+      }
+
+      /// \note We do not add '-' before argument
+      /// if it does not have key.
+      /// Example: path to source file
+      /// that tool needs to process
+      /// does not have key
+      const std::string withPrefix
+        = unergisteredOption.key.empty()
+          ? combined_for_cling.value()
+          : (kClingArgPrefix + combined_for_cling.value());
+
+      cling_extra_args.push_back(
+        std::move(withPrefix));
+    }
+  } else {
+    VLOG(9)
+        << "failed to pipeline clang argument to cling: "
+        << combined_for_clang;
+    return false;
+  }
+
+  return true;
+}
+
 /// \todo refactor long method
 bool populateClangArguments(
   const base::FilePath& clangBuildPath
   , std::vector<std::string>& args_storage
   , std::vector<std::string>& cling_extra_args
-  , cmd::BoostCmd& boostCmd
-  ){
+  , cmd::BoostCmdParser& boostCmdParser
+  )
+{
   {
     /// \note must be before all custom arguments
     const bool add_ok = add_default_clang_args(
@@ -391,17 +436,16 @@ bool populateClangArguments(
     }
   }
 
-  if(boostCmd.unregisteredOptions().empty()) {
+  if(boostCmdParser.unregisteredOptions().empty()) {
     VLOG(9)
       << "no unregistered arguments provided for clang and cling";
   }
 
-  /// \note forward unregistered (unknown) options to clang libtooling
+  /// \note forward unregistered (unknown) options
+  /// to clang libtooling
   for (const cmd::UnergisteredOption& unergisteredOption
-       : boostCmd.unregisteredOptions())
+       : boostCmdParser.unregisteredOptions())
   {
-    //DCHECK(unergisteredOption.key);
-    //DCHECK(unergisteredOption.values);
     VLOG(9)
         << "forwarding unregistered (unknown)"
       " command-line argument: "
@@ -422,6 +466,9 @@ bool populateClangArguments(
       continue;
     }
 
+    /// \note single key may have multiple values
+    /// Example with key "extra-arg":
+    /// extra-arg=-I/home/ extra-arg=-I/other/
     for(size_t i = 0
         ; i < unergisteredOption.values.size();
         i++)
@@ -440,7 +487,7 @@ bool populateClangArguments(
       // becomes "extra-arg=-I/home/"
       const std::string combined_for_clang
         = unergisteredOption.KVToSting(
-            i
+            i // value index
             , KVseparator
             );
 
@@ -494,61 +541,21 @@ bool populateClangArguments(
           std::move(withPrefix));
       }
 
-      /// \note only arguments starting with `--extra-arg=`
-      /// will be forwarded
-      base::Optional<std::string> combined_for_cling
-        = clangArgToClingArg(combined_for_clang);
-      if(combined_for_cling.has_value())
-      {
-        if(combined_for_cling.value().empty()) {
-          CHECK(combined_for_clang == kExtraArgPrefix);
-          LOG(WARNING)
-            << "Empty argument:"
-            << kExtraArgPrefix;
-          continue;
-        }
 #if defined(CLING_IS_ON)
-        // pipeline clang args to cling
-        {
-          VLOG(9)
-            << "pipelined clang argument to cling: "
-            << combined_for_cling.value();
-
-          /// \note argument without '-' prefix
-          /// example: extra-arg=-I/home/
-          // VALID: "extra-arg="
-          // NOT VALID: "-extra-arg="
-          if(base::StartsWith(
-               base::StringPiece{combined_for_cling.value()}
-               , base::StringPiece{kClingArgPrefix}
-               , base::CompareCase::INSENSITIVE_ASCII))
-          {
-            LOG(ERROR)
-                << "Command-line argument can not start with "
-                << kClingArgPrefix
-                << " Error in argument: "
-                << combined_for_cling.value();
-            continue;
-          }
-
-          /// \note we do not add '-' before argument
-          /// if it does not have key
-          /// example: path to source file that tool needs to process
-          /// does not have key
-          const std::string withPrefix
-            = unergisteredOption.key.empty()
-              ? combined_for_cling.value()
-              : (kClingArgPrefix + combined_for_cling.value());
-
-          cling_extra_args.push_back(
-            std::move(withPrefix));
-        }
-#endif // CLING_IS_ON
-      } else {
+      const bool pipelineDone
+        = pipelineClangArgToCling(
+            combined_for_clang
+            , unergisteredOption
+            , cling_extra_args);
+      if(!pipelineDone) {
         VLOG(9)
-            << "failed to pipeline clang argument to cling: "
+            << "Command-line argument "
+          "can not be piplined into cling."
+            << " Error in argument: "
             << combined_for_clang;
+        continue;
       }
+#endif // CLING_IS_ON
     } // for
   } // for
 
@@ -558,12 +565,15 @@ bool populateClangArguments(
 
 void FileSaveHandler::saveFile(
   const base::FilePath outDir
+  // can be used to disable file saving
   , bool shouldFlushFile
-  , bool shouldPrintConsole
+  // can be used to print debug information
+  , bool shouldPrintEditBufferToConsole
   , const clang::FileID &fileID
   , const clang::FileEntry *fileEntry
   , clang::Rewriter &rewriter
-  ){
+  )
+{
   std::string full_file_path = fileEntry->getName();
   VLOG(9)
     << "full_file_path is "
@@ -571,16 +581,6 @@ void FileSaveHandler::saveFile(
   if(full_file_path.empty()) {
     LOG(WARNING)
       << "unable to save file, invalid file path";
-    return;
-  }
-
-  const std::string filename = fs::path(full_file_path).filename();
-  VLOG(9)
-    << "filename is "
-    << filename;
-  if(filename.empty()) {
-    LOG(WARNING)
-      << "unable to save file, invalid file name";
     return;
   }
 
@@ -596,9 +596,23 @@ void FileSaveHandler::saveFile(
     return;
   }
 
-  const char kGeneratedFileExtentionSuffix[]
+  // extract filename from path
+  const std::string filename
+    = fs::path(full_file_path).filename();
+  VLOG(9)
+    << "filename is "
+    << filename;
+  if(filename.empty()) {
+    LOG(WARNING)
+      << "unable to save file, invalid file name";
+    return;
+  }
+
+  /// \todo make configurable
+  static const char kGeneratedFileExtentionSuffix[]
     = ".generated";
 
+  // build path to generated file
   const base::FilePath out_path
     = outDir.Append(
         filename
@@ -637,7 +651,7 @@ void FileSaveHandler::saveFile(
   }
 
   // this will output to screen
-  if (shouldPrintConsole) {
+  if (shouldPrintEditBufferToConsole) {
     clang::SourceManager &sourceManager
       = rewriter.getSourceMgr();
     rewriter.getEditBuffer(
