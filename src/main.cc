@@ -34,6 +34,23 @@ static const base::FilePath::CharType kTraceReportFileName[]
 const char kStringCommandDelim[]
   = "/";
 
+void runClangLibTooling(
+  flextool::ScopedClangEnvironment& clang_env)
+{
+  flextool::ClangTool tool;
+
+  DCHECK(!clang_env.args_storage.empty());
+  DCHECK(clang_env.annotationMatchOptions);
+  DCHECK(!clang_env.annotationMatchOptions->annotateName.empty());
+  DCHECK(clang_env.annotationMatchOptions->annotationMatchCallback);
+  DCHECK(clang_env.annotationMatchOptions->endSourceFileAction);
+
+  tool.run(
+    clang_env.args_storage // command-line arguments
+    , clang_env.annotationMatchOptions // custom settings
+    );
+}
+
 // init application systems,
 // initialization order matters!
 [[nodiscard]] /* do not ignore return value */
@@ -187,8 +204,11 @@ base::Optional<int> initEnv(
 // handle command-line argument: `--version`
 [[nodiscard]] /* do not ignore return value */
 base::Optional<int> handleVersionCmd(
-  flextool::ScopedPluginEnvironment& plugin_env)
+  flextool::ScopedCmdEnvironment& cmd_env
+  , flextool::ScopedPluginEnvironment& plugin_env)
 {
+  DCHECK(cmd_env.appCmd.count(cmd::kVersion));
+
   LOG(INFO)
     << "tool version: "
     << flextool_VERSION;
@@ -226,11 +246,57 @@ base::Optional<int> handleVersionCmd(
     EXIT_SUCCESS;
 }
 
+// handle command-line argument: `--help`
+[[nodiscard]] /* do not ignore return value */
+base::Optional<int> handleHelpCmd(
+  flextool::ScopedCmdEnvironment& cmd_env
+  , flextool::ScopedPluginEnvironment& plugin_env
+  , flextool::ScopedClangEnvironment& clang_env)
+{
+  LOG(INFO) << cmd_env.boostCmdParser.optionsToString();
+
+  /// \note allow plugins to process commands before
+  /// pre-built logic
+  {
+    DCHECK(plugin_env.main_events_dispatcher);
+    VLOG(9)
+      << "sending"
+      " plugin::ServerPlugin::Events"
+      "::StringCommand";
+
+    using StringCommand
+      = plugin::ToolPlugin::Events::StringCommand;
+
+    StringCommand eventData{
+      // raw_cmd
+      /*copy*/
+      std::string(kStringCommandDelim) + cmd::kVersion
+      , // split_parts
+      /*copy*/
+      std::vector<std::string>{cmd::kVersion}
+    };
+
+    plugin_env.main_events_dispatcher
+      ->trigger<StringCommand>(
+      std::move(eventData)
+      );
+
+    /// \note continue to forward help to clang libtooling
+    runClangLibTooling(clang_env);
+  }
+
+  // nothing after version printing
+  // stop app execution with EXIT_SUCCESS
+  return
+    EXIT_SUCCESS;
+}
+
 // handle command-line arguments, such as `--version`
 [[nodiscard]] /* do not ignore return value */
 base::Optional<int> handleCmdOptions(
   flextool::ScopedCmdEnvironment& cmd_env
   , flextool::ScopedPluginEnvironment& plugin_env
+  , flextool::ScopedClangEnvironment& clang_env
   )
 {
   if (cmd_env.appCmd.count(cmd::kVersion))
@@ -238,8 +304,17 @@ base::Optional<int> handleCmdOptions(
     DVLOG(9)
         << "processing command-line argument: "
         << cmd::kVersion;
-    return handleVersionCmd(
+    return handleVersionCmd(cmd_env,
       plugin_env);
+  }
+
+  if (cmd_env.appCmd.count(cmd::kHelp))
+  {
+    DVLOG(9)
+        << "processing command-line argument: "
+        << cmd::kHelp;
+    return handleHelpCmd(cmd_env,
+      plugin_env, clang_env);
   }
 
   return base::nullopt;
@@ -288,7 +363,8 @@ int main(int argc, char* argv[])
   {
     base::Optional<int> exit_code = handleCmdOptions(
       cmd_env
-      , plugin_env);
+      , plugin_env
+      , clang_env);
     if(exit_code.has_value()) {
       DVLOG(9)
         << "exited after handling of"
@@ -297,21 +373,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  // run Clang LibTooling
-  {
-    flextool::ClangTool tool;
-
-    DCHECK(!clang_env.args_storage.empty());
-    DCHECK(clang_env.annotationMatchOptions);
-    DCHECK(!clang_env.annotationMatchOptions->annotateName.empty());
-    DCHECK(clang_env.annotationMatchOptions->annotationMatchCallback);
-    DCHECK(clang_env.annotationMatchOptions->endSourceFileAction);
-
-    tool.run(
-      clang_env.args_storage // command-line arguments
-      , clang_env.annotationMatchOptions // custom settings
-      );
-  }
+  runClangLibTooling(clang_env);
 
   // during teardown we need to be able to perform IO.
   base::ThreadRestrictions::SetIOAllowed(true);

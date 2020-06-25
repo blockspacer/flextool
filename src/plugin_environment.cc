@@ -69,12 +69,16 @@ ScopedPluginEnvironment::ScopedPluginEnvironment()
   : main_events_dispatcher(std::make_unique<entt::dispatcher>())
 {
   DCHECK(base::MessageLoop::current()->task_runner());
+
+  DETACH_FROM_SEQUENCE(sequence_checker_);
 }
 
 /// \note destroy dispatcher before plugin manager
 /// see https://github.com/skypjack/entt/issues/103
 ScopedPluginEnvironment::~ScopedPluginEnvironment()
 {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
   DCHECK(main_events_dispatcher);
   VLOG(9)
     << "PluginManager shutdown...";

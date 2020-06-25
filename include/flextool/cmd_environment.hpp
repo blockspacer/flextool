@@ -1,7 +1,6 @@
 #pragma once
 
 #include "app_cmd_options.hpp"
-#include "clang_util.hpp"
 
 #include <base/at_exit.h>
 #include <base/files/file_path.h>

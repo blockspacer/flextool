@@ -51,6 +51,8 @@ public:
   std::unique_ptr<entt::dispatcher> main_events_dispatcher;
 
 private:
+  SEQUENCE_CHECKER(sequence_checker_);
+
   DISALLOW_COPY_AND_ASSIGN(ScopedPluginEnvironment);
 };
 

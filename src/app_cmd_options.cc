@@ -2,8 +2,6 @@
 
 #include "flextool/command_line_constants.hpp"
 
-#include <flexlib/ToolPlugin.hpp>
-
 #include <base/base_paths.h>
 #include <base/base_switches.h>
 #include <base/files/file.h>
@@ -17,6 +15,8 @@
 #include <basis/PluginManager.hpp>
 #include <basis/boost_command_line.hpp>
 
+#include <basis/cmd_util.hpp>
+
 #include <boost/none.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/program_options/errors.hpp>
@@ -26,77 +26,14 @@
 #include <limits>
 #include <ostream>
 
-#define LOG_PATH_NOT_EXIST(severity, path) \
-  LOG(severity) \
-    << "path must exist: " \
-    << path;
-
-#define LOG_PATH_NOT_DIRECTORY(severity, path) \
-  LOG(severity) \
-    << "path must be directory: " \
-    << path;
-
-#define LOG_PATH_MUST_BE_NOT_DIRECTORY(severity, path) \
-  LOG(severity) \
-    << "path must be NOT directory: " \
-    << path;
-
-#define VLOG_NOT_INITIALIZED(severity, key) \
-  VLOG(severity) \
-    << "command like argument " \
-    << key \
-    << " is not initialized";
-
 namespace po = boost::program_options;
 
 namespace cmd {
 
 namespace {
 
-static const char DEFAULT_EVENT_CATEGORIES[]
-  = "-sequence_manager"
-    ",-thread_pool"
-    ",-base"
-    ",-toplevel"
-    ",profiler"
-    ",user_timing"
-    ",ui"
-    ",browser"
-    ",latency"
-    ",latencyInfo"
-    ",loading"
-    ",skia"
-    ",task_scheduler"
-    ",native"
-    ",benchmark"
-    ",ipc"
-    ",mojom"
-    ",media"
-    ",disabled-by-default-lifecycles"
-    ",disabled-by-default-renderer.scheduler"
-    ",disabled-by-default-v8.gc"
-    ",disabled-by-default-blink_gc"
-    ",disabled-by-default-system_stats"
-    ",disabled-by-default-network"
-    ",disabled-by-default-cpu_profiler"
-    ",disabled-by-default-memory-infra";
-
-[[nodiscard]] /* do not ignore return value */
-static
-std::vector<base::FilePath>
-toFilePaths(const std::vector<std::string>& paths)
-{
-  std::vector<base::FilePath> result;
-  for (const std::string& it: paths)
-  {
-    result.push_back(
-      /// \note On POSIX, |MakeAbsoluteFilePath| fails
-      /// if the path does not exist
-      base::MakeAbsoluteFilePath(base::FilePath{it}));
-  }
-  return
-    result;
-}
+const char kPluginsConfigFilesDir[]
+  = "resources/configuration_files";
 
 [[nodiscard]] /* do not ignore return value */
 static
@@ -471,14 +408,14 @@ std::vector<base::FilePath>
 AppCmdOptions::pathsToExtraPluginFiles()
 {
   return
-    toFilePaths(cmdOptions_.pathsToExtraPluginFiles);
+    basis::toFilePaths(cmdOptions_.pathsToExtraPluginFiles);
 }
 
 std::string AppCmdOptions::tracingCategories()
 {
   return
     cmdOptions_.tracing_categories_arg
-      .value_or(DEFAULT_EVENT_CATEGORIES);
+      .value_or(basis::DEFAULT_EVENT_CATEGORIES);
 }
 
 size_t AppCmdOptions::count(
@@ -491,13 +428,13 @@ size_t AppCmdOptions::count(
 std::vector<base::FilePath> AppCmdOptions::scriptFiles()
 {
   return
-    toFilePaths(cmdOptions_.cling_scripts);
+    basis::toFilePaths(cmdOptions_.cling_scripts);
 }
 
 base::FilePath AppCmdOptions::inDir()
 {
   base::FilePath dir
-    = cmdKeyToDirectory(cmd::kInDir);
+    = basis::cmdKeyToDirectory(cmd::kInDir, boostCmdParser_);
   return
     dir.empty()
     // default value
@@ -508,7 +445,7 @@ base::FilePath AppCmdOptions::inDir()
 base::FilePath AppCmdOptions::outDir()
 {
   base::FilePath dir
-    = cmdKeyToDirectory(cmd::kOutDir);
+    = basis::cmdKeyToDirectory(cmd::kOutDir, boostCmdParser_);
   return
     dir.empty()
     // default value
@@ -519,7 +456,7 @@ base::FilePath AppCmdOptions::outDir()
 base::FilePath AppCmdOptions::pluginsDir()
 {
   base::FilePath dir
-    = cmdKeyToDirectory(cmd::kPluginsDir);
+    = basis::cmdKeyToDirectory(cmd::kPluginsDir, boostCmdParser_);
   return
     dir.empty()
     // default value
@@ -531,12 +468,12 @@ base::FilePath AppCmdOptions::pluginsDir()
 base::FilePath AppCmdOptions::pluginsConfigFile()
 {
   base::FilePath pluginsConfigFile
-    = cmdKeyToFile(cmd::kPluginsConfFile);
+    = basis::cmdKeyToFile(cmd::kPluginsConfFile, boostCmdParser_);
   return
     pluginsConfigFile.empty()
     // default value
     ? dir_exe_
-      .AppendASCII(backend::kDefaultPluginsDirName)
+      .AppendASCII(kPluginsConfigFilesDir)
       .AppendASCII(backend::kPluginsConfigFileName)
     : pluginsConfigFile;
 }
@@ -550,164 +487,6 @@ int AppCmdOptions::threadsNum()
     , kMinThreadNum
     , kMaxThreadNum
     );
-}
-
-int AppCmdOptions::cmdKeyToInt(
-  const base::StringPiece &key)
-{
-  CHECK(!key.empty());
-
-  int result = std::numeric_limits<int>::max();
-
-  CHECK(key.find_first_of(',')
-        == base::StringPiece::npos);
-  if(!boostCmdParser_.count(key)) {
-    VLOG(9)
-        << "Unable to find command-line argument: "
-        << key;
-    return
-      result;
-  }
-
-  const boost::optional<int>& value
-    = boostCmdParser_.getAs<
-    boost::optional<int>
-    >(key.as_string());
-
-  if(value.is_initialized()) {
-    result = value.value();
-  } else {
-    VLOG_NOT_INITIALIZED(9, key)
-  }
-
-  return
-    result;
-}
-
-base::FilePath AppCmdOptions::getAsPath(
-  const base::StringPiece &key)
-{
-  CHECK(!key.empty());
-
-  base::FilePath result{};
-
-  CHECK(key.find_first_of(',')
-        == base::StringPiece::npos);
-  if(!boostCmdParser_.count(key)) {
-    VLOG(9)
-        << "Unable to find command-line argument: "
-        << key;
-    return
-      result;
-  }
-
-  const boost::optional<std::string>& value
-    = boostCmdParser_.getAs<
-    boost::optional<std::string>
-    >(key.as_string());
-
-  if(value.is_initialized()
-     && !value.value().empty())
-  {
-    result = base::FilePath{value.value()};
-  } else {
-    VLOG_NOT_INITIALIZED(9, key)
-  }
-
-  return
-    result;
-}
-
-base::FilePath AppCmdOptions::cmdKeyToDirectory(
-  const char key[])
-{
-  base::FilePath dirPath
-    = getAsPath(key);
-
-  VLOG(9)
-    << key
-    << " equals to "
-    << dirPath;
-
-  if(dirPath.empty()) {
-    return
-      base::FilePath{};
-  }
-
-  /// \note On POSIX, |MakeAbsoluteFilePath| fails
-  /// if the path does not exist
-  dirPath
-    = base::MakeAbsoluteFilePath(dirPath);
-  DCHECK(!dirPath.empty())
-    << "unable to find absolute path to "
-    << dirPath;
-
-  if (!base::PathExists(dirPath)) {
-    LOG_PATH_NOT_EXIST(WARNING, dirPath)
-    return
-      base::FilePath{};
-  }
-
-  // we expect dir, NOT file
-  if(!base::DirectoryExists(dirPath)) {
-    LOG_PATH_NOT_DIRECTORY(WARNING, dirPath)
-    return
-      base::FilePath{};
-  }
-
-  return
-    dirPath;
-}
-
-base::FilePath AppCmdOptions::cmdKeyToFile(
-  const char key[])
-{
-  base::FilePath filePath
-    = getAsPath(key);
-
-  VLOG(9)
-    << key
-    << " equals to "
-    << filePath;
-
-  if(filePath.empty()) {
-    return
-      base::FilePath{};
-  }
-
-  /// \note On POSIX, |MakeAbsoluteFilePath| fails
-  /// if the path does not exist
-  filePath = base::MakeAbsoluteFilePath(filePath);
-  DCHECK(!filePath.empty())
-    << "unable to find absolute path to "
-    << filePath;
-
-  if (!base::PathExists(filePath)) {
-    LOG_PATH_NOT_EXIST(WARNING, filePath)
-    return
-      base::FilePath{};
-  }
-
-  // we expect file, NOT dir
-  if (base::DirectoryExists(filePath)) {
-    LOG_PATH_MUST_BE_NOT_DIRECTORY(WARNING, filePath)
-    return
-      base::FilePath{};
-  }
-
-  base::File::Info fileInfo;
-  bool hasInfo
-    = base::GetFileInfo(filePath, &fileInfo);
-  if(!hasInfo) {
-    LOG(WARNING)
-        << "unable to get source file information: "
-        << filePath;
-    return
-      base::FilePath{};
-  }
-
-  return
-    filePath;
 }
 
 AppCmdOptions::options_init

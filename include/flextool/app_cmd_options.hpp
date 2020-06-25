@@ -26,10 +26,6 @@ constexpr int kMinThreadNum = 1;
 
 constexpr int kMaxThreadNum = 100;
 
-//extern const char kHelpArg[];
-
-//extern const char kVersionArg[];
-
 // used to convert unprocessed command-line arguments to
 // internal data types (like std::string to base::FilePath)
 // also can contain application-specific logic
@@ -99,36 +95,6 @@ public:
 
   [[nodiscard]] /* do not ignore return value */
   std::string tracingCategories();
-
-  // converts command-line argument to ABSOLUTE path
-  /// \note returns empty base::FilePath{} if path
-  /// is NOT valid directory
-  [[nodiscard]] /* do not ignore return value */
-  base::FilePath cmdKeyToDirectory(
-    const char key[]);
-
-  // converts command-line argument to ABSOLUTE path
-  /// \note returns empty base::FilePath{} if path
-  /// is NOT valid file
-  [[nodiscard]] /* do not ignore return value */
-  base::FilePath cmdKeyToFile(
-    const char key[]);
-
-  /// \note returns std::numeric_limits<int>::max() if
-  /// command-line argument is NOT specified or NOT convertable
-  /// to int
-  [[nodiscard]] /* do not ignore return value */
-  int cmdKeyToInt(
-    const base::StringPiece& key);
-
-  // converts command-line argument to path
-  // path may be NOT absolute
-  /// \note returns empty base::FilePath{}
-  /// if command-line argument
-  /// is NOT specified or NOT valid
-  [[nodiscard]] /* do not ignore return value */
-  base::FilePath getAsPath(
-    const base::StringPiece& key);
 
   [[nodiscard]] /* do not ignore return value */
   options_init

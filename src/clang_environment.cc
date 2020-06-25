@@ -125,8 +125,6 @@ bool ScopedClangEnvironment::init(
   }
 
   if (cmd_env.appCmd.count(cmd::kHelp)) {
-    LOG(INFO) << cmd_env.boostCmdParser.optionsToString();
-
     args_storage.push_back(kClangHelpFlag);
     /// \note continue to forward help to clang libtooling
   }
