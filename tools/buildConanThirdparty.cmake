@@ -611,7 +611,7 @@ conan_build_target_if(
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/corrade")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/corrade"
       "http://github.com/mosra/corrade.git"
-      "")
+      "-b;v2020.06")
 endif()
 conan_build_target_if(
   "corrade" # target to clean
