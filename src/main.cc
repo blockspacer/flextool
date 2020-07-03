@@ -326,19 +326,19 @@ int main(int argc, char* argv[])
 {
   DCHECK(argc > 1);
 
-  // setup command-line arguments
+  // stores command-line arguments
   flextool::ScopedCmdEnvironment cmd_env;
 
-  // setup basic requirements, like thread pool, logging, etc.
+  // stores basic requirements, like thread pool, logging, etc.
   basis::ScopedBaseEnvironment base_env;
 
-  // setup ::Corrade::PluginManager
+  // stores ::Corrade::PluginManager
   flextool::ScopedPluginEnvironment plugin_env;
 
-  // setup clang libtooling
+  // stores clang libtooling
   flextool::ScopedClangEnvironment clang_env;
 
-  // setup cling C++ interpreter
+  // stores cling C++ interpreter
   flextool::ScopedClingEnvironment cling_env;
 
   // init application systems,

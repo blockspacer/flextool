@@ -44,6 +44,8 @@ Main project page: https://blockspacer.github.io/flex_docs/
 
 NOTE: cling with LLVM build may take couple of hours.
 
+Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+
 We use `buildConanThirdparty.cmake` script to download and install conan packages.
 
 ```bash
@@ -67,6 +69,10 @@ NOTE: `llvm_tools` package is optional, you can skip it using `enable_llvm_tools
 
 NOTE: LLVM build may take couple of hours.
 
+NOTE: `-DENABLE_LLVM_TOOLS=TRUE` does the same (using `buildConanThirdparty.cmake`)
+
+Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+
 You can install `llvm_tools` like so:
 
 ```bash
@@ -81,7 +87,43 @@ conan create . \
 
 See for up-to-date instructions [https://github.com/blockspacer/llvm_tools](https://github.com/blockspacer/llvm_tools)
 
-## Installation
+## Easy install with common plugins
+
+If you want to install flextool and it's plugins in single command, than change options provided to `tools/buildConanThirdparty.cmake`
+
+NOTE: `tools/buildConanThirdparty.cmake` will perform FULL RE-BUILD, it may take couple of hours.
+
+Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+
+We use `buildConanThirdparty.cmake` script to download and install conan packages.
+
+NOTE: set `-DENABLE_CLING=FALSE` if you already installed Cling using `tools/buildConanThirdparty.cmake` above.
+
+```bash
+# NOTE: don't forget to re-run `conan install` or `conan create` after command below
+# NOTE: change `build_type=Debug` to `build_type=Release` in production
+cmake \
+  -DEXTRA_CONAN_OPTS=\
+"--profile;clang\
+;-s;build_type=Debug\
+;-s;cling_conan:build_type=Release\
+;-s;llvm_tools:build_type=Release\
+;--build;missing" \
+  -DENABLE_LLVM_TOOLS=FALSE \
+  -DENABLE_CLING=TRUE \
+  -DENABLE_FLEXTOOL=TRUE \
+  -DENABLE_FLEX_REFLECT_PLUGIN=TRUE \
+  -DENABLE_SQUARETS=TRUE \
+  -DENABLE_FLEX_SQUARETS_PLUGIN=TRUE \
+  -DENABLE_FLEX_PIMPL_PLUGIN=TRUE \
+  -DENABLE_FLEX_TYPECLASS_PLUGIN=TRUE \
+  -DENABLE_FLEX_META_DEMO=TRUE \
+  -P tools/buildConanThirdparty.cmake
+```
+
+## Installation (without plugins)
+
+Use command below to re-build flextool (plugins must be installed separately).
 
 Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
 

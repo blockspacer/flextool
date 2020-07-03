@@ -27,6 +27,13 @@ endif(PRINT_TO_STDOUT)
 set(ALWAYS_BUILD TRUE CACHE BOOL "ALWAYS_BUILD")
 set(ENABLE_LLVM_TOOLS FALSE CACHE BOOL "ENABLE_LLVM_TOOLS")
 set(ENABLE_CLING TRUE CACHE BOOL "ENABLE_CLING")
+set(ENABLE_FLEXTOOL FALSE CACHE BOOL "ENABLE_FLEXTOOL")
+set(ENABLE_FLEX_REFLECT_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_REFLECT_PLUGIN")
+set(ENABLE_SQUARETS FALSE CACHE BOOL "ENABLE_SQUARETS")
+set(ENABLE_FLEX_SQUARETS_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_SQUARETS_PLUGIN")
+set(ENABLE_FLEX_PIMPL_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_PIMPL_PLUGIN")
+set(ENABLE_FLEX_TYPECLASS_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_TYPECLASS_PLUGIN")
+set(ENABLE_FLEX_META_DEMO FALSE CACHE BOOL "ENABLE_FLEX_META_DEMO")
 
 # --- includes ---
 # WHY CMAKE_CURRENT_LIST_DIR? see https://stackoverflow.com/a/12854575/10904212
@@ -703,3 +710,113 @@ conan_build_target_if(
   "${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer" # target to build
   ALWAYS_BUILD
   "")
+
+# flextool
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flextool")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flextool"
+      "https://github.com/blockspacer/flextool.git"
+      "")
+endif()
+conan_build_target_if(
+  "flextool" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flextool" # target to build
+  ENABLE_FLEXTOOL
+  ";-e;flextool:enable_tests=True;\
+-e;flextool:enable_llvm_tools=False")
+
+# flex_reflect_plugin
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_reflect_plugin")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_reflect_plugin"
+      "https://github.com/blockspacer/flex_reflect_plugin.git"
+      "")
+endif()
+conan_build_target_if(
+  "flex_reflect_plugin" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flex_reflect_plugin" # target to build
+  ENABLE_FLEX_REFLECT_PLUGIN
+  ";-o;flex_reflect_plugin:shared=True;\
+-o;flex_reflect_plugin:enable_clang_from_conan=False;\
+-e;flex_reflect_plugin:enable_tests=True")
+
+# squarets
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/squarets")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/squarets"
+      "https://github.com/blockspacer/squarets.git"
+      "")
+endif()
+conan_build_target_if(
+  "squarets" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/squarets" # target to build
+  ENABLE_SQUARETS
+  ";-o;squarets:shared=False;\
+-o;squarets:enable_clang_from_conan=False;\
+-e;squarets:enable_tests=True")
+
+# flex_squarets_plugin
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_squarets_plugin")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_squarets_plugin"
+      "https://github.com/blockspacer/flex_squarets_plugin.git"
+      "")
+endif()
+conan_build_target_if(
+  "flex_squarets_plugin" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flex_squarets_plugin" # target to build
+  ENABLE_FLEX_SQUARETS_PLUGIN
+  ";-o;flex_squarets_plugin:shared=True;\
+-o;flex_squarets_plugin:enable_clang_from_conan=False;\
+-e;flex_squarets_plugin:enable_tests=True")
+
+# flex_pimpl_plugin
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_pimpl_plugin")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_pimpl_plugin"
+      "https://github.com/blockspacer/flex_pimpl_plugin.git"
+      "")
+endif()
+conan_build_target_if(
+  "flex_pimpl_plugin" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flex_pimpl_plugin" # target to build
+  ENABLE_FLEX_PIMPL_PLUGIN
+  ";-o;flex_pimpl_plugin:shared=True;\
+-o;flex_pimpl_plugin:enable_clang_from_conan=False;\
+-e;flex_pimpl_plugin:enable_tests=True")
+
+# flex_typeclass_plugin
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_typeclass_plugin")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_typeclass_plugin"
+      "https://github.com/blockspacer/flex_typeclass_plugin.git"
+      "")
+endif()
+conan_build_target_if(
+  "flex_typeclass_plugin" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flex_typeclass_plugin" # target to build
+  ENABLE_FLEX_TYPECLASS_PLUGIN
+  ";-o;flex_typeclass_plugin:shared=True;\
+-o;flex_typeclass_plugin:enable_clang_from_conan=False;\
+-e;flex_typeclass_plugin:enable_tests=True")
+
+# flex_meta_demo
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_demo")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_demo"
+      "https://github.com/blockspacer/flex_meta_demo.git"
+      "")
+endif()
+conan_build_target_if(
+  "flex_meta_demo" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_demo" # target to build
+  ENABLE_FLEX_META_DEMO
+  ";-o;flex_meta_demo:enable_clang_from_conan=False;\
+-e;flex_meta_demo:enable_tests=True")
