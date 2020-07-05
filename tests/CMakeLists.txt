@@ -313,70 +313,73 @@ endif()
 # TODO: remove dummy_test after
 # FIXME see https://stackoverflow.com/questions/25922895/clang-link-time-optimization-with-replaced-operator-new-causes-mismatched-free
 
-add_executable(dummy_test
-  dummy_test.cpp)
-
-target_link_libraries(dummy_test PRIVATE
-  ${base_LIB}
-  ${basis_LIB}
-  #${build_util_LIB}
-  ## 3dparty libs
-  #${TESTS_3DPARTY_LIBS}
-  ## system libs
-  #${USED_SYSTEM_LIBS}
-  ## main project lib
-  #${ROOT_PROJECT_LIB}
-  #${TEST_LIB}
-)
-
-# USAGE:
-# cmake -E time cmake --build . --target TARGET_NAME_run_valgrind
-valgrind_enabler(
-  IS_ENABLED
-    ${ENABLE_VALGRIND}
-  STANDALONE_TARGET
-    dummy_test
-  EXTRA_OPTIONS # see https://valgrind.org/docs/manual/manual-core.html
-    # When enabled, Valgrind will trace into sub-processes
-    # initiated via the exec system call.
-    # This is necessary for multi-process programs.
-    --trace-children=yes
-    # --leak-check=full:
-    # each individual leak will be shown in detail
-    --leak-check=full
-    # --show-leak-kinds=all:
-    # Show all of "definite, indirect, possible, reachable"
-    # leak kinds in the "full" report.
-    --show-leak-kinds=all
-    # --track-origins=yes:
-    # Favor useful output over speed.
-    # This tracks the origins of uninitialized values,
-    # which could be very useful for memory errors.
-    # Consider turning off if Valgrind is unacceptably slow.
-    --track-origins=yes
-    # --verbose:
-    # Can tell you about unusual behavior of your program.
-    # Repeat for more verbosity.
-    --verbose
-    --show-reachable=yes
-    # When enabled, Valgrind stops reporting errors
-    # after 10,000,000 in total, or 1,000 different ones,
-    # have been seen.
-    --error-limit=yes
-    # is option is particularly useful with C++ programs,
-    # as it prints out the suppressions with mangled names,
-    # as required.
-    --gen-suppressions=all
-    # Write to a file.
-    # Useful when output exceeds terminal space.
-    --log-file=${CMAKE_CURRENT_BINARY_DIR}/dummy_test_valgrind_raw.log
-    # executable
-    $<TARGET_FILE:dummy_test>
-    # arguments of executable
-    #${TEST_ARGS}
-  VERBOSE
-  REQUIRED
-)
+#add_executable(dummy_test
+#  dummy_test.cpp)
+#
+#set_property(TARGET dummy_test
+#  PROPERTY CXX_STANDARD 17)
+#
+#target_link_libraries(dummy_test PRIVATE
+#  ${base_LIB}
+#  ${basis_LIB}
+#  #${build_util_LIB}
+#  ## 3dparty libs
+#  #${TESTS_3DPARTY_LIBS}
+#  ## system libs
+#  #${USED_SYSTEM_LIBS}
+#  ## main project lib
+#  #${ROOT_PROJECT_LIB}
+#  #${TEST_LIB}
+#)
+#
+## USAGE:
+## cmake -E time cmake --build . --target TARGET_NAME_run_valgrind
+#valgrind_enabler(
+#  IS_ENABLED
+#    ${ENABLE_VALGRIND}
+#  STANDALONE_TARGET
+#    dummy_test
+#  EXTRA_OPTIONS # see https://valgrind.org/docs/manual/manual-core.html
+#    # When enabled, Valgrind will trace into sub-processes
+#    # initiated via the exec system call.
+#    # This is necessary for multi-process programs.
+#    --trace-children=yes
+#    # --leak-check=full:
+#    # each individual leak will be shown in detail
+#    --leak-check=full
+#    # --show-leak-kinds=all:
+#    # Show all of "definite, indirect, possible, reachable"
+#    # leak kinds in the "full" report.
+#    --show-leak-kinds=all
+#    # --track-origins=yes:
+#    # Favor useful output over speed.
+#    # This tracks the origins of uninitialized values,
+#    # which could be very useful for memory errors.
+#    # Consider turning off if Valgrind is unacceptably slow.
+#    --track-origins=yes
+#    # --verbose:
+#    # Can tell you about unusual behavior of your program.
+#    # Repeat for more verbosity.
+#    --verbose
+#    --show-reachable=yes
+#    # When enabled, Valgrind stops reporting errors
+#    # after 10,000,000 in total, or 1,000 different ones,
+#    # have been seen.
+#    --error-limit=yes
+#    # is option is particularly useful with C++ programs,
+#    # as it prints out the suppressions with mangled names,
+#    # as required.
+#    --gen-suppressions=all
+#    # Write to a file.
+#    # Useful when output exceeds terminal space.
+#    --log-file=${CMAKE_CURRENT_BINARY_DIR}/dummy_test_valgrind_raw.log
+#    # executable
+#    $<TARGET_FILE:dummy_test>
+#    # arguments of executable
+#    #${TEST_ARGS}
+#  VERBOSE
+#  REQUIRED
+#)
 
 #add_to_tests_list(utils)
 
