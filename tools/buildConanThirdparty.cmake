@@ -806,6 +806,22 @@ conan_build_target_if(
 -o;flex_typeclass_plugin:enable_clang_from_conan=False;\
 -e;flex_typeclass_plugin:enable_tests=True")
 
+# flex_meta_plugin
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_plugin")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_plugin"
+      "https://github.com/blockspacer/flex_meta_plugin.git"
+      "")
+endif()
+conan_build_target_if(
+  "flex_meta_plugin" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_plugin" # target to build
+  ENABLE_FLEX_META_PLUGIN
+  ";-o;flex_meta_plugin:shared=True;\
+-o;flex_meta_plugin:enable_clang_from_conan=False;\
+-e;flex_meta_plugin:enable_tests=True")
+
 # flex_meta_demo
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_demo")
