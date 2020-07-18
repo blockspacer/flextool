@@ -23,6 +23,10 @@ namespace flextool {
 static void logSourcePathList(
   const std::vector<std::string>& sourcePathList)
 {
+  if (sourcePathList.size() < 1) {
+    LOG(WARNING)
+      << "At least one input file expected.";
+  }
   for(const auto& it: sourcePathList) {
     VLOG(9)
         << "added source file = "

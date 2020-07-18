@@ -115,6 +115,33 @@ base::Optional<int> initEnv(
     }
   }
 
+  // check that "compile_commands.json" does not exist
+  {
+    base::FilePath absolutePath
+    /// \note On POSIX, |MakeAbsoluteFilePath| fails
+    /// if the path does not exist
+      = base::MakeAbsoluteFilePath(
+          base::FilePath(cmd_env.appCmd.outDir()));
+    const base::FilePath compileCommandsPath
+      = absolutePath.AppendASCII("compile_commands.json");
+    const base::FilePath compileCommandsParentPath
+      = absolutePath.AppendASCII("..").AppendASCII("compile_commands.json");
+    if(base::PathExists(compileCommandsPath)
+       || base::PathExists(compileCommandsParentPath))
+    {
+      LOG(ERROR)
+        << "Disable generation of compilation database."
+           " If you are using CMake, "
+           "than set `CMAKE_EXPORT_COMPILE_COMMANDS` to `FALSE`."
+           " If `compile_commands.json` exist in build folder "
+           "(or in parent folder), then code generator may fail."
+           " Delete compile_commands.json file: "
+        << compileCommandsPath
+        << " Delete compile_commands.json file: "
+        << compileCommandsParentPath;
+    }
+  }
+
   // ScopedClangEnvironment
   {
     {

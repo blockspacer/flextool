@@ -150,6 +150,14 @@ GIT_SSL_NO_VERIFY=true \
           -e flextool:enable_llvm_tools=True
 ```
 
+## NOTE: flextool not compatible with `compile_commands.json`
+
+Disable generation of compilation database when you use flextool.
+
+If you are using CMake, than set `CMAKE_EXPORT_COMPILE_COMMANDS` to `FALSE`.
+
+If `compile_commands.json` exist in build folder (or in parent folder), then flextool may fail.
+
 ## Standing on the Shoulders of Giants
 
 That project possible because of [flexferrum's `autoprogrammer`](https://github.com/flexferrum/autoprogrammer).
@@ -2373,74 +2381,3 @@ See LICENSE for the full content of the licenses.
 
 - Software Engineer
 - [github](https://github.com/yvesmh)
-
-## TODOs
-
-```bash
-        # TODO: https://github.com/opcm/pcm
-        # TODO: https://github.com/dekimir/RamFuzz
-        # TODO: https://mull.readthedocs.io/en/latest/HelloWorld.html
-        # TODO: CPack https://github.com/mzdun/dashcam-gps/blob/3f6187acf66c16d1ce17db83fa328909e1dfbd68/cmake/packing.cmake
-        # TODO: travis / github actions / Jenkinsfile
-        # TODO: zzuf https://fuzzing-project.org/tutorial1.html
-        # TODO: -fsanitize=fuzzer
-        # TODO: Windows support via clang-cl
-        # TODO: http://klee.github.io/
-        # TODO: Manul https://hakin9.org/manul-fuzzer-for-open-source-and-blackbox-binaries-on-windows-linux-and-macos/
-        # TODO: https://github.com/akumuli/Akumuli/tree/master/fuzzers
-        # TODO: Dr Memory
-        # TODO: http://sandsoftwaresound.net/perf/perf-tutorial-hot-spots/
-        # TODO: bench
-        # TODO: codacy.com
-        # TODO: coveralls.io
-        # TODO: gperftools with tcmalloc
-        # TODO: gprof
-        # TODO: cachegrind and KCachegrind
-        # TODO: Massif-Visualizer
-        # TODO: pprof https://github.com/google/pprof
-        # TODO: Tools for tracing syscalls and libc library calls: strace and ltrace
-        # TODO: scan.coverity.com
-        # TODO: https://github.com/KDAB/hotspot/
-        # TODO: https://oscarforner.com/blog/rr-debugger-and-improvement-over-gdb/
-        # TODO: https://github.com/lally/ppt
-        # TODO: http://www.brendangregg.com/linuxperf.html
-        # TODO: https://github.com/KDE/heaptrack
-        # TODO: git-update-ghpages to upload the documentation to gh-pages
-        # TODO: https://github.com/skywinder/gitlab-changelog-generator
-        # TODO: Probot for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
-        # TODO: Travis for continuous integration on Linux
-        # TODO: lcov integration
-        # TODO: https://www.sourcemeter.com/
-        # TODO: Bloaty McBloatface https://github.com/google/bloaty
-        # TODO: https://metrixplusplus.github.io/home.html
-        # TODO: https://github.com/TheLartians/PackageProject.cmake
-        # TODO: https://github.com/namhyung/uftrace
-        # TODO: https://lefticus.gitbooks.io/cpp-best-practices/content/02-Use_the_Tools_Available.html
-///\todo flextool will save file with all source code transformations applied,
-/// including `rewriter.InsertText`.
-/// flextool will save file with `.generated` extention,
-/// but user can provide >>>> custom path for each generated file <<<<
-///\todo allow per-plugin generation of cmake script with list of generated files
-///\todo use cling to change file path to generated file
-/// $exec(
-///   generated(path = ./src/filename.cpp.gen);
-/// )
-///\todo support plugins that change default generator behavior (change .generated postfix in filename)
-/// plugin must use flexlib file save pipeline (it is vector<pair<function>,datasource>)
-/// other plugin can change flexlib file save pipeline (add .datetime postfix after .generated postfix)
-///\todo support per-file metadata, pass to plugin load event
-///\todo support in config file for ordered file path list with per-file rules (infile/outfile-may be same as infile or without prefix/json metadata)
-///\todo allow plugins to hook into file parsing pipeline, have custom cmd args, change main loop to `watcher`
-///\todo allow plugins to use `localstorage` to save arbitrary KV data. Remove $export
-///\todo refactor typeclass
-/// file parsing order must be set in conf file
-/// plugin hooks in parsed event, filtered by pipeline rule "typeclass"
-/// AFTER rule "typeclass" parsed, plugin can save libtooling output into member vars
-/// AFTER rule "typeclass_instance" parsed, plugin can use libtooling output stored in member vars
-/// if no data in member vars - error
-///\todo allow plugins to use parser cache. Add plugin to cache libtooling matchresult with some KV storage
-/// cache:
-/// $(make_reflect;localCache("typeclassCache","key1;somedata;");after_make_reflect;localCache("typeclassCache","key2;somedata;"))
-/// plugin may register cache observer with key "typeclassCache"
-/// plugin may register cache observer for any key
-```
