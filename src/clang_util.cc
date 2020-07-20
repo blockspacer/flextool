@@ -8,6 +8,8 @@
 #include <base/stl_util.h>
 #include <base/strings/string_piece.h>
 #include <base/strings/string_util.h>
+#include <base/optional.h>
+#include <base/strings/string_piece_forward.h>
 
 #include <basis/boost_command_line.hpp>
 

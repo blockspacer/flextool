@@ -1,33 +1,23 @@
 #pragma once
 
-#include "app_cmd_options.hpp"
-#include "cmd_environment.hpp"
 #include "clang_util.hpp"
 
-#include <base/at_exit.h>
-#include <base/files/file_path.h>
 #include <base/macros.h>
 #include <base/memory/scoped_refptr.h>
-#include <base/message_loop/message_loop.h>
 #include <base/sequence_checker.h>
 
-#include <basis/scoped_log_run_time.hpp>
-#include <basis/PluginManager.hpp>
-
-#include <flexlib/annotation_match_handler.hpp>
 #include <flexlib/annotation_parser.hpp>
-#include <flexlib/clangPipeline.hpp>
-#include <flexlib/matchers/annotation_matcher.hpp>
-#include <flexlib/parser_constants.hpp>
 
 #include <string>
 #include <vector>
 
-namespace flexlib { class AnnotationMatchHandler; }
-
 namespace clang_utils { class AnnotationMatchOptions; }
 
 namespace clang_utils { class SourceTransformPipeline; }
+
+namespace flexlib { class AnnotationMatchHandler; }
+
+namespace flextool { class ScopedCmdEnvironment; }
 
 namespace flextool {
 

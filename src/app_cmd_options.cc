@@ -1,30 +1,33 @@
+// IWYU pragma: no_include "boost/program_options/detail/value_semantic.hpp"
+
 #include "flextool/app_cmd_options.hpp" // IWYU pragma: associated
 
 #include "flextool/command_line_constants.hpp"
 
+#include <build/build_config.h>
+
 #include <base/base_paths.h>
 #include <base/base_switches.h>
-#include <base/files/file.h>
-#include <base/files/file_util.h>
 #include <base/logging.h>
 #include <base/path_service.h>
-#include <base/strings/string_piece.h>
-
-#include <build/build_config.h>
+#include <base/files/file_path.h>
+#include <base/sequence_checker.h>
+#include <base/strings/string_piece_forward.h>
 
 #include <basis/PluginManager.hpp>
 #include <basis/boost_command_line.hpp>
-
 #include <basis/cmd_util.hpp>
 
 #include <boost/none.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/value_semantic.hpp>
+#include <boost/lexical_cast/bad_lexical_cast.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/type_index/type_index_facade.hpp>
 
 #include <algorithm>
-#include <limits>
-#include <ostream>
+#include <stddef.h>
 
 namespace po = boost::program_options;
 

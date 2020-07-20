@@ -1009,6 +1009,8 @@ It will calculate the required headers and add and remove includes as appropriat
 
 See for details [https://include-what-you-use.org/](https://include-what-you-use.org/)
 
+NOTE: our cmake files will pass `-isystem/usr/lib/llvm-6.0/lib/clang/6.0.1/include` to IWUY. Change it to valid path.
+
 Usage (runs cmake with `-DENABLE_IWYU=ON`):
 
 ```bash

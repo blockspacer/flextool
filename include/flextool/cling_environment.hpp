@@ -1,23 +1,12 @@
 #pragma once
 
-#include "app_cmd_options.hpp"
-#include "clang_util.hpp"
-
-#include <base/at_exit.h>
-#include <base/files/file_path.h>
 #include <base/macros.h>
-#include <base/memory/scoped_refptr.h>
-#include <base/message_loop/message_loop.h>
 #include <base/sequence_checker.h>
-
-#include <basis/PluginManager.hpp>
-#include <basis/base_environment.hpp>
-#include <basis/scoped_log_run_time.hpp>
-
-#include <flexlib/ClingInterpreterModule.hpp>
 
 #include <string>
 #include <vector>
+
+namespace base { class FilePath; }
 
 namespace cling_utils { class ClingInterpreter; }
 

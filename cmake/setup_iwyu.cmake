@@ -22,6 +22,19 @@ iwyu_enabler(
   CHECK_TARGETS
     ${LIB_NAME}
   EXTRA_OPTIONS
+    -std=c++17
+    -DCLING_IS_ON=1
+    # include
+    -I${entt_includes}
+    # include
+    -I${basis_HEADER_DIR}
+    # include
+    -I${corrade_includes}
+    # Use the proper include directory,
+    # for clang-* it would be /usr/lib/llvm-*/lib/clang/*/include/.
+    # locate stddef.h | sed -ne '/^\/usr/p'
+    # see https://github.com/include-what-you-use/include-what-you-use/issues/679
+    -isystem/usr/lib/llvm-6.0/lib/clang/6.0.1/include
     # -Xiwyu --transitive_includes_only
     # pch_in_code: The file has an important header first
     # -Xiwyu --pch_in_code
@@ -32,6 +45,9 @@ iwyu_enabler(
     -Xiwyu --max_line_length=120
     # see https://github.com/include-what-you-use/include-what-you-use/issues/760
     -Wno-unknown-warning-option
+    -Wno-error
+    # disable all warnings
+    -Wno-everything
     # when sorting includes, place quoted ones first.
     -Xiwyu --quoted_includes_first
     # suggests the more concise syntax introduced in C++17
@@ -45,6 +61,7 @@ iwyu_enabler(
     #-Xiwyu --check_also=${CMAKE_CURRENT_SOURCE_DIR}/src/*/*
     #-Xiwyu --check_also=${CMAKE_CURRENT_SOURCE_DIR}/src/*/*/*
     #-Xiwyu --check_also=${CMAKE_CURRENT_SOURCE_DIR}/src/*/*/*/*
-  VERBOSE
+  #VERBOSE
   REQUIRED
+  CHECK_TARGETS_DEPEND
 )

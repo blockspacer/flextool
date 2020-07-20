@@ -1,54 +1,18 @@
 #include "flextool/cmd_environment.hpp" // IWYU pragma: associated
 
-#include <entt/signal/dispatcher.hpp>
-
 #include "flextool/app_cmd_options.hpp"
-#include "flextool/command_line_constants.hpp"
 
-#include <basis/PluginManager.hpp>
-#include <basis/boost_command_line.hpp>
-#include <basis/cmd_util.hpp>
-#include <basis/i18n.hpp>
-#include <basis/icu_util.hpp>
-#include <basis/log_util.hpp>
-#include <basis/thread_pool_util.hpp>
-#include <basis/tracing_util.hpp>
-
-#include <base/process/memory.h>
+#include <base/files/file_path.h>
+#include <base/sequence_checker.h>
 #include <base/base_paths.h>
-#include <base/bind.h>
-#include <base/callback_forward.h>
-#include <base/debug/stack_trace.h>
-#include <base/feature_list.h>
-#include <base/files/file.h>
-#include <base/files/file_util.h>
 #include <base/logging.h>
-#include <base/memory/ref_counted_memory.h>
-#include <base/memory/scoped_refptr.h>
-#include <base/message_loop/message_loop.h>
-#include <base/message_loop/message_loop_current.h>
-#include <base/metrics/statistics_recorder.h>
 #include <base/path_service.h>
-#include <base/run_loop.h>
-#include <base/sampling_heap_profiler/sampling_heap_profiler.h>
-#include <base/single_thread_task_runner.h>
-#include <base/strings/string_piece.h>
-#include <base/strings/string_piece_forward.h>
-#include <base/strings/string_util.h>
-#include <base/system/sys_info.h>
-#include <base/task/thread_pool/thread_pool.h>
-#include <base/threading/platform_thread.h>
-#include <base/trace_event/memory_dump_manager.h>
-#include <base/trace_event/trace_buffer.h>
-#include <base/trace_event/trace_event.h>
-#include <base/trace_event/trace_log.h>
 
-#include <algorithm>
-#include <functional>
-#include <iterator>
-#include <locale>
+#include <basis/boost_command_line.hpp>
+
+#include <boost/program_options/options_description.hpp>
+
 #include <sstream>
-#include <string.h>
 
 namespace flextool {
 

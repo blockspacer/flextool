@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <stddef.h>
 
 namespace boost {
 template <class T> class optional;

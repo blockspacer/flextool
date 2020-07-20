@@ -1,27 +1,32 @@
-#include "flextool/cmd_environment.hpp"
-#include "flextool/plugin_environment.hpp"
+#include "flextool/app_cmd_options.hpp"
 #include "flextool/clang_environment.hpp"
-#include "flextool/cling_environment.hpp"
 #include "flextool/clang_tool.hpp"
-#include "flextool/version.hpp"
+#include "flextool/cling_environment.hpp"
+#include "flextool/cmd_environment.hpp"
 #include "flextool/command_line_constants.hpp"
+#include "flextool/plugin_environment.hpp"
+#include "flextool/version.hpp"
 
+#include <entt/signal/dispatcher.hpp>
+
+#include <flexlib/matchers/annotation_matcher.hpp>
 #include <flexlib/ToolPlugin.hpp>
-#include <flexlib/clangPipeline.hpp>
 
+#include <base/files/file_path.h>
+#include <base/files/file_util.h>
 #include <base/logging.h>
-#include <base/threading/thread_restrictions.h>
 #include <base/memory/scoped_refptr.h>
 #include <base/optional.h>
+#include <base/threading/thread_restrictions.h>
 
+#include <basis/boost_command_line.hpp>
 #include <basis/base_environment.hpp>
 
 #include <stdlib.h>
+#include <algorithm>
 #include <ostream>
 #include <string>
 #include <vector>
-#include <thread>
-#include <map>
 
 namespace {
 

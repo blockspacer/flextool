@@ -429,8 +429,7 @@ if(IWYU)
     COMMAND
       ${COLORED_OUTPUT_ENABLER}
       cmake -E time cmake --build .
-        # NOTE: no custom target, uses CXX_INCLUDE_WHAT_YOU_USE
-        #--target flextool_run_iwyu
+        --target flextool_run_iwyu
     WORKING_DIRECTORY ${CURRENT_SCRIPT_DIR}/.tmp/iwyu_local_build
     TIMEOUT 7200 # sec
     RESULT_VARIABLE retcode
