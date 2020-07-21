@@ -770,7 +770,7 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
-    --install-folder local_build \
+    --install-folder local_build_valgrind \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
@@ -795,7 +795,7 @@ GIT_SSL_NO_VERIFY=true \
 cd ~/flextool
 
 # see section about `conan editable mode`
-cd local_build
+cd local_build_valgrind
 
 # optional
 # remove old CMakeCache
@@ -894,7 +894,7 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
-    --install-folder local_build \
+    --install-folder local_build_scan_build \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
@@ -908,10 +908,10 @@ CONAN_PRINT_RUN_COMMANDS=1 \
 CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
-    conan source . --source-folder local_build
+    conan source . --source-folder local_build_scan_build
 
 # see section about `conan editable mode`
-cd local_build
+cd local_build_scan_build
 
 export CXX=clang++-6.0
 export CC=clang-6.0
@@ -1012,6 +1012,11 @@ See for details [https://include-what-you-use.org/](https://include-what-you-use
 NOTE: our cmake files will pass
 
 ```bash
+# NOTE: you can get `clang_8.0.0` like so:
+# curl -SL http://releases.llvm.org/8.0.0/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz | tar -xJC .
+# mv clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 clang_8.0.0
+# mv clang_8.0.0 /usr/local
+
 -nostdinc++
 -nodefaultlibs
 -isystem/usr/local/clang_8.0.0/include/c++/v1
@@ -1218,7 +1223,7 @@ You can integrate `uncrustify` with IDE:
 
 NOTE: Libc/libstdc++ static linking is not supported.
 
-NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
 
 NOTE: Non-position-independent executables are not supported.
 Therefore, the fsanitize=thread flag will cause Clang to act as though the -fPIE flag had been supplied if compiling without -fPIC, and as though the -pie flag had been supplied if linking an executable.
@@ -1252,11 +1257,13 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
-    --install-folder local_build \
+    --install-folder local_build_tsan \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
     --profile clang \
+        -o llvm_tools:enable_tsan=True \
+        -o llvm_tools:include_what_you_use=False \
         -e flextool:enable_tests=True \
         -e flextool:enable_llvm_tools=True \
         -o flextool:enable_tsan=True \
@@ -1275,15 +1282,15 @@ GIT_SSL_NO_VERIFY=true \
         --build flexlib
 
 # remove old CMakeCache
-(rm local_build/CMakeCache.txt || true)
+(rm local_build_tsan/CMakeCache.txt || true)
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build \
-  --source-folder local_build
+  --build-folder local_build_tsan \
+  --source-folder local_build_tsan
 
 # you can run some tests to check sanitizers
-./local_build/bin/Debug/tests/flextool-gmock \
+./local_build_tsan/bin/Debug/tests/flextool-gmock \
   --gtest_filter=ToolsSanityTest.DISABLED_ThreadSanitizerTest \
   --gtest_also_run_disabled_tests
 ```
@@ -1306,7 +1313,7 @@ Usage (`-DENABLE_TSAN=ON`):
 cd ~/flextool
 
 # see section about `conan editable mode`
-cd local_build
+cd local_build_tsan
 
 # optional
 # remove old CMakeCache
@@ -1346,7 +1353,7 @@ See for details:
 * [http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/](http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/)
 * [https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/](https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/)
 
-NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
 
 Set env. var.:
 
@@ -1378,11 +1385,13 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
-    --install-folder local_build \
+    --install-folder local_build_asan \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
     --profile clang \
+        -o llvm_tools:enable_asan=True \
+        -o llvm_tools:include_what_you_use=False \
         -e flextool:enable_tests=True \
         -e flextool:enable_llvm_tools=True \
         -o flextool:enable_asan=True \
@@ -1401,15 +1410,15 @@ GIT_SSL_NO_VERIFY=true \
         --build flexlib
 
 # remove old CMakeCache
-(rm local_build/CMakeCache.txt || true)
+(rm local_build_asan/CMakeCache.txt || true)
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build \
-  --source-folder local_build
+  --build-folder local_build_asan \
+  --source-folder local_build_asan
 
 # you can run some tests to check sanitizers
-./local_build/bin/Debug/tests/flextool-gmock \
+./local_build_asan/bin/Debug/tests/flextool-gmock \
   --gtest_filter=ToolsSanityTest.DISABLED_AddressSanitizerTest \
   --gtest_also_run_disabled_tests
 # must print `AddressSanitizer: stack-buffer-overflow on address...`
@@ -1432,7 +1441,7 @@ Usage (`-DENABLE_ASAN=ON`):
 cd ~/flextool
 
 # see section about `conan editable mode`
-cd local_build
+cd local_build_asan
 
 # optional
 # remove old CMakeCache
@@ -1471,7 +1480,7 @@ NOTE: MemorySanitizer requires that all program code is instrumented.
 This also includes any libraries that the program depends on, even libc. Failing to achieve this may result in false reports.
 For the same reason you may need to replace all inline assembly code that writes to memory with a pure C/C++ code.
 
-NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
 
 Set env. var.:
 
@@ -1514,7 +1523,7 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
-    --install-folder local_build \
+    --install-folder local_build_msan \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
@@ -1546,15 +1555,15 @@ GIT_SSL_NO_VERIFY=true \
         --build flexlib
 
 # remove old CMakeCache
-(rm local_build/CMakeCache.txt || true)
+(rm local_build_msan/CMakeCache.txt || true)
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build \
-  --source-folder local_build
+  --build-folder local_build_msan \
+  --source-folder local_build_msan
 
 # you can run some tests to check sanitizers
-./local_build/bin/Debug/tests/flextool-gmock \
+./local_build_msan/bin/Debug/tests/flextool-gmock \
   --gtest_filter=ToolsSanityTest.DISABLED_MemorySanitizerTest \
   --gtest_also_run_disabled_tests
 ```
@@ -1576,7 +1585,7 @@ Usage (`-DENABLE_MSAN=ON`):
 cd ~/flextool
 
 # see section about `conan editable mode`
-cd local_build
+cd local_build_msan
 
 # optional
 # remove old CMakeCache
@@ -1633,7 +1642,7 @@ FAQ:
 
 ## For contibutors: Undefined Behavior Sanitizer
 
-NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
+NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
 
 Set env. var.:
 
@@ -1666,11 +1675,13 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
-    --install-folder local_build \
+    --install-folder local_build_ubsan \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
     --profile clang \
+        -o llvm_tools:enable_ubsan=True \
+        -o llvm_tools:include_what_you_use=False \
         -e flextool:enable_tests=True \
         -e flextool:enable_llvm_tools=True \
         -o flextool:enable_ubsan=True \
@@ -1689,15 +1700,15 @@ GIT_SSL_NO_VERIFY=true \
         --build flexlib
 
 # remove old CMakeCache
-(rm local_build/CMakeCache.txt || true)
+(rm local_build_ubsan/CMakeCache.txt || true)
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build \
-  --source-folder local_build
+  --build-folder local_build_ubsan \
+  --source-folder local_build_ubsan
 
 # you can run some tests to check sanitizers
-./local_build/bin/Debug/tests/flextool-gmock \
+./local_build_ubsan/bin/Debug/tests/flextool-gmock \
   --gtest_filter=ToolsSanityTest.DISABLED_UndefinedBehaviorSanitizerTest \
   --gtest_also_run_disabled_tests
 ```
@@ -1737,7 +1748,7 @@ Usage (`-DENABLE_UBSAN=ON`):
 cd ~/flextool
 
 # see section about `conan editable mode`
-cd local_build
+cd local_build_ubsan
 
 # optional
 # remove old CMakeCache
@@ -1806,7 +1817,7 @@ CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
     conan install . \
-    --install-folder local_build \
+    --install-folder local_build_clang_10 \
     -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
@@ -1814,10 +1825,11 @@ GIT_SSL_NO_VERIFY=true \
     -s llvm_tools:compiler.version=6.0 \
     -s llvm_tools:compiler.libcxx=libstdc++11 \
     --profile clang \
+        -o llvm_tools:enable_msan=False \
+        -o llvm_tools:include_what_you_use=True \
         -e flextool:enable_tests=True \
         -e flextool:enable_llvm_tools=True \
         -e flextool:compile_with_llvm_tools=True \
-        -o llvm_tools:include_what_you_use=True \
         -s compiler=clang \
         -s compiler.version=10 \
         -s compiler.libcxx=libstdc++11
@@ -1828,15 +1840,15 @@ CONAN_PRINT_RUN_COMMANDS=1 \
 CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
-    conan source . --source-folder local_build
+    conan source . --source-folder local_build_clang_10
 
 # remove old CMakeCache
-(rm local_build/CMakeCache.txt || true)
+(rm local_build_clang_10/CMakeCache.txt || true)
 
 # see section about `conan editable mode`
 conan build . \
-  --build-folder local_build \
-  --source-folder local_build
+  --build-folder local_build_clang_10 \
+  --source-folder local_build_clang_10
 ```
 
 ## For contibutors: doxygen
@@ -1882,7 +1894,7 @@ Use cmake build with '--target doxyDoc' and `-DBUILD_DOXY_DOC=ON`
 cd ~/flextool
 
 # see section about `conan editable mode`
-cd local_build
+cd local_build_clang_10
 
 # optional
 # remove old CMakeCache

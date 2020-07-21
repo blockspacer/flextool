@@ -37,12 +37,21 @@ iwyu_enabler(
     -I${basis_HEADER_DIR}
     # include
     -I${corrade_includes}
+    # Get llvm version that iwyu depends on:
+    # strings /usr/bin/iwyu | grep LLVM
+    # Then install required llvm version:
+    # apt-get install clang-10 clang-tools-10 clang-10-doc libclang-common-10-dev
     # Use the proper include directory,
     # for clang-* it would be /usr/lib/llvm-*/lib/clang/*/include/.
     # locate stddef.h | sed -ne '/^\/usr/p'
     # see https://github.com/include-what-you-use/include-what-you-use/issues/679
-    #-isystem/usr/lib/llvm-6.0/lib/clang/6.0.0/include
-    #-isystem/usr/lib/llvm-6.0/lib/clang/6.0.1/include
+    #-nostdinc++
+    #-nodefaultlibs
+    # NOTE: you can get `clang_8.0.0` like so:
+    # curl -SL http://releases.llvm.org/8.0.0/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz | tar -xJC .
+    # mv clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 clang_8.0.0
+    # mv clang_8.0.0 /usr/local
+    #-isystem/usr/lib/llvm-10/lib/clang/10.0.0/include/
     -nostdinc++
     -nodefaultlibs
     -isystem/usr/local/clang_8.0.0/include/c++/v1

@@ -384,6 +384,7 @@ if(IWYU)
           -s cling_conan:build_type=Release
           -s llvm_tools:build_type=Release
           --profile clang
+              -o llvm_tools:include_what_you_use=True
               -e flextool:enable_tests=True
               -e flextool:enable_llvm_tools=True
               -e chromium_base:enable_llvm_tools=True
