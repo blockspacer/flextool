@@ -10,9 +10,11 @@ if(NOT EXISTS ${IWYU_IMP})
 endif(NOT EXISTS ${IWYU_IMP})
 
 if(ENABLE_IWYU)
+  message(STATUS
+    "CONAN_LLVM_TOOLS_ROOT: ${CONAN_LLVM_TOOLS_ROOT}")
   # NOTE: you can create symlink to fix issue
-  if(NOT EXISTS "/usr/local/clang_8.0.0/include")
-    message(FATAL_ERROR "Unable to find file: /usr/local/clang_8.0.0/include")
+  if(NOT EXISTS "${CONAN_LLVM_TOOLS_ROOT}/include")
+    message(FATAL_ERROR "Unable to find file: ${CONAN_LLVM_TOOLS_ROOT}/include")
   endif()
 endif(ENABLE_IWYU)
 
@@ -54,8 +56,9 @@ iwyu_enabler(
     #-isystem/usr/lib/llvm-10/lib/clang/10.0.0/include/
     -nostdinc++
     -nodefaultlibs
-    -isystem/usr/local/clang_8.0.0/include/c++/v1
-    -isystem/usr/local/clang_8.0.0/include
+    # see https://github.com/include-what-you-use/include-what-you-use/issues/802
+    -isystem${CONAN_LLVM_TOOLS_ROOT}/include/c++/v1/
+    -isystem${CONAN_LLVM_TOOLS_ROOT}/lib/clang/10.0.1/include/
     # -Xiwyu --transitive_includes_only
     # pch_in_code: The file has an important header first
     # -Xiwyu --pch_in_code

@@ -18,6 +18,7 @@
 #include <basis/boost_command_line.hpp>
 #include <basis/cmd_util.hpp>
 
+#include <boost/lexical_cast/bad_lexical_cast.hpp>
 #include <boost/none.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/program_options/errors.hpp>

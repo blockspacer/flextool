@@ -2,7 +2,7 @@
  # READ https://github.com/hdclark/DICOMautomaton/blob/master/artifacts/20180318_include-what-you-use/iwyu_how-to.txt
 
 # { ref: cmake_mapping.imp },
-# { ref: boost-all-private.imp },
+ { ref: boost-all-private.imp },
  { ref: boost-all.imp },
  { ref: beast-all.imp },
  { ref: qt5_4.imp },
