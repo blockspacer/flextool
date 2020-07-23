@@ -1012,6 +1012,9 @@ See for details [https://include-what-you-use.org/](https://include-what-you-use
 Usage (runs cmake with `-DENABLE_IWYU=ON`):
 
 ```bash
+export CXX=clang++-6.0
+export CC=clang-6.0
+
 # creates local build in separate folder and runs cmake targets
 cmake -DIWYU="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
