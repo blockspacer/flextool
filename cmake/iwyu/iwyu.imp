@@ -24,6 +24,7 @@
  { symbol: ["std::abs", private, "<cmath>", public]},
  { symbol: ["abs", private, "<cmath>", public]},
  { symbol: ["std::hash", private, "<functional>", public]},
+ { include: ["<__nullptr>", private, "<cstddef>", public ] },
 
  # iwyu-mapping-stl
  { include: ["<bits/exception.h>", private, "<exception>", public ] },
