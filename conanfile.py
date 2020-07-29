@@ -211,21 +211,33 @@ class flextoolConan(conan_build_helper.CMakePackage):
             self.options["flexlib"].enable_ubsan = True
             self.options["basis"].enable_ubsan = True
             self.options["chromium_base"].enable_ubsan = True
+            self.options["boost"].enable_ubsan = True
+            if self.options.enable_tests:
+              self.options["conan_gtest"].enable_ubsan = True
 
         if self.options.enable_asan:
             self.options["flexlib"].enable_asan = True
             self.options["basis"].enable_asan = True
             self.options["chromium_base"].enable_asan = True
+            self.options["boost"].enable_asan = True
+            if self.options.enable_tests:
+              self.options["conan_gtest"].enable_asan = True
 
         if self.options.enable_msan:
             self.options["flexlib"].enable_msan = True
             self.options["basis"].enable_msan = True
             self.options["chromium_base"].enable_msan = True
+            self.options["boost"].enable_msan = True
+            if self.options.enable_tests:
+              self.options["conan_gtest"].enable_msan = True
 
         if self.options.enable_tsan:
             self.options["flexlib"].enable_tsan = True
             self.options["basis"].enable_tsan = True
             self.options["chromium_base"].enable_tsan = True
+            self.options["boost"].enable_tsan = True
+            if self.options.enable_tests:
+              self.options["conan_gtest"].enable_tsan = True
 
     def build_requirements(self):
         self.build_requires("cmake_platform_detection/master@conan/stable")
@@ -248,7 +260,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
     def requirements(self):
         if self._is_tests_enabled():
             self.requires("catch2/[>=2.1.0]@bincrafters/stable")
-            #self.requires("gtest/[>=1.8.0]@bincrafters/stable")
             self.requires("conan_gtest/release-1.10.0@conan/stable")
             self.requires("FakeIt/[>=2.0.4]@gasuketsu/stable")
 
@@ -280,13 +291,13 @@ class flextoolConan(conan_build_helper.CMakePackage):
 
         self.requires("corrade/2020.06@magnum/stable")
 
-        self.requires("type_safe/0.2@conan/stable")
+        #self.requires("type_safe/0.2@conan/stable")
 
-        self.requires("double-conversion/3.1.1@bincrafters/stable")
+        #self.requires("double-conversion/3.1.1@bincrafters/stable")
 
-        self.requires("gflags/2.2.2@bincrafters/stable")
+        #self.requires("gflags/2.2.2@bincrafters/stable")
 
-        self.requires("glog/0.4.0@bincrafters/stable")
+        #self.requires("glog/0.4.0@bincrafters/stable")
 
         # patched to support "openssl/OpenSSL_1_1_1-stable@conan/stable"
         #self.requires("libevent/2.1.11@dev/stable")
@@ -296,7 +307,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
         # see https://github.com/skypjack/entt/commit/74f3df83dbc9fc4b43b8cfb9d71ba02234bd5c4a
         self.requires("entt/3.3.2")
 
-        self.requires("lz4/1.8.3@bincrafters/stable")
+        #self.requires("lz4/1.8.3@bincrafters/stable")
 
         # must match openssl version used in webrtc
         ##self.requires("openssl/OpenSSL_1_1_1-stable@conan/stable")
@@ -304,23 +315,23 @@ class flextoolConan(conan_build_helper.CMakePackage):
         #self.requires("OpenSSL/1.1.1c@conan/stable")
 
         # patched to support "openssl/OpenSSL_1_1_1-stable@conan/stable"
-        self.requires("zlib/v1.2.11@conan/stable")
+        #self.requires("zlib/v1.2.11@conan/stable")
 
-        self.requires("lzma/5.2.4@bincrafters/stable")
+        #self.requires("lzma/5.2.4@bincrafters/stable")
 
-        self.requires("zstd/1.3.8@bincrafters/stable")
+        #self.requires("zstd/1.3.8@bincrafters/stable")
 
-        self.requires("snappy/1.1.7@bincrafters/stable")
+        #self.requires("snappy/1.1.7@bincrafters/stable")
 
-        self.requires("bzip2/1.0.8@dev/stable")
+        #self.requires("bzip2/1.0.8@dev/stable")
 
-        self.requires("libsodium/1.0.18@bincrafters/stable")
+        #self.requires("libsodium/1.0.18@bincrafters/stable")
 
-        self.requires("libelf/0.8.13@bincrafters/stable")
+        #self.requires("libelf/0.8.13@bincrafters/stable")
 
-        self.requires("libdwarf/20190505@bincrafters/stable")
+        #self.requires("libdwarf/20190505@bincrafters/stable")
 
-        self.requires("clang_folly_conan/v2019.01.14.00@conan/stable")
+        #self.requires("clang_folly_conan/v2019.01.14.00@conan/stable")
 
     def _configure_cmake(self):
         cmake = CMake(self)

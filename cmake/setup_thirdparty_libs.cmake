@@ -4,9 +4,9 @@ if(NOT TARGET CONAN_PKG::chromium_base)
   message(FATAL_ERROR "Use chromium_base from conan")
 endif()
 
-if(NOT TARGET CONAN_PKG::clang_folly_conan)
-  message(FATAL_ERROR "Use clang_folly_conan from conan")
-endif()
+#if(NOT TARGET CONAN_PKG::clang_folly_conan)
+#  message(FATAL_ERROR "Use clang_folly_conan from conan")
+#endif()
 
 if(NOT TARGET CONAN_PKG::chromium_build_util)
   message(FATAL_ERROR "Use chromium_build_util from conan")
@@ -60,21 +60,22 @@ list(APPEND USED_3DPARTY_LIBS
   ${basis_LIB}
   #TODO: doctest
   #CONAN_PKG::doctest
-  CONAN_PKG::clang_folly_conan
+  #CONAN_PKG::clang_folly_conan
   CONAN_PKG::boost
-  CONAN_PKG::double-conversion
-  CONAN_PKG::glog
-  CONAN_PKG::lz4
-  CONAN_PKG::lzma
-  CONAN_PKG::zstd
-  CONAN_PKG::snappy
-  CONAN_PKG::libsodium
-  CONAN_PKG::libdwarf
-  CONAN_PKG::bzip2
-  CONAN_PKG::gflags
-  CONAN_PKG::libunwind
-  CONAN_PKG::libelf
-  CONAN_PKG::xz_utils
+  CONAN_PKG::openssl
+  #CONAN_PKG::double-conversion
+  #CONAN_PKG::glog
+  #CONAN_PKG::lz4
+  #CONAN_PKG::lzma
+  #CONAN_PKG::zstd
+  #CONAN_PKG::snappy
+  #CONAN_PKG::libsodium
+  #CONAN_PKG::libdwarf
+  #CONAN_PKG::bzip2
+  #CONAN_PKG::gflags
+  #CONAN_PKG::libunwind
+  #CONAN_PKG::libelf
+  #CONAN_PKG::xz_utils
   CONAN_PKG::corrade
   Corrade::PluginManager
   ${USED_BOOST_LIBS}
@@ -91,12 +92,12 @@ set(USED_SYSTEM_LIBS
                # Custom libs
     stdc++fs # C++17 std::filesystem
     # @note: Order matters https://stackoverflow.com/a/10269201/10904212
-    ${LIBIBERTY_LIBRARY} # used by folly
-    ${DOUBLE_CONVERSION_LIBRARY} # used by folly
-    ${LIBEVENT_LIB} # used by folly
-    ${LZ4_LIBRARY} # used by folly
-    ${LIBUNWIND_LIBRARIES} # used by folly
-    ${LIBLZMA_LIBRARIES} # used by folly
+    #${LIBIBERTY_LIBRARY} # used by folly
+    #${DOUBLE_CONVERSION_LIBRARY} # used by folly
+    #${LIBEVENT_LIB} # used by folly
+    #${LZ4_LIBRARY} # used by folly
+    #${LIBUNWIND_LIBRARIES} # used by folly
+    #${LIBLZMA_LIBRARIES} # used by folly
     CACHE INTERNAL "USED_SYSTEM_LIBS")
 
 message(STATUS "flextool USED_3DPARTY_LIBS=${USED_3DPARTY_LIBS}")

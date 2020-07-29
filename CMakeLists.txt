@@ -43,8 +43,10 @@ if (CONAN_AUTO_INSTALL)
     set(conan_build_type "Debug")
   endif()
   # No --build=missing cause llvm requires long build
+  # You can use `EXTRA_CONAN_AUTO_INSTALL_OPTIONS` like so:
+  # cmake .. -DCONAN_AUTO_INSTALL=ON -DEXTRA_CONAN_AUTO_INSTALL_OPTIONS="--build missing" -DCMAKE_BUILD_TYPE=Debug
   conan_auto_install(
-    CONAN_OPTIONS "--profile=${CONAN_PROFILE} -s build_type=${conan_build_type} -s cling_conan:build_type=Release -s llvm_tools:build_type=Release -o openssl:shared=True"
+    CONAN_OPTIONS "--profile=${CONAN_PROFILE} -s build_type=${conan_build_type} -s cling_conan:build_type=Release -s llvm_tools:build_type=Release -o openssl:shared=True ${EXTRA_CONAN_AUTO_INSTALL_OPTIONS}"
     #FORCE
   )
 endif()
@@ -123,6 +125,22 @@ validate_out_source_build(WARNING) # from cmake_helper_utils (conan package)
 if(ENABLE_MSAN OR ENABLE_TSAN OR ENABLE_ASAN OR ENABLE_UBSAN)
   find_package(cmake_sanitizers REQUIRED)
 endif()
+
+if(ENABLE_MSAN)
+  add_msan_flags()
+endif(ENABLE_MSAN)
+
+if(ENABLE_TSAN)
+  add_tsan_flags()
+endif(ENABLE_TSAN)
+
+if(ENABLE_ASAN)
+  add_asan_flags()
+endif(ENABLE_ASAN)
+
+if(ENABLE_UBSAN)
+  add_ubsan_flags()
+endif(ENABLE_UBSAN)
 
 if(COMPILE_WITH_LLVM_TOOLS)
   # force change CMAKE_*_COMPILER and CMAKE_LINKER to clang from conan

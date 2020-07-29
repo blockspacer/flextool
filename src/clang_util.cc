@@ -355,7 +355,8 @@ base::Optional<std::string> clangArgToClingArg(
       std::move(combined_for_cling)};
 }
 
-bool pipelineClangArgToCling(
+#if defined(CLING_IS_ON)
+static bool pipelineClangArgToCling(
   const std::string& combined_for_clang
   , const cmd::UnergisteredOption& unergisteredOption
   , std::vector<std::string>& cling_extra_args)
@@ -418,6 +419,7 @@ bool pipelineClangArgToCling(
 
   return true;
 }
+#endif // CLING_IS_ON
 
 /// \todo refactor long method
 bool populateClangArguments(
