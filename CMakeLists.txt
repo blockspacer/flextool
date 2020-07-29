@@ -437,19 +437,19 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_compile_log_level.cmake)
 ## ---------------------------- docs -------------------------------- ##
 
 if(BUILD_DOXY_DOC)
-  add_subdirectory( docs )
+  add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/docs )
 endif()
 
 ## ---------------------------- tests -------------------------------- ##
 
 if(ENABLE_TESTS)
-  add_subdirectory( tests )
+  add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
 endif()
 
 # --------------------------------- Benchmark ----------------------------------
 
 # TODO: https://github.com/jar-git/cmake-template/blob/b7fbb0d465fbbfd0a0e80977d9563f042314bbb3/example_app/CMakeLists.txt#L70
-# add_subdirectory(bench)
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bench)
 
 ## ---------------------------- Uninstall -------------------------------- ##
 

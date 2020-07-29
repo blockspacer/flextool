@@ -230,7 +230,7 @@ if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper")
       "")
 endif()
 conan_build_target_if(
-  "cmake_platform_detection" # target to clean
+  "conan_build_helper" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan_build_helper" # target to build
   ALWAYS_BUILD

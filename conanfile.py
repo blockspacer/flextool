@@ -30,7 +30,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
     # there is no need to define a `source` method. The source folder can be
     # defined like this
     exports_sources = ("LICENSE", "VERSION", "*.md", "include/*", "src/*",
-                       "cmake/*", "CMakeLists.txt", "tests/*", "benchmarks/*",
+                       "cmake/*", "examples/*", "CMakeLists.txt", "tests/*", "benchmarks/*",
                        "scripts/*", "tools/*", "codegen/*", "assets/*",
                        "assets/configuration_files/*", "assets/icu/*", "assets",
                        "docs/*", "licenses/*", "patches/*", "resources/*",
@@ -212,7 +212,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
             self.options["basis"].enable_ubsan = True
             self.options["chromium_base"].enable_ubsan = True
             self.options["boost"].enable_ubsan = True
-            if self.options.enable_tests:
+            if self._is_tests_enabled():
               self.options["conan_gtest"].enable_ubsan = True
 
         if self.options.enable_asan:
@@ -220,7 +220,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
             self.options["basis"].enable_asan = True
             self.options["chromium_base"].enable_asan = True
             self.options["boost"].enable_asan = True
-            if self.options.enable_tests:
+            if self._is_tests_enabled():
               self.options["conan_gtest"].enable_asan = True
 
         if self.options.enable_msan:
@@ -228,7 +228,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
             self.options["basis"].enable_msan = True
             self.options["chromium_base"].enable_msan = True
             self.options["boost"].enable_msan = True
-            if self.options.enable_tests:
+            if self._is_tests_enabled():
               self.options["conan_gtest"].enable_msan = True
 
         if self.options.enable_tsan:
@@ -236,7 +236,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
             self.options["basis"].enable_tsan = True
             self.options["chromium_base"].enable_tsan = True
             self.options["boost"].enable_tsan = True
-            if self.options.enable_tests:
+            if self._is_tests_enabled():
               self.options["conan_gtest"].enable_tsan = True
 
     def build_requirements(self):
