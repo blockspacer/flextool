@@ -102,7 +102,7 @@ macro(set_test_compile_options target)
     CXX_EXTENSIONS OFF
     CMAKE_CXX_STANDARD_REQUIRED ON
     CMAKE_CXX_FLAGS "-rtti /std:c++latest"
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ROOT_PROJECT_NAME}-tests
     )
 endmacro()
 
@@ -182,7 +182,7 @@ macro(tests_add_executable target source_list TEST_ARGS TEST_LIB)
       --gen-suppressions=all
       # Write to a file.
       # Useful when output exceeds terminal space.
-      --log-file=${CMAKE_CURRENT_BINARY_DIR}/${target}_valgrind_raw.log
+      --log-file=${CMAKE_CURRENT_BINARY_DIR}/${ROOT_PROJECT_NAME}-tests/${target}_valgrind_raw.log
       # executable
       $<TARGET_FILE:${target}>
       # arguments of executable
@@ -372,7 +372,7 @@ if(${ROOT_PROJECT_NAME}_BUILD_TESTS)
   #    --gen-suppressions=all
   #    # Write to a file.
   #    # Useful when output exceeds terminal space.
-  #    --log-file=${CMAKE_CURRENT_BINARY_DIR}/dummy_test_valgrind_raw.log
+  #    --log-file=${CMAKE_CURRENT_BINARY_DIR}/${ROOT_PROJECT_NAME}-tests/dummy_test_valgrind_raw.log
   #    # executable
   #    $<TARGET_FILE:dummy_test>
   #    # arguments of executable
@@ -391,7 +391,7 @@ if(${ROOT_PROJECT_NAME}_BUILD_TESTS)
   add_custom_command( TARGET ${ROOT_PROJECT_NAME}-gmock POST_BUILD
                       COMMAND ${CMAKE_COMMAND} -E copy_directory
                           ${CMAKE_CURRENT_SOURCE_DIR}/data
-                          ${CMAKE_CURRENT_BINARY_DIR})
+                          ${CMAKE_CURRENT_BINARY_DIR}/${ROOT_PROJECT_NAME}-tests)
 
   enable_testing()
 endif()

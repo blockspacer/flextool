@@ -1590,6 +1590,16 @@ export CXX=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*
 # must exist
 file $(dirname $CXX)/../lib/clang/10.0.1/lib/linux/libclang_rt.msan_cxx-x86_64.a
 
+export LD_LIBRARY_PATH="$(dirname $CXX)/../lib:$LD_LIBRARY_PATH"
+
+# TODO
+# export MSAN_LIB="$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "libclang_rt.msan-*.so" | head -n 1)"
+# must exist
+# file $MSAN_LIB
+# export LD_PRELOAD="$MSAN_LIB $LD_PRELOAD"
+
+sudo ldconfig
+
 # NOTE: NO `--profile` argument cause we use `CXX` env. var
 CONAN_REVISIONS_ENABLED=1 \
 CONAN_VERBOSE_TRACEBACK=1 \
@@ -1730,7 +1740,7 @@ Set env. var.:
 
 ```bash
 # see https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
-export UBSAN_OPTIONS="fast_unwind_on_malloc=0:handle_segv=0:disable_coredump=0:halt_on_error=1:print_stacktrace=1"
+export UBSAN_OPTIONS="fast_unwind_on_malloc=0:handle_segv=0:disable_coredump=0:halt_on_error=1:print_stacktrace=1:report_error_type=1"
 
 # make sure that env. var. UBSAN_SYMBOLIZER_PATH points to llvm-symbolizer
 # conan package llvm_tools provides llvm-symbolizer
