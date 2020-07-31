@@ -27,7 +27,13 @@ endif(PRINT_TO_STDOUT)
 set(ALWAYS_BUILD TRUE CACHE BOOL "ALWAYS_BUILD")
 set(ENABLE_LLVM_TOOLS FALSE CACHE BOOL "ENABLE_LLVM_TOOLS")
 set(ENABLE_CLING TRUE CACHE BOOL "ENABLE_CLING")
+set(ENABLE_BASIS TRUE CACHE BOOL "ENABLE_BASIS")
+set(ENABLE_TYPE_SAFE TRUE CACHE BOOL "ENABLE_TYPE_SAFE")
+set(ENABLE_CLANG_FOLLY_CONAN FALSE CACHE BOOL "ENABLE_CLANG_FOLLY_CONAN")
+set(ENABLE_CORRADE TRUE CACHE BOOL "ENABLE_CORRADE")
 set(ENABLE_FLEXTOOL FALSE CACHE BOOL "ENABLE_FLEXTOOL")
+set(ENABLE_CPPCHECK TRUE CACHE BOOL "ENABLE_CPPCHECK")
+set(ENABLE_FLEXLIB TRUE CACHE BOOL "ENABLE_FLEXLIB")
 set(ENABLE_FLEX_REFLECT_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_REFLECT_PLUGIN")
 set(ENABLE_SQUARETS FALSE CACHE BOOL "ENABLE_SQUARETS")
 set(ENABLE_FLEX_SQUARETS_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_SQUARETS_PLUGIN")
@@ -35,6 +41,12 @@ set(ENABLE_FLEX_PIMPL_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_PIMPL_PLUGIN")
 set(ENABLE_FLEX_TYPECLASS_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_TYPECLASS_PLUGIN")
 set(ENABLE_FLEX_META_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_META_PLUGIN")
 set(ENABLE_FLEX_META_DEMO FALSE CACHE BOOL "ENABLE_FLEX_META_DEMO")
+set(ENABLE_MONGO_CXX_DRIVER FALSE CACHE BOOL "ENABLE_MONGO_CXX_DRIVER")
+set(ENABLE_ABSEIL FALSE CACHE BOOL "ENABLE_ABSEIL")
+set(ENABLE_MONGO_C_DRIVER FALSE CACHE BOOL "ENABLE_MONGO_C_DRIVER")
+set(ENABLE_FLATC_CONAN FALSE CACHE BOOL "ENABLE_FLATC_CONAN")
+set(ENABLE_CONAN_POCO FALSE CACHE BOOL "ENABLE_CONAN_POCO")
+set(ENABLE_CONAN_PROTOBUF FALSE CACHE BOOL "ENABLE_CONAN_PROTOBUF")
 
 # --- includes ---
 # WHY CMAKE_CURRENT_LIST_DIR? see https://stackoverflow.com/a/12854575/10904212
@@ -611,21 +623,21 @@ conan_build_target_if(
   "clang_folly_conan" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/clang_folly_conan" # target to build
-  ALWAYS_BUILD
+  ENABLE_CLANG_FOLLY_CONAN
   "")
 
 # corrade
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/corrade")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/corrade"
-      "http://github.com/mosra/corrade.git"
-      "-b;v2020.06")
+      "https://github.com/blockspacer/corrade_conan.git"
+      "")
 endif()
 conan_build_target_if(
   "corrade" # target to clean
-  "magnum/stable"
+  "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/corrade" # target to build
-  ALWAYS_BUILD
+  ENABLE_CORRADE
   "")
 
 # type_safe
@@ -639,7 +651,7 @@ conan_build_target_if(
   "type_safe" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/type_safe" # target to build
-  ALWAYS_BUILD
+  ENABLE_TYPE_SAFE
   "")
 
 # basis
@@ -653,7 +665,7 @@ conan_build_target_if(
   "basis" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/basis" # target to build
-  ALWAYS_BUILD
+  ENABLE_BASIS
   "")
 
 # cling_conan
@@ -681,7 +693,7 @@ conan_build_target_if(
   "flexlib" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/flexlib" # target to build
-  ALWAYS_BUILD
+  ENABLE_FLEXLIB
   "")
 
 # flex_support_headers
@@ -709,7 +721,7 @@ conan_build_target_if(
   "conan-cppcheck_installer" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer" # target to build
-  ALWAYS_BUILD
+  ENABLE_CPPCHECK
   "")
 
 # flextool
@@ -837,3 +849,81 @@ conan_build_target_if(
   ENABLE_FLEX_META_DEMO
   ";-o;flex_meta_demo:enable_clang_from_conan=False;\
 -e;flex_meta_demo:enable_tests=True")
+
+# conan_protobuf
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf"
+      "https://github.com/blockspacer/conan_protobuf.git"
+      "")
+endif()
+conan_build_target_if(
+  "protobuf" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf" # target to build
+  ENABLE_CONAN_PROTOBUF)
+
+# poco
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/poco")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/poco"
+      "https://github.com/blockspacer/conan_poco.git"
+      "")
+endif()
+conan_build_target_if(
+  "poco" # target to clean
+  "dev/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/poco" # target to build
+  ENABLE_CONAN_POCO)
+
+# flatc_conan
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flatc_conan")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flatc_conan"
+      "https://github.com/blockspacer/conan-flatc_installer.git"
+      "")
+endif()
+conan_build_target_if(
+  "flatc_conan" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/flatc_conan" # target to build
+  ENABLE_FLATC_CONAN)
+
+# mongo-c-driver
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/mongo-c-driver")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/mongo-c-driver"
+      "https://github.com/blockspacer/mongo-c-driver.git"
+      "")
+endif()
+conan_build_target_if(
+  "mongo-c-driver" # target to clean
+  "dev/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/mongo-c-driver" # target to build
+  ENABLE_MONGO_C_DRIVER)
+
+# mongo-cxx-driver
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/mongo-cxx-driver")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/mongo-cxx-driver"
+      "https://github.com/blockspacer/mongo-cxx-driver-patched.git"
+      "")
+endif()
+conan_build_target_if(
+  "mongo-cxx-driver" # target to clean
+  "dev/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/mongo-cxx-driver" # target to build
+  ENABLE_MONGO_CXX_DRIVER)
+
+# abseil
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/abseil")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/abseil"
+      "https://github.com/abseil/abseil-cpp.git"
+      "")
+endif()
+conan_build_target_if(
+  "abseil" # target to clean
+  "abseil/20200225@conan/stable" # target to create
+  "${CURRENT_SCRIPT_DIR}/.tmp/abseil" # target to build
+  ENABLE_ABSEIL)

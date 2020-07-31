@@ -313,6 +313,7 @@ target_compile_definitions(${LIB_NAME} PRIVATE
   #BOOST_NO_TYPEID
   # TODO
   #BOOST_NO_EXCEPTIONS
+  BOOST_ASIO_STANDALONE=1
 )
 
 target_compile_definitions(${LIB_NAME} PUBLIC

@@ -1050,6 +1050,17 @@ cmake .. \
 
 See for details [https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/](https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/)
 
+To get the most out of ccache, put something like this in `~/.ccache/ccache.conf`:
+
+```bash
+max_size = 50.0G  # or whatever cache size you prefer; default is 5G; 0 means unlimited
+base_dir = /home/yourname  # or wherever you keep your source files
+```
+
+Note: `base_dir` is required for ccache to share cached compiles of the same file across different repositories / paths; it will only do this for paths under `base_dir`. So this option is required for effective use of ccache with git worktrees (described below).
+
+You must not set `base_dir` to "/", or anywhere that contains system headers (according to the ccache docs).
+
 ## For contibutors: GOLD linker
 
 Installation:
@@ -1228,6 +1239,12 @@ export TSAN_OPTIONS="handle_segv=0:disable_coredump=0:abort_on_error=1:report_th
 # and prints its path during cmake configure step
 # echo $TSAN_SYMBOLIZER_PATH
 export TSAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
+
+export CFLAGS="-fsanitize=thread -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export CXXFLAGS="-fsanitize=thread -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
 ```
 
 Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
@@ -1360,6 +1377,8 @@ NOTE: you can create blacklist file, see:
 
 ## For contibutors: Address Sanitizer
 
+NOTE: build with exceptions and rtti disabled, see [https://bugs.chromium.org/p/chromium/issues/detail?id=832808](https://bugs.chromium.org/p/chromium/issues/detail?id=832808)
+
 See for details:
 
 * [http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/](http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/)
@@ -1379,6 +1398,12 @@ export ASAN_OPTIONS="fast_unwind_on_malloc=0:strict_init_order=1:check_initializ
 # and prints its path during cmake configure step
 # echo $ASAN_SYMBOLIZER_PATH
 export ASAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
+
+export CFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export CXXFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
 ```
 
 Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
@@ -1529,6 +1554,12 @@ export MSAN_OPTIONS="poison_in_dtor=1:fast_unwind_on_malloc=0:check_initializati
 # and prints its path during cmake configure step
 # echo $MSAN_SYMBOLIZER_PATH
 export MSAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
+
+export CFLAGS="-fsanitize=memory -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export CXXFLAGS="-fsanitize=memory -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
 ```
 
 Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
@@ -1706,6 +1737,12 @@ export UBSAN_OPTIONS="fast_unwind_on_malloc=0:handle_segv=0:disable_coredump=0:h
 # and prints its path during cmake configure step
 # echo $UBSAN_SYMBOLIZER_PATH
 export UBSAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
+
+export CFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export CXXFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
+
+export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
 ```
 
 Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
