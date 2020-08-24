@@ -21,10 +21,8 @@ else()
 endif()
 
 find_package(chromium_base REQUIRED)
-if(TARGET chromium_base::chromium_base-static)
-  set(base_LIB chromium_base::chromium_base-static)
-else()
-  message(FATAL_ERROR "not supported: using system provided chromium_base library")
+if(NOT TARGET ${base_LIB})
+  message(FATAL_ERROR "not supported ${base_LIB}: using system provided chromium_base library")
 endif()
 
 # see https://doc.magnum.graphics/corrade/corrade-cmake.html#corrade-cmake-subproject
@@ -41,13 +39,10 @@ list(APPEND USED_3DPARTY_LIBS
   ${build_util_LIB}
 )
 
-if(NOT TARGET CONAN_PKG::flexlib)
-  message(FATAL_ERROR "Use flexlib from conan")
+find_package(flexlib REQUIRED)
+if(NOT TARGET ${flexlib_LIB})
+  message(FATAL_ERROR "Use flexlib from conan (${flexlib_LIB})")
 endif()
-set(flexlib CONAN_PKG::flexlib)
-if(${PROJECT_NAME}_LOCAL_BUILD)
-  set(flexlib flexlib)
-endif(${PROJECT_NAME}_LOCAL_BUILD)
 
 find_package(basis REQUIRED)
 FROM_HERE("invalid basis_HEADER_DIR")
@@ -56,8 +51,8 @@ validate(CHECK_NOT_EMPTY ${basis_HEADER_DIR}
 )
 
 list(APPEND USED_3DPARTY_LIBS
-  ${flexlib}
   ${basis_LIB}
+  ${flexlib_LIB}
   #TODO: doctest
   #CONAN_PKG::doctest
   #CONAN_PKG::clang_folly_conan

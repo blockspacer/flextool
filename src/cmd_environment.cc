@@ -8,7 +8,7 @@
 #include <base/logging.h>
 #include <base/path_service.h>
 
-#include <basis/boost_command_line.hpp>
+#include <flexlib/boost_command_line.hpp>
 
 #include <boost/program_options/options_description.hpp>
 

@@ -63,21 +63,37 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "enable_valgrind=False",
         "enable_clang_from_conan=False",
         # boost
-        "boost:without_atomic=True",
-        "boost:without_chrono=True",
-        "boost:without_container=True",
-        "boost:without_context=True",
-        "boost:without_coroutine=True",
-        "boost:without_graph=True",
-        "boost:without_graph_parallel=True",
-        "boost:without_log=True",
-        "boost:without_math=True",
-        "boost:without_mpi=True",
-        "boost:without_serialization=True",
+        "boost:no_rtti=False",
+        "boost:no_exceptions=False",
+        "boost:without_python=True",
         "boost:without_test=True",
-        "boost:without_timer=True",
-        "boost:without_type_erasure=True",
-        "boost:without_wave=True",
+        "boost:without_coroutine=False",
+        "boost:without_stacktrace=False",
+        "boost:without_math=False",
+        "boost:without_wave=False",
+        "boost:without_contract=False",
+        "boost:without_locale=False",
+        "boost:without_random=False",
+        "boost:without_regex=False",
+        "boost:without_mpi=False",
+        "boost:without_timer=False",
+        "boost:without_thread=False",
+        "boost:without_chrono=False",
+        "boost:without_atomic=False",
+        "boost:without_system=False",
+        "boost:without_program_options=False",
+        "boost:without_serialization=False",
+        "boost:without_log=False",
+        "boost:without_type_erasure=False",
+        "boost:without_graph=False",
+        "boost:without_graph_parallel=False",
+        "boost:without_iostreams=False",
+        "boost:without_context=False",
+        "boost:without_fiber=False",
+        "boost:without_filesystem=False",
+        "boost:without_date_time=False",
+        "boost:without_exception=False",
+        "boost:without_container=False",
         # llvm
         "llvm:shared=False",
         "compiler-rt:shared=False",
@@ -207,6 +223,13 @@ class flextoolConan(conan_build_helper.CMakePackage):
             if not self._is_llvm_tools_enabled():
                 raise ConanInvalidConfiguration("sanitizers require llvm_tools")
 
+        if self.options.enable_ubsan \
+           or self.options.enable_asan \
+           or self.options.enable_msan \
+           or self.options.enable_tsan:
+            if not self.options["boost"].no_exceptions:
+                raise ConanInvalidConfiguration("sanitizers require boost without exceptions")
+
         if self.options.enable_ubsan:
             self.options["flexlib"].enable_ubsan = True
             self.options["basis"].enable_ubsan = True
@@ -289,7 +312,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
 
         self.requires("basis/master@conan/stable")
 
-        self.requires("corrade/2020.06@magnum/stable")
+        self.requires("corrade/v2020.06@conan/stable")
 
         #self.requires("type_safe/0.2@conan/stable")
 

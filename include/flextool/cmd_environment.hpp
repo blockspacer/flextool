@@ -6,7 +6,7 @@
 #include <base/macros.h>
 #include <base/sequence_checker.h>
 
-#include <basis/boost_command_line.hpp>
+#include <flexlib/boost_command_line.hpp>
 
 namespace flextool {
 

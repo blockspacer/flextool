@@ -15,8 +15,9 @@
 #include <base/strings/string_piece_forward.h>
 
 #include <basis/PluginManager.hpp>
-#include <basis/boost_command_line.hpp>
 #include <basis/cmd_util.hpp>
+
+#include <flexlib/boost_command_line.hpp>
 
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
 #include <boost/none.hpp>
@@ -410,7 +411,7 @@ std::vector<base::FilePath>
 AppCmdOptions::pathsToExtraPluginFiles()
 {
   return
-    basis::toFilePaths(cmdOptions_.pathsToExtraPluginFiles);
+    cmd::toFilePaths(cmdOptions_.pathsToExtraPluginFiles);
 }
 
 std::string AppCmdOptions::tracingCategories()
@@ -430,13 +431,13 @@ size_t AppCmdOptions::count(
 std::vector<base::FilePath> AppCmdOptions::scriptFiles()
 {
   return
-    basis::toFilePaths(cmdOptions_.cling_scripts);
+    cmd::toFilePaths(cmdOptions_.cling_scripts);
 }
 
 base::FilePath AppCmdOptions::inDir()
 {
   base::FilePath dir
-    = basis::cmdKeyToDirectory(cmd::kInDir, boostCmdParser_);
+    = cmd::cmdKeyToDirectory(cmd::kInDir, boostCmdParser_);
   return
     dir.empty()
     // default value
@@ -447,7 +448,7 @@ base::FilePath AppCmdOptions::inDir()
 base::FilePath AppCmdOptions::outDir()
 {
   base::FilePath dir
-    = basis::cmdKeyToDirectory(cmd::kOutDir, boostCmdParser_);
+    = cmd::cmdKeyToDirectory(cmd::kOutDir, boostCmdParser_);
   return
     dir.empty()
     // default value
@@ -458,7 +459,7 @@ base::FilePath AppCmdOptions::outDir()
 base::FilePath AppCmdOptions::pluginsDir()
 {
   base::FilePath dir
-    = basis::cmdKeyToDirectory(cmd::kPluginsDir, boostCmdParser_);
+    = cmd::cmdKeyToDirectory(cmd::kPluginsDir, boostCmdParser_);
   return
     dir.empty()
     // default value
@@ -470,7 +471,7 @@ base::FilePath AppCmdOptions::pluginsDir()
 base::FilePath AppCmdOptions::pluginsConfigFile()
 {
   base::FilePath pluginsConfigFile
-    = basis::cmdKeyToFile(cmd::kPluginsConfFile, boostCmdParser_);
+    = cmd::cmdKeyToFile(cmd::kPluginsConfFile, boostCmdParser_);
   return
     pluginsConfigFile.empty()
     // default value

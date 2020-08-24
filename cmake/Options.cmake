@@ -1,10 +1,13 @@
 ﻿include_guard( DIRECTORY )
 
-# Hack to depend NOT on CONAN_PKG::libname, but on libname directly
-# See for details
-# https://docs.conan.io/en/latest/developing_packages/workspaces.html
-set(${PROJECT_NAME}_LOCAL_BUILD FALSE CACHE BOOL "${PROJECT_NAME}_LOCAL_BUILD")
-message(STATUS "${PROJECT_NAME}_LOCAL_BUILD=${${PROJECT_NAME}_LOCAL_BUILD}")
+# used by https://docs.conan.io/en/latest/developing_packages/workspaces.html
+get_filename_component(LOCAL_BUILD_ABSOLUTE_ROOT_PATH
+  "${PACKAGE_flextool_SRC}"
+  ABSOLUTE)
+if(EXISTS "${LOCAL_BUILD_ABSOLUTE_ROOT_PATH}")
+  # path to Find*.cmake file
+  list(PREPEND CMAKE_MODULE_PATH "${LOCAL_BUILD_ABSOLUTE_ROOT_PATH}/cmake")
+endif()
 
 option(BUILD_DOXY_DOC
   "build doxygen documentation" OFF)

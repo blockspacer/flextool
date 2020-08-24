@@ -11,7 +11,7 @@
 #include <base/optional.h>
 #include <base/strings/string_piece_forward.h>
 
-#include <basis/boost_command_line.hpp>
+#include <flexlib/boost_command_line.hpp>
 
 #include <clang/Basic/FileManager.h>
 #include <clang/Basic/SourceManager.h>

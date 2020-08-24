@@ -294,28 +294,23 @@ cmake_minimum_required(VERSION 3.0)
 
 project(WorkspaceProject)
 
-set(flexlib_LOCAL_BUILD TRUE CACHE BOOL "flexlib_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flexlib/cmake)
-
-set(flextool_LOCAL_BUILD TRUE CACHE BOOL "flextool_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flextool/cmake)
-
 include(\${CMAKE_BINARY_DIR}/conanworkspace.cmake)
+
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flexlib_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flextool_SRC}/cmake")
+
 conan_workspace_subdirectories()
 
 add_dependencies(flextool flexlib)
 EOF
 
-# must contain `include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)` without `\`
+# must contain `include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)` without slash `\` (slash added for bash cat command)
 cat CMakeLists.txt
 
 # combines options from all projects
 conan workspace install \
-  ../conanws.yml --profile=clang \
+  ../conanws.yml \
+  --profile=clang \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
   -s llvm_tools:build_type=Release \
@@ -395,6 +390,8 @@ add plugins to yml file:
 
 ```yml
 editables:
+    chromium_base/master@conan/stable:
+        path: /........./chromium_base
     basis/master@conan/stable:
         path: /........./basis
     flex_support_headers/master@conan/stable:
@@ -445,64 +442,24 @@ cmake_minimum_required(VERSION 3.0)
 
 project(WorkspaceProject)
 
-set(basis_LOCAL_BUILD TRUE CACHE BOOL "basis_LOCAL_BUILD")
+include(\${CMAKE_BINARY_DIR}/conanworkspace.cmake)
 
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./basis/cmake)
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_chromium_base_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_basis_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flex_support_headers_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flexlib_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flex_reflect_plugin_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_squarets_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flex_squarets_plugin_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flex_typeclass_plugin_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flex_meta_plugin_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flex_meta_demo_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flex_pimpl_plugin_SRC}/cmake")
+list(PREPEND CMAKE_MODULE_PATH "\${PACKAGE_flextool_SRC}/cmake")
 
-set(flex_support_headers_LOCAL_BUILD TRUE CACHE BOOL "flex_support_headers_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flex_support_headers/cmake)
-
-set(flexlib_LOCAL_BUILD TRUE CACHE BOOL "flexlib_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flexlib/cmake)
-
-set(flextool_LOCAL_BUILD TRUE CACHE BOOL "flextool_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flextool/cmake)
-
-set(flex_reflect_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_reflect_plugin_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flex_reflect_plugin/cmake)
-
-set(squarets_LOCAL_BUILD TRUE CACHE BOOL "squarets_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./squarets/cmake)
-
-set(flex_squarets_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_squarets_plugin_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flex_squarets_plugin/cmake)
-
-set(flex_typeclass_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_typeclass_plugin_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flex_typeclass_plugin/cmake)
-
-set(flex_meta_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_meta_plugin_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flex_meta_plugin/cmake)
-
-set(flex_meta_demo_LOCAL_BUILD TRUE CACHE BOOL "flex_meta_demo_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flex_meta_demo/cmake)
-
-set(flex_pimpl_plugin_LOCAL_BUILD TRUE CACHE BOOL "flex_pimpl_plugin_LOCAL_BUILD")
-
-# path to Find*.cmake file
-list(APPEND CMAKE_MODULE_PATH /........./flex_pimpl_plugin/cmake)
-
-include(${CMAKE_BINARY_DIR}/conanworkspace.cmake)
 conan_workspace_subdirectories()
 
+add_dependencies(basis chromium_base-static)
 add_dependencies(flexlib basis)
 add_dependencies(flextool flexlib basis flex_support_headers)
 add_dependencies(flex_reflect_plugin flextool)
@@ -525,7 +482,8 @@ add plugins options to `conan workspace install`:
 ```bash
 # combines options from all projects
 conan workspace install \
-  ../conanws.yml --profile=clang \
+  ../conanws.yml \
+  --profile=clang \
   -s build_type=Debug \
     -s cling_conan:build_type=Release \
     -s llvm_tools:build_type=Release \
@@ -1368,6 +1326,11 @@ find . -iname '*.lib' -exec rm {} \;
 cmake -E time cmake --build . \
   --config Debug \
   -- -j8
+
+# do not forget to reset compile flags
+unset CFLAGS
+unset CXXFLAGS
+unset LDFLAGS
 ```
 
 NOTE: you can create blacklist file, see:
@@ -1479,6 +1442,11 @@ conan build . \
   --gtest_filter=ToolsSanityTest.DISABLED_AddressSanitizerTest \
   --gtest_also_run_disabled_tests
 # must print `AddressSanitizer: stack-buffer-overflow on address...`
+
+# do not forget to reset compile flags
+unset CFLAGS
+unset CXXFLAGS
+unset LDFLAGS
 ```
 
 NOTE: Change of options may require rebuild of some deps (`--build=missing`).
@@ -1655,6 +1623,11 @@ conan build . \
 ./local_build_msan/bin/Debug/tests/flextool-gmock \
   --gtest_filter=ToolsSanityTest.DISABLED_MemorySanitizerTest \
   --gtest_also_run_disabled_tests
+
+# do not forget to reset compile flags
+unset CFLAGS
+unset CXXFLAGS
+unset LDFLAGS
 ```
 
 NOTE: Change of options may require rebuild of some deps (`--build=missing`).
@@ -1829,6 +1802,11 @@ conan build . \
 ./local_build_ubsan/bin/Debug/tests/flextool-gmock \
   --gtest_filter=ToolsSanityTest.DISABLED_UndefinedBehaviorSanitizerTest \
   --gtest_also_run_disabled_tests
+
+# do not forget to reset compile flags
+unset CFLAGS
+unset CXXFLAGS
+unset LDFLAGS
 ```
 
 NOTE: Use `_Nonnull` annotation, see [https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#ubsan-checks](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#ubsan-checks)

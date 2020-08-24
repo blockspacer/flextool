@@ -12,8 +12,14 @@ find_package(Cling QUIET)
 
 list(REMOVE_AT CMAKE_MODULE_PATH -1)
 
-if(flextool_LOCAL_BUILD)
-else()
+# used by https://docs.conan.io/en/latest/developing_packages/workspaces.html
+if(TARGET flextool OR TARGET flextool::exe)
+  # bin dirs
+  list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_BINARY_DIR})
+  list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/cmake/flextool-config.cmake")
   # uses Config.cmake or a -config.cmake file
   # see https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
   # BELOW MUST BE EQUAL TO find_package(... CONFIG REQUIRED)

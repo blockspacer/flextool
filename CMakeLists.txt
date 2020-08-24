@@ -280,11 +280,9 @@ set_target_properties(${LIB_NAME}
     CMAKE_CXX_STANDARD_REQUIRED ON
 )
 
-if(${PROJECT_NAME}_LOCAL_BUILD)
-  # bin dirs
-  list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_BINARY_DIR})
-  list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_BINARY_DIR})
-endif(${PROJECT_NAME}_LOCAL_BUILD)
+# bin dirs used by https://docs.conan.io/en/latest/developing_packages/workspaces.html
+list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_BINARY_DIR})
 
 # POSITION_INDEPENDENT_CODE for -fPIC
 set_property(TARGET ${LIB_NAME}

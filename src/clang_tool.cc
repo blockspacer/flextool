@@ -118,7 +118,7 @@ void ClangTool::run(
   llvm::cl::OptionCategory UseOverrideCategory(
     "Use override options");
 
-  int args_arc
+  const int args_arc
     = static_cast<int>(args_vec.size());
 
   // parse the command-line args passed to your code
