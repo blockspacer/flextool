@@ -340,6 +340,7 @@ export build_type=Debug
 
 # configure via cmake
 cmake -E time cmake . \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_TESTS=TRUE \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -533,6 +534,7 @@ export build_type=Debug
 
 # configure via cmake
 cmake -E time cmake . \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_TESTS=TRUE \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -769,6 +771,7 @@ find . -iname '*.lib' -exec rm {} \;
 
 # NOTE: -DENABLE_VALGRIND=ON
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_VALGRIND=ON \
   -DENABLE_TESTS=TRUE \
   -DENABLE_VALGRIND_TESTS=TRUE \
@@ -888,6 +891,7 @@ scan-build \
   --use-c++=clang++-6.0 \
   -o ./scanbuildout/ \
   cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DCMAKE_C_COMPILER=ccc-analyzer \
   -DCMAKE_CXX_COMPILER=c++-analyzer \
   -DENABLE_TESTS=FALSE \
@@ -999,6 +1003,7 @@ export CC=gcc
 export CXX=g++
 # NOTE: -DUSE_CCACHE=ON
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DUSE_CCACHE=ON \
   -DENABLE_TESTS=FALSE \
   -DBUILD_SHARED_LIBS=FALSE \
@@ -1040,6 +1045,7 @@ export CC=gcc
 export CXX=g++
 # NOTE: -DUSE_LD_GOLD=ON
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DUSE_LD_GOLD=ON \
   -DENABLE_TESTS=FALSE \
   -DBUILD_SHARED_LIBS=FALSE \
@@ -1307,6 +1313,7 @@ cd local_build_tsan
 
 # NOTE: -DENABLE_TSAN=ON
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_TSAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBUILD_SHARED_LIBS=FALSE \
@@ -1476,6 +1483,7 @@ cd local_build_asan
 
 # NOTE: -DENABLE_ASAN=ON
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_ASAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBUILD_SHARED_LIBS=FALSE \
@@ -1657,6 +1665,7 @@ cd local_build_msan
 
 # NOTE: -DENABLE_MSAN=ON
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_MSAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBUILD_SHARED_LIBS=FALSE \
@@ -1854,6 +1863,7 @@ cd local_build_ubsan
 
 # NOTE: -DENABLE_UBSAN=ON
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_UBSAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBUILD_SHARED_LIBS=FALSE \
@@ -2036,6 +2046,7 @@ cmake -E make_directory "doc-mcss"
 
 # NOTE: you can change python version like so: -DPYTHON_EXECUTABLE=/usr/bin/python3
 cmake .. \
+  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DMCSS_ROOT_DIR_FOR_DOCS=$HOME/m.css \
   -DPYTHON_EXECUTABLE=/usr/bin/python3 \
   -DENABLE_TESTS=TRUE \

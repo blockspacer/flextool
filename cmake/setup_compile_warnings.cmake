@@ -2,6 +2,7 @@ include_guard( DIRECTORY )
 
 list(APPEND ClangErrorFlags
   -Werror=thread-safety
+  -Werror=thread-safety-analysis
 )
 
 list(APPEND GCCAndClangErrorFlags
@@ -120,13 +121,16 @@ target_compile_options(${LIB_NAME} PRIVATE
     #-Wlifetime
     # see http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
     # see https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf
-    -Wthread-safety
+    -Wthread-safety-analysis
     -Wall
     -W
     -Wextra
     -Wpedantic
     -Wdeprecated-register
     -Wnon-virtual-dtor
+    # Negative requirements are an experimental feature
+    # which will produce many warnings in existing code
+    -Wno-thread-safety-negative
   >
 )
 
