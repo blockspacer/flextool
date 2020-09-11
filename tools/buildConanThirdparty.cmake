@@ -320,7 +320,7 @@ conan_build_target_if(
 
 # llvm_tools
 
-if(ENABLE_LLVM_TOOLS \
+if(ENABLE_LLVM_TOOLS
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/llvm_tools")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/llvm_tools"
       "http://github.com/blockspacer/llvm_tools.git"
@@ -615,7 +615,7 @@ conan_build_target_if(
 
 # clang_folly_conan
 
-if(ENABLE_CLANG_FOLLY_CONAN \
+if(ENABLE_CLANG_FOLLY_CONAN
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/clang_folly_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/clang_folly_conan"
       "http://github.com/blockspacer/clang_folly_conan.git"
@@ -630,7 +630,7 @@ conan_build_target_if(
 
 # corrade
 
-if(ENABLE_CORRADE \
+if(ENABLE_CORRADE
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/corrade")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/corrade"
       "https://github.com/blockspacer/corrade_conan.git"
@@ -645,7 +645,7 @@ conan_build_target_if(
 
 # type_safe
 
-if(ENABLE_TYPE_SAFE \
+if(ENABLE_TYPE_SAFE
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/type_safe")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/type_safe"
       "http://github.com/foonathan/type_safe.git"
@@ -660,7 +660,7 @@ conan_build_target_if(
 
 # basis
 
-if(ENABLE_BASIS \
+if(ENABLE_BASIS
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/basis")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/basis"
       "https://github.com/blockspacer/basis.git"
@@ -675,7 +675,7 @@ conan_build_target_if(
 
 # cling_conan
 
-if(ENABLE_CLING \
+if(ENABLE_CLING
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/cling_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/cling_conan"
       "https://github.com/blockspacer/cling_conan.git"
@@ -690,7 +690,7 @@ conan_build_target_if(
 
 # flexlib
 
-if(ENABLE_FLEXLIB \
+if(ENABLE_FLEXLIB
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flexlib")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flexlib"
       "https://github.com/blockspacer/flexlib.git"
@@ -719,7 +719,7 @@ conan_build_target_if(
 
 # conan-cppcheck_installer
 
-if(ENABLE_CPPCHECK \
+if(ENABLE_CPPCHECK
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan-cppcheck_installer"
       "https://github.com/bincrafters/conan-cppcheck_installer.git"
@@ -734,7 +734,7 @@ conan_build_target_if(
 
 # flextool
 
-if(ENABLE_FLEXTOOL \
+if(ENABLE_FLEXTOOL
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flextool")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flextool"
       "https://github.com/blockspacer/flextool.git"
@@ -750,7 +750,7 @@ conan_build_target_if(
 
 # flex_reflect_plugin
 
-if(ENABLE_FLEX_REFLECT_PLUGIN \
+if(ENABLE_FLEX_REFLECT_PLUGIN
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_reflect_plugin")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_reflect_plugin"
       "https://github.com/blockspacer/flex_reflect_plugin.git"
@@ -767,7 +767,7 @@ conan_build_target_if(
 
 # squarets
 
-if(ENABLE_SQUARETS \
+if(ENABLE_SQUARETS
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/squarets")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/squarets"
       "https://github.com/blockspacer/squarets.git"
@@ -784,7 +784,7 @@ conan_build_target_if(
 
 # flex_squarets_plugin
 
-if(ENABLE_FLEX_SQUARETS_PLUGIN \
+if(ENABLE_FLEX_SQUARETS_PLUGIN
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_squarets_plugin")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_squarets_plugin"
       "https://github.com/blockspacer/flex_squarets_plugin.git"
@@ -801,7 +801,7 @@ conan_build_target_if(
 
 # flex_pimpl_plugin
 
-if(ENABLE_FLEX_PIMPL_PLUGIN \
+if(ENABLE_FLEX_PIMPL_PLUGIN
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_pimpl_plugin")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_pimpl_plugin"
       "https://github.com/blockspacer/flex_pimpl_plugin.git"
@@ -818,7 +818,7 @@ conan_build_target_if(
 
 # flex_typeclass_plugin
 
-if(ENABLE_FLEX_TYPECLASS_PLUGIN \
+if(ENABLE_FLEX_TYPECLASS_PLUGIN
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_typeclass_plugin")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_typeclass_plugin"
       "https://github.com/blockspacer/flex_typeclass_plugin.git"
@@ -835,7 +835,7 @@ conan_build_target_if(
 
 # flex_meta_plugin
 
-if(ENABLE_FLEX_META_PLUGIN \
+if(ENABLE_FLEX_META_PLUGIN
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_plugin")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_plugin"
       "https://github.com/blockspacer/flex_meta_plugin.git"
@@ -852,7 +852,7 @@ conan_build_target_if(
 
 # flex_meta_demo
 
-if(ENABLE_FLEX_META_DEMO \
+if(ENABLE_FLEX_META_DEMO
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_demo")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flex_meta_demo"
       "https://github.com/blockspacer/flex_meta_demo.git"
@@ -868,7 +868,7 @@ conan_build_target_if(
 
 # conan_protobuf
 
-if(ENABLE_CONAN_PROTOBUF \
+if(ENABLE_CONAN_PROTOBUF
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf"
       "https://github.com/blockspacer/conan_protobuf.git"
@@ -883,7 +883,7 @@ conan_build_target_if(
 
 # poco
 
-if(ENABLE_CONAN_POCO \
+if(ENABLE_CONAN_POCO
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/poco")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/poco"
       "https://github.com/blockspacer/conan_poco.git"
@@ -898,7 +898,7 @@ conan_build_target_if(
 
 # flatc_conan
 
-if(ENABLE_FLATC_CONAN \
+if(ENABLE_FLATC_CONAN
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/flatc_conan")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/flatc_conan"
       "https://github.com/blockspacer/conan-flatc_installer.git"
@@ -913,7 +913,7 @@ conan_build_target_if(
 
 # mongo-c-driver
 
-if(ENABLE_MONGO_C_DRIVER \
+if(ENABLE_MONGO_C_DRIVER
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/mongo-c-driver")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/mongo-c-driver"
       "https://github.com/blockspacer/mongo-c-driver.git"
@@ -928,7 +928,7 @@ conan_build_target_if(
 
 # mongo-cxx-driver
 
-if(ENABLE_MONGO_CXX_DRIVER \
+if(ENABLE_MONGO_CXX_DRIVER
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/mongo-cxx-driver")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/mongo-cxx-driver"
       "https://github.com/blockspacer/mongo-cxx-driver-patched.git"
@@ -943,7 +943,7 @@ conan_build_target_if(
 
 # abseil
 
-if(ENABLE_ABSEIL \
+if(ENABLE_ABSEIL
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/abseil")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/abseil"
       "https://github.com/abseil/abseil-cpp.git"

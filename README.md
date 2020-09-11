@@ -1260,6 +1260,7 @@ GIT_SSL_NO_VERIFY=true \
         -e boost:enable_llvm_tools=True \
         -o boost:enable_tsan=True \
         -e boost:compile_with_llvm_tools=True \
+        -o boost:no_exceptions=True \
         -o flexlib:enable_tsan=True \
         -e flexlib:enable_llvm_tools=True \
         -o flexlib:enable_clang_from_conan=False \
@@ -1425,6 +1426,7 @@ GIT_SSL_NO_VERIFY=true \
         -e boost:enable_llvm_tools=True \
         -o boost:enable_asan=True \
         -e boost:compile_with_llvm_tools=True \
+        -o boost:no_exceptions=True \
         -o flexlib:enable_asan=True \
         -e flexlib:enable_llvm_tools=True \
         -o flexlib:enable_clang_from_conan=False \
@@ -1608,6 +1610,7 @@ GIT_SSL_NO_VERIFY=true \
         -e boost:enable_llvm_tools=True \
         -o boost:enable_msan=True \
         -e boost:compile_with_llvm_tools=True \
+        -o boost:no_exceptions=True \
         -o flexlib:enable_msan=True \
         -e flexlib:enable_llvm_tools=True \
         -o flexlib:enable_clang_from_conan=False \
@@ -1788,6 +1791,7 @@ GIT_SSL_NO_VERIFY=true \
         -e boost:enable_llvm_tools=True \
         -o boost:enable_ubsan=True \
         -e boost:compile_with_llvm_tools=True \
+        -o boost:no_exceptions=True \
         -o flexlib:enable_ubsan=True \
         -e flexlib:enable_llvm_tools=True \
         -o flexlib:enable_clang_from_conan=False \
@@ -2435,14 +2439,14 @@ See for details:
 ## For contibutors: Prefer Clang To GCC
 
 * Clang supports thread safety annotations (GUARDED_BY)
-  1. Enable `-Wthread-safety`
+  1. Enable `-Wthread-safety-analysis`
   2. Use `base/thread_annotations.h` https://github.com/chromium/chromium/blob/master/base/thread_annotations.h
   See for details:
   - http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
   - see https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf
   - https://insights.sei.cmu.edu/sei_blog/2014/10/thread-safety-analysis-in-c-and-c.html
 
-* Clang fas first-class support sanitizers
+* Clang fas first-class support for sanitizers.
   See details about MSAN, ASAN, TSAN, etc. in docs.
 
 * Clang can be build with lifetime profile:
