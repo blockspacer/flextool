@@ -98,6 +98,12 @@ macro(set_test_compile_options target)
     $<$<CXX_COMPILER_ID:Clang>:-O0> )
 
   set_target_properties( ${target} PROPERTIES
+    # ENABLE_EXPORTS for -rdynamic
+    # i.e. export symbols from the executables
+    # required for plugin system
+    # see https://stackoverflow.com/a/8626922
+    ENABLE_EXPORTS ON
+    POSITION_INDEPENDENT_CODE ON
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF
     CMAKE_CXX_STANDARD_REQUIRED ON

@@ -271,6 +271,12 @@ target_compile_options(${LIB_NAME}
 set(DEBUG_LIBRARY_SUFFIX "")
 set_target_properties(${LIB_NAME}
   PROPERTIES
+    # ENABLE_EXPORTS for -rdynamic
+    # i.e. export symbols from the executables
+    # required for plugin system
+    # see https://stackoverflow.com/a/8626922
+    ENABLE_EXPORTS ON
+    POSITION_INDEPENDENT_CODE ON
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" # TODO: /lib
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" # TODO: /lib
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" # TODO: /bin
