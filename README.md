@@ -44,7 +44,31 @@ Main project page: https://blockspacer.github.io/flex_docs/
 
 NOTE: cling with LLVM build may take couple of hours.
 
-Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+Command below uses `--profile clang`.
+
+Example conan profile `~/.conan/profiles/clang`:
+
+```txt
+[settings]
+# We are building in Ubuntu Linux
+os_build=Linux
+os=Linux
+arch_build=x86_64
+arch=x86_64
+
+compiler=clang
+compiler.version=6.0
+compiler.libcxx=libstdc++11
+
+[env]
+CC=/usr/bin/clang-6.0
+CXX=/usr/bin/clang++-6.0
+
+[build_requires]
+cmake_installer/3.15.5@conan/stable
+```
+
+Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
 
 We use `buildConanThirdparty.cmake` script to download and install conan packages.
 

@@ -12,3 +12,6 @@ compiler.libcxx=libstdc++11
 [env]
 CC=/usr/bin/clang
 CXX=/usr/bin/clang++
+
+[build_requires]
+cmake_installer/3.15.5@conan/stable
