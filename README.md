@@ -38,7 +38,7 @@ Main project page: https://blockspacer.github.io/flex_docs/
 
 ## Before installation
 
-- [installation guide](https://blockspacer.github.io/flex_docs/download/)
+- [Installation Guide](https://blockspacer.github.io/flex_docs/download/)
 
 - conan packages
 
@@ -68,7 +68,7 @@ CXX=/usr/bin/clang++-6.0
 cmake_installer/3.15.5@conan/stable
 ```
 
-Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html.
 
 We use `buildConanThirdparty.cmake` script to download and install conan packages.
 
@@ -89,13 +89,13 @@ cmake \
 
 - llvm_tools package
 
-NOTE: `llvm_tools` package is optional, you can skip it using `enable_llvm_tools=False` like so: `-e flextool:enable_llvm_tools=False -e basis:enable_llvm_tools=False -e chromium_base:enable_llvm_tools=False`
+NOTE: `llvm_tools` package is optional; you can skip it using `enable_llvm_tools=False` like so: `-e flextool:enable_llvm_tools=False -e basis:enable_llvm_tools=False -e chromium_base:enable_llvm_tools=False`
 
 NOTE: LLVM build may take couple of hours.
 
 NOTE: `-DENABLE_LLVM_TOOLS=TRUE` does the same (using `buildConanThirdparty.cmake`)
 
-Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html.
 
 You can install `llvm_tools` like so:
 
@@ -109,15 +109,15 @@ conan create . \
   --build missing
 ```
 
-See for up-to-date instructions [https://github.com/blockspacer/llvm_tools](https://github.com/blockspacer/llvm_tools)
+Up-to-date instructions are found here: [https://github.com/blockspacer/llvm_tools](https://github.com/blockspacer/llvm_tools)
 
 ## Easy install with common plugins
 
-If you want to install flextool and it's plugins in single command, than change options provided to `tools/buildConanThirdparty.cmake`
+If you want to install flextool and its plugins in single command, change the options provided to `tools/buildConanThirdparty.cmake`.
 
-NOTE: `tools/buildConanThirdparty.cmake` will perform FULL RE-BUILD, it may take couple of hours.
+NOTE: `tools/buildConanThirdparty.cmake` will perform a FULL RE-BUILD; it may take couple of hours.
 
-Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html.
 
 We use `buildConanThirdparty.cmake` script to download and install conan packages.
 
@@ -150,7 +150,7 @@ cmake \
 
 Use command below to re-build flextool (plugins must be installed separately).
 
-Command below uses `--profile clang`. Before creation of conan profile file see https://docs.conan.io/en/latest/using_packages/using_profiles.html
+Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html
 
 ```bash
 # Tested with clang 6.0
@@ -178,13 +178,13 @@ GIT_SSL_NO_VERIFY=true \
 
 Disable generation of compilation database when you use flextool.
 
-If you are using CMake, than set `CMAKE_EXPORT_COMPILE_COMMANDS` to `FALSE`.
+If you are using CMake, set `CMAKE_EXPORT_COMPILE_COMMANDS` to `FALSE`.
 
-If `compile_commands.json` exist in build folder (or in parent folder), then flextool may fail.
+If `compile_commands.json` exists in build folder (or in parent folder), flextool may fail.
 
 ## Standing on the Shoulders of Giants
 
-That project possible because of [flexferrum's `autoprogrammer`](https://github.com/flexferrum/autoprogrammer).
+This project is possible because of [flexferrum's `autoprogrammer`](https://github.com/flexferrum/autoprogrammer).
 
 Articles about flexferrum's `autoprogrammer` in media:
 
@@ -196,7 +196,7 @@ Articles about flexferrum's `autoprogrammer` in media:
 With the editable packages, you can tell Conan where to find the headers and the artifacts ready for consumption in your local working directory.
 There is no need to run `conan create` or `conan export-pkg`.
 
-See for details [https://docs.conan.io/en/latest/developing_packages/editable_packages.html](https://docs.conan.io/en/latest/developing_packages/editable_packages.html)
+For details, see: [https://docs.conan.io/en/latest/developing_packages/editable_packages.html](https://docs.conan.io/en/latest/developing_packages/editable_packages.html)
 
 Build locally:
 
@@ -241,7 +241,7 @@ conan editable add local_build/package_dir \
   flextool/master@conan/stable
 ```
 
-Note that `conanfile.py` modified to detect local builds via `self.in_local_cache`
+Note that `conanfile.py` is modified to detect local builds via `self.in_local_cache`.
 
 After change source in folder local_build (run commands in source package folder):
 
@@ -256,7 +256,7 @@ conan package . \
   --source-folder local_build
 ```
 
-Build your test project
+Build your test project.
 
 In order to revert the editable mode just remove the link using:
 
@@ -267,11 +267,11 @@ conan editable remove \
 
 ## For contibutors: conan workspace
 
-Allows to build multiple projects at once, it just creates `CMakeLists.txt` with `add_subdirectory` pointing to each package folder.
+Allows to build multiple projects at once; it just creates `CMakeLists.txt` with `add_subdirectory` pointing to each package folder.
 
 NOTE: You can open workspace in IDE as usual CMake based project (change build directory to WorkspaceProject path)!
 
-See for details [https://docs.conan.io/en/latest/developing_packages/workspaces.html](https://docs.conan.io/en/latest/developing_packages/workspaces.html)
+For details, see: [https://docs.conan.io/en/latest/developing_packages/workspaces.html](https://docs.conan.io/en/latest/developing_packages/workspaces.html)
 
 For example, we want to build both flextool and flexlib at the same time (flextool requires flexlib).
 
@@ -403,15 +403,15 @@ if not self.in_local_cache:
 
 Make sure that all targets have globally unique names.
 
-For example, you can not have in each project target with same name like "test". You can solve that issue by adding project-specific prefix to name of each target like "${ROOT_PROJECT_NAME}-test_main_gtest".
+For example: you can not have a target in each project with the same name like "test". You can solve that issue by adding project-specific prefix to name of each target like "${ROOT_PROJECT_NAME}-test_main_gtest".
 
-Because `CMAKE_BINARY_DIR` will point to folder created by `conan workspace install` - make sure that you prefer `CMAKE_CURRENT_BINARY_DIR` to `CMAKE_BINARY_DIR` etc.
+Because `CMAKE_BINARY_DIR` will point to folder created by `conan workspace install`, make sure that you prefer `CMAKE_CURRENT_BINARY_DIR` to `CMAKE_BINARY_DIR` etc.
 
 ## For contibutors: conan workspace with plugins
 
-Before installation: plugins require pre-built flextool (in same workspace). You must build workspace without plugins, only then you will be able to re-build it with plugins.
+Before installation: plugins require pre-built flextool (in same workspace). You must build workspace without plugins; only then you will be able to re-build it with plugins.
 
-add plugins to yml file:
+Add plugins to yml file:
 
 ```yml
 editables:
@@ -502,7 +502,7 @@ add_dependencies(flex_meta_demo flex_squarets_plugin)
 EOF
 ```
 
-add plugins options to `conan workspace install`:
+Add plugins options to `conan workspace install`:
 
 ```bash
 # combines options from all projects
@@ -543,7 +543,7 @@ conan workspace install \
     -e flex_meta_demo:enable_tests=True
 ```
 
-build and test workspace
+Build and test workspace:
 
 ```bash
 export CXX=clang++-6.0
@@ -621,7 +621,7 @@ cmake -E time cmake --build . \
 
 ## For contibutors: cppcheck
 
-Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`.
 
 Install cppcheck via conan:
 
@@ -663,9 +663,9 @@ Open 'index.html' to see the results.
 
 Desktop application that provides a single context to manage and run multiple scripts.
 
-Simplifies setup of local dev environment. Allows to avoid opening a lot of shell terminals.
+Simplifies setup of local dev environment; this avoids opening a lot of shell terminals.
 
-You can add custom commands in `package.json` or `plugin/vue-cli-plugin/ui.js`
+You can add custom commands in `package.json` or `plugin/vue-cli-plugin/ui.js`:
 
 ```bash
 # Before: Install Latest Node.js and NPM
@@ -685,13 +685,13 @@ sudo npm install -g @vue/cli
 sudo vue ui --dev --port 8061
 ```
 
-Open `http://localhost:8061/`
+Open `http://localhost:8061/`.
 
 Import project directory.
 
 Select `Tasks`, like build/test...
 
-Tasks may be changed in `package.json`
+Tasks may be changed in `package.json`.
 
 NOTE: We use `package.json` only for tasks. Conan is controlled by a file called conanfile.txt.
 
@@ -705,9 +705,9 @@ Useful links:
 
 We use `.gdbinit` add 'add-auto-load-safe-path .'
 
-Read for more details about `.gdbinit` [https://metricpanda.com/tips-for-productive-debugging-with-gdb](https://metricpanda.com/tips-for-productive-debugging-with-gdb)
+For more details about `.gdbinit`, read: [https://metricpanda.com/tips-for-productive-debugging-with-gdb](https://metricpanda.com/tips-for-productive-debugging-with-gdb)
 
-Read for more details about `gdb` [http://www.yolinux.com/TUTORIALS/GDB-Commands.html](http://www.yolinux.com/TUTORIALS/GDB-Commands.html)
+For more details about `gdb`, read: [http://www.yolinux.com/TUTORIALS/GDB-Commands.html](http://www.yolinux.com/TUTORIALS/GDB-Commands.html)
 
 GDB debugging session can be automated like so:
 
@@ -726,9 +726,9 @@ gdb \
 
 ## For contibutors: valgrind
 
-Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
+Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`.
 
-See for details:
+For details, see:
 
 * [https://www.jetbrains.com/help/clion/memory-profiling-with-valgrind.html](https://www.jetbrains.com/help/clion/memory-profiling-with-valgrind.html)
 * [https://heeris.id.au/2016/valgrind-gdb/](https://heeris.id.au/2016/valgrind-gdb/)
@@ -741,7 +741,7 @@ sudo apt install valgrind  # Ubuntu, Debian, etc.
 sudo yum install valgrind  # RHEL, CentOS, Fedora, etc.
 ```
 
-NOTE: make sure you set `use_alloc_shim=False` and `enable_valgrind=True` (see below)
+NOTE: make sure you set `use_alloc_shim=False` and `enable_valgrind=True` (see below).
 
 Run valgrind via cmake:
 
@@ -817,17 +817,18 @@ cmake -E time cmake --build . \
 find $PWD -name *valgrind*.log
 ```
 
-To find leaks you can seach for `definitely lost` in log file.
+To find leaks, you can seach for `definitely lost` in log file.
 
-NOTE: you can add valgrind suppressions in `cmake/valgrind.cfg`
+NOTE: you can add valgrind suppressions in `cmake/valgrind.cfg`.
 
-NOTE: compile program with a debug flag to run under valgrind
+NOTE: compile program with a debug flag to run under valgrind.
 
-NOTE: use `valgrind --tool=helgrind` to detect potential deadlocks and data races
+NOTE: use `valgrind --tool=helgrind` to detect potential deadlocks and data races.
 
-NOTE: use `valgrind --tool=massif --massif-out-file=massif_file --stacks=true` to measure size of heap. See also https://kde.org/applications/development/org.kde.massif-visualizer
+NOTE: use `valgrind --tool=massif --massif-out-file=massif_file --stacks=true` to measure size of heap.
+See also: https://kde.org/applications/development/org.kde.massif-visualizer
 
-See for details https://stackoverflow.com/a/44989219
+For details, see: https://stackoverflow.com/a/44989219
 
 TODO: try to build with valgrind and clang 10 https://stackoverflow.com/questions/40509986/valgrind-reporting-mismatched-free-delete-delete
 
@@ -856,7 +857,8 @@ cmake -DCLANG_TIDY="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 
 Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
-See for details [https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md](https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md) and [https://clang-analyzer.llvm.org/scan-build.html](https://clang-analyzer.llvm.org/scan-build.html)
+For details, see: [https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md](https://chromium.googlesource.com/chromium/src.git/+/master/docs/clang_static_analyzer.md)
+and [https://clang-analyzer.llvm.org/scan-build.html](https://clang-analyzer.llvm.org/scan-build.html)
 
 The program ccc-analyzer acts like a fake compiler, forwarding its command line arguments over to the compiler to perform regular compilation and clang to perform static analysis.
 
@@ -968,7 +970,7 @@ Open resulting `scanbuildout/...../index.html` file
 
 Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
-See for details [https://github.com/myint/cppclean](https://github.com/myint/cppclean)
+For details, see: [https://github.com/myint/cppclean](https://github.com/myint/cppclean)
 
 Installation:
 
@@ -991,9 +993,9 @@ Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
 include-what-you-use (IWYU) is a project intended to optimise includes.
 
-It will calculate the required headers and add and remove includes as appropriate.
+It will calculate the required headers and add / remove includes as appropriate.
 
-See for details [https://include-what-you-use.org/](https://include-what-you-use.org/)
+For details, see: [https://include-what-you-use.org/](https://include-what-you-use.org/)
 
 Usage (runs cmake with `-DENABLE_IWYU=ON`):
 
@@ -1007,11 +1009,11 @@ cmake -DIWYU="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 
 CODESTYLE: use `// IWYU pragma: associated` in C++ source files.
 
-NOTE: Read about IWYU Pragmas [https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md)
+NOTE: Read about IWYU Pragmas: [https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md)
 
-NOTE: don`t use "bits/" or "/details/*" includes, add them to mappings file (.imp)
+NOTE: don't use "bits/" or "/details/*" includes, add them to mappings file (.imp)
 
-See for details:
+For details, see:
 
 * https://llvm.org/devmtg/2010-11/Silverstein-IncludeWhatYouUse.pdf
 * https://github.com/include-what-you-use/include-what-you-use/tree/master/docs
@@ -1035,16 +1037,17 @@ cmake .. \
   -DCMAKE_BUILD_TYPE=Debug
 ```
 
-See for details [https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/](https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/)
+For details, see: [https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/](https://www.virag.si/2015/07/use-ccache-with-cmake-for-faster-compilation/)
 
-To get the most out of ccache, put something like this in `~/.ccache/ccache.conf`:
+To get the most out of ccache, put something like this in: `~/.ccache/ccache.conf`:
 
 ```bash
 max_size = 50.0G  # or whatever cache size you prefer; default is 5G; 0 means unlimited
 base_dir = /home/yourname  # or wherever you keep your source files
 ```
 
-Note: `base_dir` is required for ccache to share cached compiles of the same file across different repositories / paths; it will only do this for paths under `base_dir`. So this option is required for effective use of ccache with git worktrees (described below).
+Note: `base_dir` is required for ccache to share cached compiles of the same file across different repositories / paths; it will only do this for paths under `base_dir`.
+So this option is required for effective use of ccache with git worktrees (described below).
 
 You must not set `base_dir` to "/", or anywhere that contains system headers (according to the ccache docs).
 
@@ -1077,7 +1080,7 @@ cmake .. \
   -DCMAKE_BUILD_TYPE=Debug
 ```
 
-See for details [https://cristianadam.eu/20170709/speeding-up-cmake/](https://cristianadam.eu/20170709/speeding-up-cmake/)
+For details, see: [https://cristianadam.eu/20170709/speeding-up-cmake/](https://cristianadam.eu/20170709/speeding-up-cmake/)
 
 NOTE: gold not threaded by default, configure with "--enable-threads"
 
@@ -1087,7 +1090,7 @@ NOTE: lld threaded by default, may be faster than gold
 
 Make sure you use `Debug` build with `-e flextool:enable_llvm_tools=True`
 
-See for details: https://oclint-docs.readthedocs.io/en/stable/devel/codingstandards.html
+For details, see: https://oclint-docs.readthedocs.io/en/stable/devel/codingstandards.html
 
 Installation:
 
@@ -1120,13 +1123,13 @@ Open report.html
 
 See oclint tutorial: [http://docs.oclint.org/en/stable/intro/tutorial.html](http://docs.oclint.org/en/stable/intro/tutorial.html)
 
-See list of oclint rules at [https://oclint-docs.readthedocs.io/en/stable/rules/](https://oclint-docs.readthedocs.io/en/stable/rules/)
+See list of oclint rules at: [https://oclint-docs.readthedocs.io/en/stable/rules/](https://oclint-docs.readthedocs.io/en/stable/rules/)
 
 NOTE: you can suppress oclint warnings [http://docs.oclint.org/en/stable/howto/suppress.html#oclint-comment](http://docs.oclint.org/en/stable/howto/suppress.html#oclint-comment)
 
 ## For contibutors: clang-format
 
-See for details [https://clang.llvm.org/docs/ClangFormat.html](https://clang.llvm.org/docs/ClangFormat.html)
+For details, see: [https://clang.llvm.org/docs/ClangFormat.html](https://clang.llvm.org/docs/ClangFormat.html)
 
 Usage (runs cmake with `-DENABLE_CLANG_FORMAT=ON`):
 
@@ -1135,17 +1138,17 @@ Usage (runs cmake with `-DENABLE_CLANG_FORMAT=ON`):
 cmake -DCLANG_FORMAT="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
-We use `.clang-format` file. See for details [https://clang.llvm.org/docs/ClangFormatStyleOptions.html](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)
+We use `.clang-format` file. For details, see: [https://clang.llvm.org/docs/ClangFormatStyleOptions.html](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)
 
 NOTE: we use `DisableFormat`, so clang-format will change only include order based on `SortIncludes`.
 
-Unfortunately, `clang-format` is not configurable enough, so it can be used only to sort includes. See https://stackoverflow.com/a/32191189
+Unfortunately, `clang-format` is not configurable enough, so it can be used only to sort includes. See: https://stackoverflow.com/a/32191189
 
 ## For contibutors: uncrustify
 
 We use uncrustify bacause clang-format and astyle [do not support a lot of options](https://dev.to/voins/does-anybody-know-a-good-working-c-formatting-tool-2lpi).
 
-See for details [https://patrickhenson.com/2018/06/07/uncrustify-configuration.html](https://patrickhenson.com/2018/06/07/uncrustify-configuration.html)
+For details, see: [https://patrickhenson.com/2018/06/07/uncrustify-configuration.html](https://patrickhenson.com/2018/06/07/uncrustify-configuration.html)
 
 Installation:
 
@@ -1171,7 +1174,7 @@ Usage (runs cmake with `-DENABLE_UNCRUSTIFY=ON`):
 cmake -DUNCRUSTIFY="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
 
-We use `uncrustify.cfg` file. See for details [https://patrickhenson.com/2018/06/07/uncrustify-configuration.html](https://patrickhenson.com/2018/06/07/uncrustify-configuration.html)
+We use `uncrustify.cfg` file. For details, see: [https://patrickhenson.com/2018/06/07/uncrustify-configuration.html](https://patrickhenson.com/2018/06/07/uncrustify-configuration.html)
 
 To get a list of all available options use:
 
@@ -1202,8 +1205,8 @@ enable_processing_cmt           = " *INDENT-ON*"     # string
 
 You can integrate `uncrustify` with IDE:
 
-* QT Creator [https://doc.qt.io/qtcreator/creator-beautifier.html](https://doc.qt.io/qtcreator/creator-beautifier.html)
-* Visual Studio Code [https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify](https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify)
+* QT Creator: [https://doc.qt.io/qtcreator/creator-beautifier.html](https://doc.qt.io/qtcreator/creator-beautifier.html)
+* Visual Studio Code: [https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify](https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify)
 
 ## For contibutors: Thread Sanitizer
 
@@ -1320,7 +1323,7 @@ Read TSAN manuals:
 * [https://www.chromium.org/developers/testing/threadsanitizer-tsan-v2](https://www.chromium.org/developers/testing/threadsanitizer-tsan-v2)
 
 NOTE: ThreadSanitizer generally requires all code to be compiled with -fsanitize=thread.
-If some code (e.g. dynamic libraries) is not compiled with the flag, it can lead to false positive race reports, false negative race reports and/or missed stack frames in reports depending on the nature of non-instrumented code.
+If some code (e.g. dynamic libraries) is not compiled with the flag, it can lead to false positive race reports, false negative race reports, and/or missed stack frames in reports depending on the nature of non-instrumented code.
 
 Usage (`-DENABLE_TSAN=ON`):
 
@@ -1365,16 +1368,16 @@ unset CXXFLAGS
 unset LDFLAGS
 ```
 
-NOTE: you can create blacklist file, see:
+NOTE: you can create blacklist file; see:
 
 * [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
 * [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
 
 ## For contibutors: Address Sanitizer
 
-NOTE: build with exceptions and rtti disabled, see [https://bugs.chromium.org/p/chromium/issues/detail?id=832808](https://bugs.chromium.org/p/chromium/issues/detail?id=832808)
+NOTE: build with exceptions and rtti disabled; see: [https://bugs.chromium.org/p/chromium/issues/detail?id=832808](https://bugs.chromium.org/p/chromium/issues/detail?id=832808)
 
-See for details:
+For details, see:
 
 * [http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/](http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/)
 * [https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/](https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/)
@@ -1531,7 +1534,7 @@ cmake -E time cmake --build . \
   -- -j8
 ```
 
-NOTE: you can create blacklist file, see:
+NOTE: you can create blacklist file; see:
 
 * [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
 * [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
@@ -1571,11 +1574,11 @@ Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
   -e flextool:enable_llvm_tools=True
 ```
 
-If you want MemorySanitizer to work properly and not produce any false positives, you must ensure that all the code in your program and in libraries it uses is instrumented (i.e. built with `-fsanitize=memory`).
-In particular, you would need to link against MSan-instrumented C++ standard library. See [https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo](https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo)
+If you want MemorySanitizer to work properly and not produce any false positives, you must ensure that all the code in your program and in the libraries it uses is instrumented (i.e. built with `-fsanitize=memory`).
+In particular, you would need to link against MSan-instrumented C++ standard library. See: [https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo](https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo)
 You need to re-build both C++ standard library and googletest (and other dependencies) with MemorySanitizer.
 
-Re-build all required projects with `-o llvm_tools:enable_msan=True`, `enable_llvm_tools=True`, `compile_with_llvm_tools=True` and `llvm_tools:build_type=Release` to use MSan-instrumented C++ standard library.
+Re-build all required projects with `-o llvm_tools:enable_msan=True`, `enable_llvm_tools=True`, `compile_with_llvm_tools=True`, and `llvm_tools:build_type=Release` to use MSan-instrumented C++ standard library.
 
 NOTE: re-build some deps with custom MSan-instrumented C++ standard library. For that you can add to `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`: `-fsanitize=memory -stdlib=libc++ -L/usr/src/libcxx_msan/lib -lc++abi -I/usr/src/libcxx_msan/include -I/usr/src/libcxx_msan/include/c++/v1` (replace paths to yours). Usually dependency will have option like `-o *:enable_msan=True` to achieve same effect.
 
@@ -1674,7 +1677,7 @@ Read MSAN manuals:
 * [https://www.jetbrains.com/help/clion/google-sanitizers.html#MSanChapter](https://www.jetbrains.com/help/clion/google-sanitizers.html#MSanChapter)
 * [https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43308.pdf](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43308.pdf)
 
-NOTE: `detect_leaks=1` enables Leak Sanitizer, see [https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer](https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer)
+NOTE: `detect_leaks=1` enables Leak Sanitizer; see: [https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer](https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer)
 
 Usage (`-DENABLE_MSAN=ON`):
 
@@ -1714,7 +1717,7 @@ cmake -E time cmake --build . \
   -- -j8
 ```
 
-NOTE: you can create blacklist file, see:
+NOTE: you can create blacklist file; see:
 
 * [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
 * [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
@@ -1913,14 +1916,14 @@ cmake -E time cmake --build . \
   -- -j8
 ```
 
-NOTE: you can create blacklist file, see:
+NOTE: you can create blacklist file; see:
 
 * [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
 * [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
 
 ## For contibutors: build using clang 10 from conan
 
-Requires `enable_llvm_tools=True` and `compile_with_llvm_tools=True` and `llvm_tools:build_type=Release`:
+Requires `enable_llvm_tools=True`, `compile_with_llvm_tools=True`, and `llvm_tools:build_type=Release`:
 
 ```bash
 -s llvm_tools:build_type=Release \
@@ -1933,7 +1936,7 @@ Requires `enable_llvm_tools=True` and `compile_with_llvm_tools=True` and `llvm_t
 * `enable_llvm_tools` installs clang 10 from conan
 * `compile_with_llvm_tools` sets cmake variables required to use clang 10 from conan
 
-run `conan install` or `conan create` with
+Run `conan install` or `conan create` with:
 
 ```bash
 # OR create conan profile https://docs.conan.io/en/latest/reference/profiles.html
@@ -2096,7 +2099,7 @@ cmake -E time cmake --build . \
 find $PWD -name *.html
 ```
 
-open doxyDoc/html/index.html
+Open doxyDoc/html/index.html
 
 NOTE: Document namespaces in docs/namespaces.dox
 
@@ -2123,7 +2126,7 @@ See:
 
 ## For contibutors: Fuzzing with AFL
 
-See for details [https://afl-1.readthedocs.io/en/latest/index.html](https://afl-1.readthedocs.io/en/latest/index.html)
+For details, see: [https://afl-1.readthedocs.io/en/latest/index.html](https://afl-1.readthedocs.io/en/latest/index.html)
 
 NOTE: prefer github.com/google/AFL or aflplus.plus to not updated AFL from `lcamtuf.coredump.cx/afl`
 
@@ -2135,7 +2138,7 @@ Fuzzer tries to modify the input so that it can reach as much lines of the progr
 
 Therefore, fuzzing allows the discovery of vulnerabilities lying in code paths that are hard to reach by normal usage.
 
-Install compiling the source code using following commands:
+Install + compile the source code using following commands:
 
 ```bash
 # optional
@@ -2198,13 +2201,15 @@ unset CC
 unset LLVM_CONFIG
 ```
 
-We compile code using the AFL compiler using `-DCMAKE_C_COMPILER=afl-clang-fast`, `-DCMAKE_CXX_COMPILER=afl-clang-fast++`, `-DCMAKE_LINKER=afl-clang-fast`.
+We compile code using the AFL compiler: `-DCMAKE_C_COMPILER=afl-clang-fast`, `-DCMAKE_CXX_COMPILER=afl-clang-fast++`, and `-DCMAKE_LINKER=afl-clang-fast`.
 
-You can verify if binary uses the AFL compiler using `nm BINARY_PATH | grep afl`
+To verify if binary uses the AFL compiler: `nm BINARY_PATH | grep afl`
 
-Build application with some sanitizers and debug information enabled (`-DENABLE_ASAN=ON` etc.):
+To build application with some sanitizers and debug information enabled: (`-DENABLE_ASAN=ON` etc.):
 
-NOTE: There are some things to consider when using Address Sanitizer. Even if ASan finds a memory access violation it doesn't automatically crash the application. This is a problem when using automated fuzzing tools, because they usually try to detect segfaults by checking the return code. We can however force ASan to crash software when an error happens with the environment variable ASAN_OPTIONS like this before fuzzing: `export ASAN_OPTIONS='abort_on_error=1'`
+NOTE: There are some things to consider when using Address Sanitizer. Even if ASan finds a memory access violation, it doesn't automatically crash the application.
+This is a problem when using automated fuzzing tools because they usually try to detect segfaults by checking the return code.
+We can, however, force ASan to crash software when an error happens with the environment variable ASAN_OPTIONS before fuzzing: `export ASAN_OPTIONS='abort_on_error=1'`
 
 NOTE: Disable custom memory allocation functions. This can hide memory access bugs and prevent the detection of memory access errors.
 
@@ -2241,11 +2246,11 @@ export AFL_USE_ASAN=1
 # make sure you compile app with `-fsanitize=address` or `-fsanitize=memory` etc.
 ```
 
-NOTE: Use `AFL_DONT_OPTIMIZE=1`, read http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html
+NOTE: Use `AFL_DONT_OPTIMIZE=1`; read: http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html
 
-See for details `Using ASAN with AFL` at [https://afl-1.readthedocs.io/en/latest/notes_for_asan.html](https://afl-1.readthedocs.io/en/latest/notes_for_asan.html)
+For details, see: [Using ASAN with AFL](https://afl-1.readthedocs.io/en/latest/notes_for_asan.html)
 
-Before fuzzing the program, we may require switching to root user to arrange the core_pattern. Login as root and type the following command
+Before fuzzing the program, we may require switching to root user to arrange the core_pattern. Login as root and type the following command:
 
 ```bash
 # see https://afl-1.readthedocs.io/en/latest/tips.html#check-os-configuration
@@ -2259,9 +2264,9 @@ exit
 
 NOTE: Do not run the fuzzer with root access
 
-NOTE: Get a solid environment for the fuzzer, never run the fuzzer on low configured hypervisors
+NOTE: Get a solid environment for the fuzzer; never run the fuzzer on low configured hypervisors.
 
-`afl-fuzz` is used to run AFL, the actual syntax is as follows
+`afl-fuzz` is used to run AFL. The actual syntax is as follows:
 
 ```bash
 # see https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries
@@ -2285,15 +2290,16 @@ AFL_PERSISTENT=1 afl-fuzz -i inputs -o multi_sync -M master ./fuzz_capstone
 AFL_PERSISTENT=1 afl-fuzz -i inputs -o multi_sync -S slave1 ./fuzz_capstone
 ```
 
-To understand AFL status screen read [https://afl-1.readthedocs.io/en/latest/user_guide.html#status-screen](https://afl-1.readthedocs.io/en/latest/user_guide.html#status-screen)
+To understand AFL status screen, read: [https://afl-1.readthedocs.io/en/latest/user_guide.html#status-screen](https://afl-1.readthedocs.io/en/latest/user_guide.html#status-screen)
 
 NOTE: If `total paths` stays at 1 you probably have set up something wrong.
 
-NOTE: Prefer `-m none`. We use AddressSanitizer that maps a lot of pages for the shadow memory so we have to remove the memory limit to have it up and running.
+NOTE: Prefer `-m none`. We use AddressSanitizer; this maps a lot of pages for the shadow memory, so we have to remove the memory limit to have it up and running.
 
-NOTE: With `-m none` your fuzzed software may actually try to really allocate and use a lot of memory due to your fuzzed samples. This may lead to random crashes in your system. You shouldn't do any important work while doing so.
+NOTE: With `-m none`, your fuzzed software may actually try to really allocate and use a lot of memory due to your fuzzed samples.
+This may lead to random crashes in your system. You shouldn't do any important work while doing so.
 
-NOTE: you can try `ASAN_OPTIONS=hard_rss_limit_mb=2000` to avoid `-m none`. See https://countuponsecurity.com/category/fuzzing/
+NOTE: you can try `ASAN_OPTIONS=hard_rss_limit_mb=2000` to avoid `-m none`. See: https://countuponsecurity.com/category/fuzzing/
 
 You can write custom binary that will run using `afl-fuzz`. It may wrap function that you want to test like so:
 
@@ -2335,17 +2341,18 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-NOTE: __AFL_LOOP(), allows AFL to perform the fuzzing of the binary in process through some memory wizardry, as opposed to starting up a new process for every new testcase we want to test. Requires `AFL_PERSISTENT=1`.
+NOTE: __AFL_LOOP() allows AFL to perform the fuzzing of the binary in process through some memory wizardry, as opposed to starting up a new process for every new testcase we want to test. Requires `AFL_PERSISTENT=1`.
 
 By default, AFL forks a process every time it tests a different input. We can control AFL to run multiple fuzz cases in a single instance of the program, rather than reverting the program state back for every test sample. This will reduce the time spent in the kernel space and improve the fuzzing speed. This is called AFL_PERSISTENT mode. We can do that by including the __AFL_LOOP(1000) macro within our test harness.
 
-NOTE: you may be interested in __AFL_INIT, see for details [https://robertheaton.com/2019/07/08/how-to-write-an-afl-wrapper-for-any-language/](https://robertheaton.com/2019/07/08/how-to-write-an-afl-wrapper-for-any-language/)
+NOTE: you may be interested in __AFL_INIT; see for details: [https://robertheaton.com/2019/07/08/how-to-write-an-afl-wrapper-for-any-language/](https://robertheaton.com/2019/07/08/how-to-write-an-afl-wrapper-for-any-language/)
 
 Let the fuzzer run for few hours or days as it generates maximum code execution paths based on the test cases provided.
 
 Stop fuzzing issuing `ctrl+c’ observing `total paths` and `uniq crashes` in the section `overall results` of AFL statistics screen.
 
-Create dictionary that takes all of the constants and strings found in the program binary and adds them to the dictionary. See for script code [http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html](http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html)
+Create dictionary that takes all of the constants and strings found in the program binary and adds them to the dictionary.
+See for script code:[http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html](http://moyix.blogspot.com/2016/07/fuzzing-with-afl-is-an-art.html)
 
 ```bash
 #!/bin/bash
@@ -2356,21 +2363,22 @@ objdump -d "${1}" | grep -Eo '\$0x[0-9a-f]+' | cut -c 2- | sort -u | while read 
 i=0; strings "${1}"| while read line; do echo -n "$line" > testcases/string_${i} ; i=$[ $i + 1 ] ; done
 ```
 
-You need to create a dictionary in one of the two formats discussed in dictionaries/README.dictionaries; and then point the fuzzer to it via the -x option in the command line. Read [https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries](https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries) and [https://github.com/mirrorer/afl/blob/master/dictionaries/README.dictionaries](https://github.com/mirrorer/afl/blob/master/dictionaries/README.dictionaries)
+You need to create a dictionary in one of the two formats discussed in dictionaries/README.dictionaries and then point the fuzzer to it via the -x option in the command line.
+Read: [https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries](https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries) and [https://github.com/mirrorer/afl/blob/master/dictionaries/README.dictionaries](https://github.com/mirrorer/afl/blob/master/dictionaries/README.dictionaries)
 
-You can also use `libtokencap` to create a dictionary, see [https://github.com/mirrorer/afl/blob/master/libtokencap/README.tokencap](https://github.com/mirrorer/afl/blob/master/libtokencap/README.tokencap)
+You can also use `libtokencap` to create a dictionary; see: [https://github.com/mirrorer/afl/blob/master/libtokencap/README.tokencap](https://github.com/mirrorer/afl/blob/master/libtokencap/README.tokencap)
 
-We can find the test cases which cause the crash, in the `results’ folder which we have created. On navigating to the folder `results`, we observe few folders gets generated
+We can find the test cases which cause the crash in the `results` folder which we have created. On navigating to the folder `results`, we observe few folders get generated.
 
-NOTE: Keep the input data files small. Under 1 kB is ideal
+NOTE: Keep the input data files small; under 1 kB is ideal.
 
 Use `afl-cmin` to minimize number of input data files.
 
 Use `afl-tmin` to minimize each input data file (removes any bytes that do not affect the code paths taken).
 
-Use `afl-ptmin` to run `afl-tmin` in parallel. See for details [https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/](https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/)
+Use `afl-ptmin` to run `afl-tmin` in parallel. For details, see: [https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/](https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/)
 
-To reproduce found crash you can use `crashwalk` (it is gdb plugin), see [https://ritcsec.wordpress.com/2018/05/10/vulnerability-discovery-by-fuzzing/](https://ritcsec.wordpress.com/2018/05/10/vulnerability-discovery-by-fuzzing/)
+To reproduce found crash you can use `crashwalk` (it is gdb plugin), see: [https://ritcsec.wordpress.com/2018/05/10/vulnerability-discovery-by-fuzzing/](https://ritcsec.wordpress.com/2018/05/10/vulnerability-discovery-by-fuzzing/)
 
 ```bash
 apt-get install gdb golang
@@ -2386,11 +2394,14 @@ go get -u github.com/bnagy/crashwalk/cmd/...
 ~/go/bin/cwtriage -root syncdir/fuzzer1/crashes/ -match id -- ~/parse @@
 ```
 
-When you can not reproduce a crash found by afl-fuzz, the most likely cause is that you are not setting the same memory limit as used by the tool. Read [https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries](https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries)
+When you can not reproduce a crash found by afl-fuzz, the most likely cause is that you are not setting the same memory limit as used by the tool.
+Read: [https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries](https://afl-1.readthedocs.io/en/latest/fuzzing.html#fuzzing-binaries)
 
-NOTE: You can use `afl-cov` to quantify how well you are exercising the available code paths in the binary. See for details [https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/](https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/)
+NOTE: You can use `afl-cov` to quantify how well you are exercising the available code paths in the binary.
+For details, see: [https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/](https://foxglovesecurity.com/2016/03/15/fuzzing-workflows-a-fuzz-job-from-start-to-finish/)
 
-NOTE: putting the AFL working directory on a RAM disk, you can potentially gain some additional speed and avoid wearing out the disks at the same time. See for details [https://bananamafia.dev/post/gb-fuzz/](https://bananamafia.dev/post/gb-fuzz/)
+NOTE: putting the AFL working directory on a RAM disk, you can potentially gain some additional speed and avoid wearing out the disks at the same time.
+For details, see: [https://bananamafia.dev/post/gb-fuzz/](https://bananamafia.dev/post/gb-fuzz/)
 
 ```bash
 # Fuzzing involves billions of reads and writes to the filesystem (!!!)
@@ -2405,17 +2416,19 @@ NOTE: `-fvisibility-inlines-hidden` flag MAY BREAK AFL INSTRUMENTATION
 
 AFL provides a crash exploration script in `experimental/crash_triage/triage_crashes.sh`
 
-When run the triage script will cycle through each crash file in /out/crashes directory and print the resulting crash data to the screen.
+When run, the triage script will cycle through each crash file in the `/out/crashes` directory and print the resulting crash data to the screen.
 
-`triage_crashes` usage: `./triage_crashes.sh ~/targets/out/ ~/targets/target-app/target-app_binary` See for details [https://research.aurainfosec.io/hunting-for-bugs-101/](https://research.aurainfosec.io/hunting-for-bugs-101/)
+`triage_crashes` usage: `./triage_crashes.sh ~/targets/out/ ~/targets/target-app/target-app_binary`
+For details, see: [https://research.aurainfosec.io/hunting-for-bugs-101/](https://research.aurainfosec.io/hunting-for-bugs-101/)
 
-NOTE: Instrument with AFL just the libraries you actually want to stress-test right now, one at a time. Let the program use system-wide, non-instrumented libraries for any functionality you don’t actually want to fuzz.
+NOTE: Instrument with AFL just the libraries you actually want to stress-test right now, one at a time.
+Let the program use system-wide, non-instrumented libraries for any functionality you don’t actually want to fuzz.
 
-NOTE: you can enable `crash exploration mode` via `-C`, see https://lcamtuf.blogspot.com/2014/11/afl-fuzz-crash-exploration-mode.html
+NOTE: you can enable `crash exploration mode` via `-C`; see: https://lcamtuf.blogspot.com/2014/11/afl-fuzz-crash-exploration-mode.html
 
-NOTE: AFL detects faults by checking for the first spawned process dying due to a signal (SIGSEGV, SIGABRT, etc). Programs that install custom handlers for these signals may need to have the relevant code commented out
+NOTE: AFL detects faults by checking for the first spawned process dying due to a signal (SIGSEGV, SIGABRT, etc). Programs that install custom handlers for these signals may need to have the relevant code commented out.
 
-See for details:
+For details, see:
 
 * https://github.com/mykter/afl-training
 * https://www.loginsoft.com/blog/2018/02/02/discovering-vulnerabilities-with-afl-fuzzer/
@@ -2438,7 +2451,7 @@ NOTE: `-fsanitize=fuzzer` links in the libFuzzer’s main() symbol.
 
 NOTE: In most cases you may want to combine libFuzzer with AddressSanitizer (ASAN), UndefinedBehaviorSanitizer (UBSAN), or both. You can also build with MemorySanitizer (MSAN), but support is experimental: `-fsanitize=undefined,address,fuzzer`.
 
-Executable repeatedly calls function:
+Executable repeatedly calls the following function:
 
 ```cpp
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
@@ -2447,13 +2460,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 }
 ```
 
-Use `-fsanitize=address,fuzzer`. Note that you can change sanitizer (address, memory, thread, etc.)
+Use `-fsanitize=address,fuzzer`. Note that you can change sanitizer (address, memory, thread, etc.).
 
-NOTE: if you suspect memory leaks in your target you should run libFuzzer with `-runs=N` or `-max_total_time=N`. If your target has massive leaks you will eventually run out of RAM. To protect your machine from OOM death you may use e.g. `ASAN_OPTIONS=hard_rss_limit_mb=2000` (with AddressSanitizer).
+NOTE: if you suspect memory leaks in your target you should run libFuzzer with `-runs=N` or `-max_total_time=N`. If your target has massive leaks you will eventually run out of RAM. To protect your machine from OOM death you may use: `ASAN_OPTIONS=hard_rss_limit_mb=2000` (with AddressSanitizer).
 
-libFuzzer requires seed corpus, see for details [https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md)
+libFuzzer requires seed corpus. For details, see: [https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md)
 
-See for details:
+For details, see:
 
 * https://llvm.org/docs/LibFuzzer.html
 * https://medium.com/@levwalkin/compile-llvm-clang-libfuzzer-b61e82718430
@@ -2465,7 +2478,7 @@ See for details:
 * Clang supports thread safety annotations (GUARDED_BY)
   1. Enable `-Wthread-safety-analysis`
   2. Use `base/thread_annotations.h` https://github.com/chromium/chromium/blob/master/base/thread_annotations.h
-  See for details:
+  For details, see:
   - http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
   - see https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf
   - https://insights.sei.cmu.edu/sei_blog/2014/10/thread-safety-analysis-in-c-and-c.html
@@ -2476,7 +2489,7 @@ See for details:
 * Clang can be build with lifetime profile:
   1. Build special branch of Clang https://github.com/mgehre/llvm-project
   2. Enable `-Wlifetime`
-  See for details:
+  For details, see:
   - https://pspdfkit.com/blog/2020/the-cpp-lifetime-profile/
   - https://herbsutter.com/2018/09/20/lifetime-profile-v1-0-posted/
 
