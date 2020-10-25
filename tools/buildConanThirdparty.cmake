@@ -32,6 +32,7 @@ set(ENABLE_TYPE_SAFE TRUE CACHE BOOL "ENABLE_TYPE_SAFE")
 set(ENABLE_CLANG_FOLLY_CONAN FALSE CACHE BOOL "ENABLE_CLANG_FOLLY_CONAN")
 set(ENABLE_CORRADE TRUE CACHE BOOL "ENABLE_CORRADE")
 set(ENABLE_FLEXTOOL FALSE CACHE BOOL "ENABLE_FLEXTOOL")
+set(ENABLE_BASIS_PLUGIN_HELPER TRUE CACHE BOOL "ENABLE_BASIS_PLUGIN_HELPER")
 set(ENABLE_CPPCHECK TRUE CACHE BOOL "ENABLE_CPPCHECK")
 set(ENABLE_FLEXLIB TRUE CACHE BOOL "ENABLE_FLEXLIB")
 set(ENABLE_FLEX_REFLECT_PLUGIN FALSE CACHE BOOL "ENABLE_FLEX_REFLECT_PLUGIN")
@@ -747,6 +748,21 @@ conan_build_target_if(
   ENABLE_FLEXTOOL
   ";-e;flextool:enable_tests=True;\
 -e;flextool:enable_llvm_tools=False")
+
+# basis_plugin_helper
+
+if(ENABLE_BASIS_PLUGIN_HELPER
+  AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/basis_plugin_helper")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/basis_plugin_helper"
+      "https://github.com/blockspacer/basis_plugin_helper.git"
+      "")
+endif()
+conan_build_target_if(
+  "basis_plugin_helper" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/basis_plugin_helper" # target to build
+  ENABLE_BASIS_PLUGIN_HELPER
+  "")
 
 # flex_reflect_plugin
 
