@@ -1,6 +1,3 @@
-/*#include "basis/log/Logger.hpp"
-#include "basis/log_util.hpp"*/
-
 #include <base/logging.h>
 #include <base/i18n/icu_util.h>
 #include <base/command_line.h>

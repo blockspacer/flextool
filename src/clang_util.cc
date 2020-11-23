@@ -49,7 +49,7 @@ namespace clang {
 class FileID;
 } // namespace clang
 
-namespace {
+namespace std {
 
 /// \todo code repeat
 template<class T>
@@ -61,6 +61,10 @@ std::ostream& operator<<(
   return
     stream;
 }
+
+} // namespace std
+
+namespace {
 
 static const char kExtraClangFlag[] = "-extra-arg";
 

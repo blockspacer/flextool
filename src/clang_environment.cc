@@ -25,10 +25,7 @@
 #include <iterator>
 #include <sstream>
 
-
-namespace {
-
-static const char kClangHelpFlag[] = "-help";
+namespace std {
 
 /// \todo code repeat
 template<class T>
@@ -40,6 +37,12 @@ std::ostream& operator<<(
   return
     stream;
 }
+
+} // namespace std
+
+namespace {
+
+static const char kClangHelpFlag[] = "-help";
 
 } // namespace
 
