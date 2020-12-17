@@ -20,6 +20,8 @@
 #include <base/feature_list.h>
 #include <base/at_exit.h>
 #include <base/message_loop/message_loop.h>
+#include <base/path_service.h>
+#include <base/files/file_path.h>
 
 #include <base/bind.h>
 #include <base/test/launcher/unit_test_launcher.h>
@@ -48,9 +50,11 @@ int runCatchTests(int argc, char* const argv[]) {
 #if defined(USE_CATCH_TEST) || defined(GTEST_NO_SUITE)
 static inline void initI18n()
 {
-  /// \todo InitializeICUWithFileDescriptor
-  bool icu_initialized = base::i18n::InitializeICU();
-  ignore_result(icu_initialized);
+  base::FilePath exe_path;
+  DCHECK(base::PathService::Get(base::DIR_EXE, &exe_path));
+  base::FilePath data_path = exe_path.AppendASCII("./resources/icu/optimal/icudt64l.dat");
+  bool icu_initialized = base::i18n::InitializeICUWithPath(data_path);
+  DCHECK(icu_initialized);
 }
 
 static inline void initCommandLine(int argc, char* argv[])
