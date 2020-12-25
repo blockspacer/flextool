@@ -167,8 +167,10 @@ add_library(${LIB_NAME}-test-includes INTERFACE)
 set(VERSION_HEADER_LOCATION
   ${flextool_include_DIR}/version.hpp)
 
-configure_file(${flextool_include_DIR}/version.hpp.in
-  ${VERSION_HEADER_LOCATION})
+configure_file_if_changed(
+  INPUT ${flextool_include_DIR}/version.hpp.in
+  OUTPUT ${VERSION_HEADER_LOCATION}
+  TMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/generated_version_hpp.tmp)
 
 set_source_files_properties(${PROJECT_BINARY_DIR}/version.hpp
   PROPERTIES GENERATED 1)

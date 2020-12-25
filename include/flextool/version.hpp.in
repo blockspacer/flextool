@@ -1,8 +1,5 @@
-#ifndef __VERSION_HPP__
-#define __VERSION_HPP__
+#pragma once
 
 // version variable that will be substituted by cmake
 // This shows an example using the $ variable type
-#define ${PROJECT_NAME}_VERSION "${PROJECT_VERSION}"
-
-#endif
+#define @PROJECT_NAME@_VERSION "@PROJECT_VERSION@"

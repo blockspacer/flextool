@@ -85,6 +85,9 @@ cmake \
   -DENABLE_LLVM_TOOLS=FALSE \
   -DENABLE_CLING=TRUE \
   -P tools/buildConanThirdparty.cmake
+
+# clean build cache
+conan remove "*" --build --force
 ```
 
 - llvm_tools package
@@ -107,6 +110,9 @@ conan create . \
   -s build_type=Release \
   --profile clang \
   --build missing
+
+# clean build cache
+conan remove "*" --build --force
 ```
 
 Up-to-date instructions are found here: [https://github.com/blockspacer/llvm_tools](https://github.com/blockspacer/llvm_tools)
@@ -145,6 +151,9 @@ cmake \
   -DENABLE_FLEX_META_PLUGIN=TRUE \
   -DENABLE_FLEX_META_DEMO=TRUE \
   -P tools/buildConanThirdparty.cmake
+
+# clean build cache
+conan remove "*" --build --force
 ```
 
 ## Installation (without plugins)
@@ -173,6 +182,9 @@ GIT_SSL_NO_VERIFY=true \
       --profile clang \
           -e flextool:enable_tests=True \
           -e flextool:enable_llvm_tools=True
+
+# clean build cache
+conan remove "*" --build --force
 ```
 
 ## NOTE: flextool not compatible with `compile_commands.json`
@@ -368,7 +380,6 @@ cmake -E time cmake . \
   -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_TESTS=TRUE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=ON \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -565,7 +576,6 @@ cmake -E time cmake . \
   -DCMAKE_VERBOSE_MAKEFILE=TRUE \
   -DENABLE_TESTS=TRUE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=ON \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -649,6 +659,9 @@ GIT_SSL_NO_VERIFY=true \
     cmake -E time \
       conan create . conan/stable \
       -s build_type=Release
+
+# clean build cache
+conan remove "*" --build --force
 ```
 
 Usage (runs cmake with `-DENABLE_CPPCHECK=ON`):
@@ -806,7 +819,6 @@ cmake .. \
   -DENABLE_VALGRIND=ON \
   -DENABLE_TESTS=TRUE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=ON \
   -DENABLE_VALGRIND_TESTS=TRUE \
   -DBUILD_SHARED_LIBS=FALSE \
@@ -932,7 +944,6 @@ scan-build \
   -DCMAKE_CXX_COMPILER=c++-analyzer \
   -DENABLE_TESTS=FALSE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=OFF \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -1046,7 +1057,6 @@ cmake .. \
   -DUSE_CCACHE=ON \
   -DENABLE_TESTS=FALSE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=OFF \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -1092,7 +1102,6 @@ cmake .. \
   -DUSE_LD_GOLD=ON \
   -DENABLE_TESTS=FALSE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=OFF \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -1368,7 +1377,6 @@ cmake .. \
   -DENABLE_TSAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=OFF \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -1546,7 +1554,6 @@ cmake .. \
   -DENABLE_ASAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=OFF \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -1736,7 +1743,6 @@ cmake .. \
   -DENABLE_MSAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=OFF \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -1942,7 +1948,6 @@ cmake .. \
   -DENABLE_UBSAN=ON \
   -DENABLE_TESTS=FALSE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=OFF \
   -DBUILD_SHARED_LIBS=FALSE \
   -DCONAN_AUTO_INSTALL=OFF \
@@ -2129,7 +2134,6 @@ cmake .. \
   -DPYTHON_EXECUTABLE=/usr/bin/python3 \
   -DENABLE_TESTS=TRUE \
   -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DBASE_NEED_GEN_BUILDFLAGS=FALSE \
   -DENABLE_DOCTEST=ON \
   -DBUILD_DOXY_DOC=ON \
   -DBUILD_SHARED_LIBS=FALSE \
