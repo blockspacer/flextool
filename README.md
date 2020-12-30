@@ -2575,6 +2575,16 @@ the MIT license
 
 See LICENSE for the full content of the licenses.
 
+## Disclaimer
+
+That open source project based on the Google Chromium project.
+
+This is not official Google product.
+
+Portions Copyright (c) Google Inc.
+
+See LICENSE files.
+
 ### Contributors List: Example Profile
 
 - I'm an example that you can copy, if you want :)
