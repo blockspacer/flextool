@@ -57,12 +57,12 @@ arch_build=x86_64
 arch=x86_64
 
 compiler=clang
-compiler.version=6.0
+compiler.version=10
 compiler.libcxx=libstdc++11
 
 [env]
-CC=/usr/bin/clang-6.0
-CXX=/usr/bin/clang++-6.0
+CC=/usr/bin/clang-10
+CXX=/usr/bin/clang++-10
 
 [build_requires]
 cmake_installer/3.15.5@conan/stable
@@ -163,9 +163,9 @@ Use command below to re-build flextool (plugins must be installed separately).
 Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html
 
 ```bash
-# Tested with clang 6.0
-export CXX=clang++-6.0
-export CC=clang-6.0
+# Tested with clang 10
+export CXX=clang++-10
+export CC=clang-10
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 # NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
@@ -318,9 +318,9 @@ EOF
 ```
 
 ```bash
-# Tested with clang 6.0
-export CXX=clang++-6.0
-export CC=clang-6.0
+# Tested with clang 10
+export CXX=clang++-10
+export CC=clang-10
 
 mkdir build_flex
 
@@ -365,8 +365,8 @@ conan workspace install \
 Build into folder created by `conan workspace install`:
 
 ```bash
-export CXX=clang++-6.0
-export CC=clang-6.0
+export CXX=clang++-10
+export CC=clang-10
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 export build_type=Debug
@@ -469,9 +469,9 @@ root:
 Use `add_dependencies` in `CMakeLists.txt`:
 
 ```bash
-# Tested with clang 6.0
-export CXX=clang++-6.0
-export CC=clang-6.0
+# Tested with clang 10
+export CXX=clang++-10
+export CC=clang-10
 
 mkdir build_flex
 
@@ -561,8 +561,8 @@ conan workspace install \
 Build and test workspace:
 
 ```bash
-export CXX=clang++-6.0
-export CC=clang-6.0
+export CXX=clang++-10
+export CC=clang-10
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 export build_type=Debug
@@ -922,8 +922,8 @@ GIT_SSL_NO_VERIFY=true \
 # see section about `conan editable mode`
 cd local_build_scan_build
 
-export CXX=clang++-6.0
-export CC=clang-6.0
+export CXX=clang++-10
+export CC=clang-10
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 export build_type=Debug
@@ -935,8 +935,8 @@ export build_type=Debug
 # NOTE: changed CMAKE_C_COMPILER to ccc-analyzer (!!!)
 # configure via cmake
 scan-build \
-  --use-cc=clang-6.0 \
-  --use-c++=clang++-6.0 \
+  --use-cc=clang-10 \
+  --use-c++=clang++-10 \
   -o ./scanbuildout/ \
   cmake .. \
   -DCMAKE_VERBOSE_MAKEFILE=TRUE \
@@ -981,8 +981,8 @@ scan-build \
   -enable-checker optin.performance.Padding \
   -enable-checker security.insecureAPI.rand \
   -enable-checker security.insecureAPI.strcpy \
-  --use-cc=clang-6.0 \
-  --use-c++=clang++-6.0 \
+  --use-cc=clang-10 \
+  --use-c++=clang++-10 \
   -o ./scanbuildout/ \
   make \
   -j8
@@ -1024,8 +1024,8 @@ For details, see: [https://include-what-you-use.org/](https://include-what-you-u
 Usage (runs cmake with `-DENABLE_IWYU=ON`):
 
 ```bash
-export CXX=clang++-6.0
-export CC=clang-6.0
+export CXX=clang++-10
+export CC=clang-10
 
 # creates local build in separate folder and runs cmake targets
 cmake -DIWYU="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
@@ -1298,7 +1298,7 @@ GIT_SSL_NO_VERIFY=true \
         -o llvm_tools:enable_tsan=True \
         -o llvm_tools:include_what_you_use=False \
         -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=6.0 \
+        -s llvm_tools:compiler.version=10 \
         -s llvm_tools:compiler.libcxx=libstdc++11 \
         -e flextool:compile_with_llvm_tools=True \
         -s compiler=clang \
@@ -1470,7 +1470,7 @@ GIT_SSL_NO_VERIFY=true \
         -o llvm_tools:enable_asan=True \
         -o llvm_tools:include_what_you_use=False \
         -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=6.0 \
+        -s llvm_tools:compiler.version=10 \
         -s llvm_tools:compiler.libcxx=libstdc++11 \
         -e flextool:compile_with_llvm_tools=True \
         -s compiler=clang \
@@ -1660,7 +1660,7 @@ GIT_SSL_NO_VERIFY=true \
         -o llvm_tools:enable_msan=True \
         -o llvm_tools:include_what_you_use=False \
         -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=6.0 \
+        -s llvm_tools:compiler.version=10 \
         -s llvm_tools:compiler.libcxx=libstdc++11 \
         -e flextool:compile_with_llvm_tools=True \
         -s compiler=clang \
@@ -1847,7 +1847,7 @@ GIT_SSL_NO_VERIFY=true \
         -o llvm_tools:enable_ubsan=True \
         -o llvm_tools:include_what_you_use=False \
         -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=6.0 \
+        -s llvm_tools:compiler.version=10 \
         -s llvm_tools:compiler.libcxx=libstdc++11 \
         -e flextool:compile_with_llvm_tools=True \
         -s compiler=clang \
@@ -2022,11 +2022,11 @@ GIT_SSL_NO_VERIFY=true \
         --build missing \
         --build cascade \
         -s cling_conan:compiler=clang \
-        -s cling_conan:compiler.version=6.0 \
+        -s cling_conan:compiler.version=10 \
         -s cling_conan:compiler.libcxx=libstdc++11 \
         -o llvm_tools:include_what_you_use=True \
         -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=6.0 \
+        -s llvm_tools:compiler.version=10 \
         -s llvm_tools:compiler.libcxx=libstdc++11 \
         -e flextool:enable_tests=True \
         -e flextool:enable_llvm_tools=True \
@@ -2203,8 +2203,8 @@ Install + compile the source code using following commands:
 ca-certificates llvm-dev libtool libtool-bin \
 libglib2.0-dev make nasm wget
 
-# Tested with clang 6.0 and gcc 7
-sudo apt-get -y install clang-6.0 g++-7 gcc-7
+# Tested with clang 10 and gcc 7
+sudo apt-get -y install clang-10 g++-7 gcc-7
 
 export CXX=g++-7
 export CC=gcc-7
@@ -2213,7 +2213,7 @@ $CC -v
 
 
 # llvm-config binary that coresponds to the same clang you are using to compile
-export LLVM_CONFIG=/usr/bin/llvm-config-6.0
+export LLVM_CONFIG=/usr/bin/llvm-config-10
 $LLVM_CONFIG --cxxflags
 
 cd ~
@@ -2233,8 +2233,8 @@ make
 make \
   -C llvm_mode \
   LLVM_CONFIG=$LLVM_CONFIG \
-  CC=clang-6.0 \
-  CXX=clang++-6.0
+  CC=clang-10 \
+  CXX=clang++-10
 #
 # optional
 # cd qemu_mode
