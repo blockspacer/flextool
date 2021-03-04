@@ -31,7 +31,7 @@
 namespace {
 
 static const base::FilePath::CharType kIcuDataFileName[]
-  = FILE_PATH_LITERAL(R"raw(./resources/icu/optimal/icudt64l.dat)raw");
+  = FILE_PATH_LITERAL(R"raw(./resources/icu/optimal/icudt68l.dat)raw");
 
 static const base::FilePath::CharType kTraceReportFileName[]
   = FILE_PATH_LITERAL(R"raw(trace_report.json)raw");

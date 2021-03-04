@@ -52,7 +52,7 @@ static inline void initI18n()
 {
   base::FilePath exe_path;
   DCHECK(base::PathService::Get(base::DIR_EXE, &exe_path));
-  base::FilePath data_path = exe_path.AppendASCII("./resources/icu/optimal/icudt64l.dat");
+  base::FilePath data_path = exe_path.AppendASCII("./resources/icu/optimal/icudt68l.dat");
   bool icu_initialized = base::i18n::InitializeICUWithPath(data_path);
   DCHECK(icu_initialized);
 }

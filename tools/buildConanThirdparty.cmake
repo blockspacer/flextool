@@ -348,6 +348,34 @@ conan_build_target_if(
   ALWAYS_BUILD
   "")
 
+# conan_google_benchmark
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_google_benchmark")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_google_benchmark"
+      "http://github.com/blockspacer/conan_google_benchmark.git"
+      "")
+endif()
+conan_build_target_if(
+  "conan_google_benchmark" # target to clean
+  "dev/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_google_benchmark" # target to build
+  ALWAYS_BUILD
+  "")
+
+# conan_fmtlib
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_fmtlib")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_fmtlib"
+      "https://github.com/blockspacer/conan_fmtlib.git"
+      "")
+endif()
+conan_build_target_if(
+  "conan_fmtlib" # target to clean
+  "dev/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_fmtlib" # target to build
+  ALWAYS_BUILD
+  "")
+
 # conan_zlib
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_zlib")
