@@ -47,7 +47,7 @@ set(ENABLE_ABSEIL FALSE CACHE BOOL "ENABLE_ABSEIL")
 set(ENABLE_MONGO_C_DRIVER FALSE CACHE BOOL "ENABLE_MONGO_C_DRIVER")
 set(ENABLE_FLATC_CONAN FALSE CACHE BOOL "ENABLE_FLATC_CONAN")
 set(ENABLE_CONAN_POCO FALSE CACHE BOOL "ENABLE_CONAN_POCO")
-set(ENABLE_CONAN_PROTOBUF FALSE CACHE BOOL "ENABLE_CONAN_PROTOBUF")
+set(ENABLE_CONAN_PROTOBUF TRUE CACHE BOOL "ENABLE_CONAN_PROTOBUF")
 
 # --- includes ---
 # WHY CMAKE_CURRENT_LIST_DIR? see https://stackoverflow.com/a/12854575/10904212
@@ -348,6 +348,20 @@ conan_build_target_if(
   ALWAYS_BUILD
   "")
 
+# conan_abseil
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_abseil")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_abseil"
+      "http://github.com/blockspacer/conan_abseil.git"
+      "")
+endif()
+conan_build_target_if(
+  "conan_abseil" # target to clean
+  "master/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_abseil" # target to build
+  ALWAYS_BUILD
+  "")
+
 # conan_google_benchmark
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_google_benchmark")
@@ -625,6 +639,35 @@ conan_build_target_if(
   "cobalt_starboard" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/cobalt_starboard_conan" # target to build
+  ALWAYS_BUILD
+  "")
+
+# conan_protobuf
+
+if(ENABLE_CONAN_PROTOBUF
+  AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf"
+      "https://github.com/blockspacer/conan_protobuf.git"
+      "")
+endif()
+conan_build_target_if(
+  "protobuf" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf" # target to build
+  ENABLE_CONAN_PROTOBUF
+  "")
+
+# conan_google_gn
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_google_gn")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_google_gn"
+      "http://github.com/blockspacer/conan_google_gn.git"
+      "")
+endif()
+conan_build_target_if(
+  "google_gn" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_google_gn" # target to build
   ALWAYS_BUILD
   "")
 
@@ -910,21 +953,6 @@ conan_build_target_if(
   ";-o;flex_meta_demo:enable_clang_from_conan=False;\
 -e;flex_meta_demo:enable_tests=True")
 
-# conan_protobuf
-
-if(ENABLE_CONAN_PROTOBUF
-  AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf")
-  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf"
-      "https://github.com/blockspacer/conan_protobuf.git"
-      "")
-endif()
-conan_build_target_if(
-  "protobuf" # target to clean
-  "conan/stable"
-  "${CURRENT_SCRIPT_DIR}/.tmp/conan_protobuf" # target to build
-  ENABLE_CONAN_PROTOBUF
-  "")
-
 # poco
 
 if(ENABLE_CONAN_POCO
@@ -983,19 +1011,4 @@ conan_build_target_if(
   "dev/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/mongo-cxx-driver" # target to build
   ENABLE_MONGO_CXX_DRIVER
-  "")
-
-# abseil
-
-if(ENABLE_ABSEIL
-  AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/abseil")
-  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/abseil"
-      "https://github.com/abseil/abseil-cpp.git"
-      "")
-endif()
-conan_build_target_if(
-  "abseil" # target to clean
-  "abseil/20200225@conan/stable" # target to create
-  "${CURRENT_SCRIPT_DIR}/.tmp/abseil" # target to build
-  ENABLE_ABSEIL
   "")
