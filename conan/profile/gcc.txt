@@ -14,4 +14,4 @@ CC=/usr/bin/gcc
 CXX=/usr/bin/g++
 
 [build_requires]
-cmake_installer/3.15.5@conan/stable
+cmake_installer/3.15.5

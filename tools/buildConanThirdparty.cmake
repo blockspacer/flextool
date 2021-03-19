@@ -671,6 +671,20 @@ conan_build_target_if(
   ALWAYS_BUILD
   "")
 
+# conan_perfetto
+
+if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/conan_perfetto")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/conan_perfetto"
+      "http://github.com/blockspacer/conan_perfetto.git"
+      "")
+endif()
+conan_build_target_if(
+  "perfetto" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/conan_perfetto" # target to build
+  ALWAYS_BUILD
+  "")
+
 # chromium_base_conan
 
 if(NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/chromium_base_conan")

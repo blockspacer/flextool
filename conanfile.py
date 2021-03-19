@@ -283,7 +283,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
     def requirements(self):
         if self._is_tests_enabled():
             self.requires("catch2/[>=2.1.0]@bincrafters/stable")
-            self.requires("conan_gtest/release-1.10.0@conan/stable")
+            self.requires("conan_gtest/stable@conan/stable")
             self.requires("FakeIt/[>=2.0.4]@gasuketsu/stable")
 
         self.requires("chromium_icu/master@conan/stable")
