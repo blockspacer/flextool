@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 3.8)
 # project() must be before checks, see https://stackoverflow.com/a/26437667/10904212
 set(PROJECT_NAME "flextool")
 
+set(FLEXTOOL_LIB_NAME ${PROJECT_NAME})
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/parse_version_file.cmake)
 
 project(${PROJECT_NAME}
@@ -162,7 +164,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/setup_thirdparty_libs.cmake)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectFiles.cmake)
 
-add_library(${LIB_NAME}-test-includes INTERFACE)
+add_library(${FLEXTOOL_LIB_NAME}-test-includes INTERFACE)
 
 set(VERSION_HEADER_LOCATION
   ${flextool_include_DIR}/version.hpp)
@@ -179,7 +181,7 @@ set_source_files_properties(${PROJECT_BINARY_DIR}/version.hpp
 
 # Executable target definition. CMake-build-system documentation:
 # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html
-add_executable(${LIB_NAME}
+add_executable(${FLEXTOOL_LIB_NAME}
   ${flextool_SOURCES} # from ProjectFiles.cmake
   ${flextool_src_DIR}/main.cc
   ${VERSION_HEADER_LOCATION}
@@ -188,16 +190,16 @@ add_executable(${LIB_NAME}
 # Alias target for the executable to be used outside of the project. Command:
 # https://cmake.org/cmake/help/latest/command/add_executable.html
 add_executable(flextool::exe
-  ALIAS ${LIB_NAME})
+  ALIAS ${FLEXTOOL_LIB_NAME})
 
 # -------------------------------- link_libraries ------------------------------------
 
-target_link_libraries(${LIB_NAME} PUBLIC
+target_link_libraries(${FLEXTOOL_LIB_NAME} PUBLIC
   ${USED_3DPARTY_LIBS}
   ${USED_SYSTEM_LIBS}
 )
 
-target_link_libraries( ${LIB_NAME} PRIVATE
+target_link_libraries( ${FLEXTOOL_LIB_NAME} PRIVATE
   CONAN_PKG::entt
   chromium_icu::chromium_icu-static
 )
@@ -206,14 +208,14 @@ if(ENABLE_CLING)
   find_package(Cling REQUIRED)
 
   list(APPEND CLING_DEFINITIONS CLING_IS_ON=1)
-  target_link_libraries(${LIB_NAME} PUBLIC
+  target_link_libraries(${FLEXTOOL_LIB_NAME} PUBLIC
     CONAN_PKG::cling_conan
   )
 
   if(MSVC)
-    set_target_properties(${LIB_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS 1)
+    set_target_properties(${FLEXTOOL_LIB_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS 1)
     set_property(
-      TARGET ${LIB_NAME}
+      TARGET ${FLEXTOOL_LIB_NAME}
       APPEND_STRING
       PROPERTY LINK_FLAGS
                "/EXPORT:?setValueNoAlloc@internal@runtime@cling@@YAXPEAX00D_K@Z
@@ -223,7 +225,7 @@ if(ENABLE_CLING)
 endif(ENABLE_CLING)
 
 if(ENABLE_CLANG_FROM_CONAN)
-  target_link_libraries( ${LIB_NAME} PUBLIC#PRIVATE
+  target_link_libraries( ${FLEXTOOL_LIB_NAME} PUBLIC#PRIVATE
     CONAN_PKG::libclang
     CONAN_PKG::clang_tooling
     CONAN_PKG::clang_tooling_core
@@ -240,38 +242,38 @@ macro(add_relative_include_dir TARGET VISIBILITY_BUILD VISIBILITY_INSTALL NEW_EL
     ${VISIBILITY_BUILD} "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NEW_ELEM}>"
     ${VISIBILITY_INSTALL} "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/${NEW_ELEM}>"
   )
-  target_include_directories( ${LIB_NAME}-test-includes SYSTEM INTERFACE
+  target_include_directories( ${FLEXTOOL_LIB_NAME}-test-includes SYSTEM INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/${NEW_ELEM} )
 endmacro(add_relative_include_dir)
 
-#add_relative_include_dir(${LIB_NAME} PRIVATE PRIVATE "include/flextool")
+#add_relative_include_dir(${FLEXTOOL_LIB_NAME} PRIVATE PRIVATE "include/flextool")
 
-add_relative_include_dir(${LIB_NAME} PUBLIC PUBLIC "include")
+add_relative_include_dir(${FLEXTOOL_LIB_NAME} PUBLIC PUBLIC "include")
 
 # ---------------------------------- Build options -------------------------------------
 
 # startup target for MS Visual Studio IDE
-set_vs_startup_project(${LIB_NAME}) # from Utils.cmake
+set_vs_startup_project(${FLEXTOOL_LIB_NAME}) # from Utils.cmake
 
 if(TARGET_EMSCRIPTEN)
   # use PROPERTY CXX_STANDARD 17
 else()
-  target_compile_features(${LIB_NAME}
+  target_compile_features(${FLEXTOOL_LIB_NAME}
     PUBLIC cxx_auto_type
     PRIVATE cxx_variadic_templates)
 endif()
 
 # being a cross-platform target, we enforce standards conformance on MSVC
-target_compile_options(${LIB_NAME}
+target_compile_options(${FLEXTOOL_LIB_NAME}
   PUBLIC "$<$<BOOL:${MSVC}>:/permissive->")
 
 # without rtti you will get error:
 # ERROR: boost::bad_any_cast: failed conversion using boost::any_cast
-#target_compile_options(${LIB_NAME} PRIVATE
+#target_compile_options(${FLEXTOOL_LIB_NAME} PRIVATE
 #  -frtti)
 
 set(DEBUG_LIBRARY_SUFFIX "")
-set_target_properties(${LIB_NAME}
+set_target_properties(${FLEXTOOL_LIB_NAME}
   PROPERTIES
     # ENABLE_EXPORTS for -rdynamic
     # i.e. export symbols from the executables
@@ -293,23 +295,23 @@ list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PROGRAM_PATH ${CMAKE_CURRENT_BINARY_DIR})
 
 # POSITION_INDEPENDENT_CODE for -fPIC
-set_property(TARGET ${LIB_NAME}
+set_property(TARGET ${FLEXTOOL_LIB_NAME}
   PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # ---------------------------------- compile_definitions -------------------------------------
 
 # see https://cmake.org/cmake/help/v3.0/module/TestBigEndian.html
-test_big_endian(${LIB_NAME}_IS_BIG_ENDIAN)
-if(${${LIB_NAME}_IS_BIG_ENDIAN})
+test_big_endian(${FLEXTOOL_LIB_NAME}_IS_BIG_ENDIAN)
+if(${${FLEXTOOL_LIB_NAME}_IS_BIG_ENDIAN})
   list(APPEND flextool_PUBLIC_DEFINES
     IS_BIG_ENDIAN=1)
 endif()
 
 if(ENABLE_CLING)
-  target_compile_definitions(${LIB_NAME} PRIVATE CLING_IS_ON=1)
+  target_compile_definitions(${FLEXTOOL_LIB_NAME} PRIVATE CLING_IS_ON=1)
 endif(ENABLE_CLING)
 
-target_compile_definitions(${LIB_NAME} PRIVATE
+target_compile_definitions(${FLEXTOOL_LIB_NAME} PRIVATE
   ${flextool_PRIVATE_DEFINES}
   # https://stackoverflow.com/a/30877725
   BOOST_SYSTEM_NO_DEPRECATED
@@ -322,13 +324,13 @@ target_compile_definitions(${LIB_NAME} PRIVATE
   BOOST_ASIO_STANDALONE=1
 )
 
-target_compile_definitions(${LIB_NAME} PUBLIC
+target_compile_definitions(${FLEXTOOL_LIB_NAME} PUBLIC
   ${flextool_PUBLIC_DEFINES}
   ${CLING_DEFINITIONS}
 )
 
 # TODO: DISABLE_DOCTEST
-target_compile_definitions(${LIB_NAME} PUBLIC
+target_compile_definitions(${FLEXTOOL_LIB_NAME} PUBLIC
   DISABLE_DOCTEST=1
 )
 
@@ -344,15 +346,15 @@ target_compile_definitions(${LIB_NAME} PUBLIC
 # ---------------------------------- resource dirs -------------------------------------
 
 # remove old resources dir
-#add_custom_command( TARGET ${LIB_NAME} PRE_BUILD
+#add_custom_command( TARGET ${FLEXTOOL_LIB_NAME} PRE_BUILD
 #  COMMAND ${CMAKE_COMMAND} -E remove_directory
-#    $<TARGET_FILE_DIR:${LIB_NAME}>/resources )
+#    $<TARGET_FILE_DIR:${FLEXTOOL_LIB_NAME}>/resources )
 
 # copy new resources
-add_custom_command( TARGET ${LIB_NAME} PRE_BUILD
+add_custom_command( TARGET ${FLEXTOOL_LIB_NAME} PRE_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_CURRENT_SOURCE_DIR}/resources/
-    $<TARGET_FILE_DIR:${LIB_NAME}>/resources )
+    $<TARGET_FILE_DIR:${FLEXTOOL_LIB_NAME}>/resources )
 
 # -------------------------------- Install -------------------------------------
 
@@ -369,7 +371,7 @@ if(ENABLE_LTO)
   find_lto(CXX)
 
   # enable lto if available for non-debug configurations
-  target_enable_lto(${LIB_NAME} optimized)
+  target_enable_lto(${FLEXTOOL_LIB_NAME} optimized)
 else(ENABLE_LTO)
   if(cmake_build_type_tolower MATCHES "release" )
     message(WARNING "Enable LTO in Release builds")
@@ -427,7 +429,7 @@ endif(USE_LD_GOLD)
 
 if(USE_CCACHE)
   add_ccache()
-  target_ccache_summary(${LIB_NAME}) # from cmake_helper_utils (conan package)
+  target_ccache_summary(${FLEXTOOL_LIB_NAME}) # from cmake_helper_utils (conan package)
 endif(USE_CCACHE)
 
 ## ---------------------------- coverage -------------------------------- ##
@@ -450,6 +452,8 @@ endif()
 ## ---------------------------- tests -------------------------------- ##
 
 if(ENABLE_TESTS)
+  enable_testing()
+  message( "${PROJECT_NAME} testing enabled" )
   add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
 endif()
 

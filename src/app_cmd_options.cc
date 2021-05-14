@@ -9,13 +9,16 @@
 #include <base/base_paths.h>
 #include <base/base_switches.h>
 #include <base/logging.h>
+#include <base/check.h>
+#include <base/notreached.h>
 #include <base/path_service.h>
 #include <base/files/file_path.h>
 #include <base/sequence_checker.h>
 #include <base/strings/string_piece_forward.h>
 
-#include <basis/PluginManager.hpp>
-#include <basis/cmd_util.hpp>
+#include <basis/plugin_manager.h>
+
+#include <basic/cmd_util.h>
 
 #include <flexlib/boost_command_line.hpp>
 

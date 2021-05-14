@@ -4,9 +4,10 @@
 #include <base/base_paths.h>
 #include <base/files/file_util.h>
 #include <base/logging.h>
-#include <base/message_loop/message_loop.h>
-#include <base/message_loop/message_loop_current.h>
 #include <base/path_service.h>
+#include <base/check.h>
+#include <base/notreached.h>
+#include <base/threading/thread_task_runner_handle.h>
 #include <base/sequence_checker.h>
 
 #include <entt/signal/dispatcher.hpp>
@@ -15,7 +16,7 @@
 
 #include <flexlib/ToolPlugin.hpp>
 
-#include <basis/PluginManager.hpp>
+#include <basis/plugin_manager.h>
 
 #include <sstream>
 #include <algorithm>
@@ -25,7 +26,7 @@ namespace flextool {
 ScopedPluginEnvironment::ScopedPluginEnvironment()
   : main_events_dispatcher(std::make_unique<entt::dispatcher>())
 {
-  DCHECK(base::MessageLoop::current()->task_runner());
+  DCHECK(base::ThreadTaskRunnerHandle::Get());
 
   DETACH_FROM_SEQUENCE(sequence_checker_);
 }

@@ -1,4 +1,5 @@
-conan-center https://conan.bintray.com True
+conan-center-bintray https://conan.bintray.com True
+conan-center https://center.conan.io True
 bincrafters https://api.bintray.com/conan/bincrafters/public-conan True
 skypjack https://api.bintray.com/conan/skypjack/conan True
 conan-doom_strong_types https://api.bintray.com/conan/milerius/doom_strong_types True

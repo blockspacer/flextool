@@ -9,6 +9,8 @@
 #include <base/strings/string_piece.h>
 #include <base/strings/string_util.h>
 #include <base/optional.h>
+#include <base/check.h>
+#include <base/notreached.h>
 #include <base/strings/string_piece_forward.h>
 
 #include <flexlib/boost_command_line.hpp>
@@ -351,12 +353,9 @@ base::Optional<std::string> clangArgToClingArg(
       base::size(kExtraArgPrefix));
   }
 
-  std::string combined_for_cling;
-  arg_without_prefix.CopyToString(&combined_for_cling);
-
   return
     base::Optional<std::string>{
-      std::move(combined_for_cling)};
+      static_cast<std::string>(arg_without_prefix)};
 }
 
 #if defined(CLING_IS_ON)

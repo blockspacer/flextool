@@ -11,7 +11,7 @@ cppclean_enabler(
   IS_ENABLED
     ${ENABLE_CPPCLEAN}
   CHECK_TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXTRA_OPTIONS
     --include-path ${CMAKE_CURRENT_SOURCE_DIR}/include
     #--include-path-non-system ${CMAKE_CURRENT_SOURCE_DIR}/include

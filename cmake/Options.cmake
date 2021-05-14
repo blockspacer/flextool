@@ -9,6 +9,8 @@ if(EXISTS "${LOCAL_BUILD_ABSOLUTE_ROOT_PATH}")
   list(PREPEND CMAKE_MODULE_PATH "${LOCAL_BUILD_ABSOLUTE_ROOT_PATH}/cmake")
 endif()
 
+set(FLEXTOOL_SOURCES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/flextool/)
+
 option(BUILD_DOXY_DOC
   "build doxygen documentation" OFF)
 

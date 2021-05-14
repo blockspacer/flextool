@@ -11,7 +11,7 @@ install(
 
 install(
   TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXPORT
     ${PROJECT_NAME}-config
   DESTINATION
@@ -25,14 +25,14 @@ install(
   DESTINATION
     cmake)
 
-set_target_properties(${LIB_NAME}
+set_target_properties(${FLEXTOOL_LIB_NAME}
   PROPERTIES
-    EXPORT_NAME ${LIB_NAME})
+    EXPORT_NAME ${FLEXTOOL_LIB_NAME})
 
 # see Package Configuration File (PCF) https://jfreeman.dev/blog/2019/05/22/trying-conan-with-modern-cmake:-dependencies/
 export(
   TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   NAMESPACE
     ${PROJECT_NAME}::
   FILE
@@ -43,7 +43,7 @@ export(PACKAGE ${PROJECT_NAME})
 
 install(
   TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   INCLUDES DESTINATION
     ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION
@@ -82,7 +82,7 @@ install(FILES
    DESTINATION "."
 )
 
-install(TARGETS ${LIB_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+install(TARGETS ${FLEXTOOL_LIB_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
 
 install(
   DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources" # source directory

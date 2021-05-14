@@ -13,7 +13,7 @@ uncrustify_enabler(
   IS_ENABLED
     ${ENABLE_UNCRUSTIFY}
   CHECK_TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXTRA_OPTIONS
     --no-backup
     -c ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg

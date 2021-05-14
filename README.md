@@ -36,6 +36,22 @@ Main project page: https://blockspacer.github.io/flex_docs/
 - [Plugins](https://blockspacer.github.io/flex_docs/adding_plugins/)
 - [Tracing and log levels](https://blockspacer.github.io/flex_docs/bug_report/)
 
+## Supported platforms
+
+Tested on Ubuntu 20.04.2 LTS.
+
+May work on other platforms with minor modifications.
+
+## Before installation: Add conan remotes
+
+To be able to add the list of dependency remotes please type the following command:
+
+```bash
+cmake -E time conan config install conan/remotes/
+# OR:
+# cmake -E time conan config install conan/remotes_disabled_ssl/
+```
+
 ## Before installation
 
 - [Installation Guide](https://blockspacer.github.io/flex_docs/download/)
@@ -204,6 +220,60 @@ Articles about flexferrum's `autoprogrammer` in media:
 - [RUS] (article) metaclasses https://habr.com/ru/article/448466/
 - [RUS] (slides) C++17 metaclasses https://assets.ctfassets.net/oxjq45e8ilak/55bGdX2PnYzmrpM8rwCjcE/791e7eee3236c2023e86e169faca8a0e/Sergei_Sadovnikov_Metaclasses_in_C___dream_Reality.pdf
 
+## Dev-only build (local conan flow)
+
+```bash
+find . -type f -name "*_buildflags.h" -exec rm {} \;
+find . -type f -name "*_buildflags.tmp" -exec rm {} \;
+
+(rm -rf local_build || true)
+
+mkdir local_build
+
+cd local_build
+
+export CONAN_REVISIONS_ENABLED=1
+export CONAN_VERBOSE_TRACEBACK=1
+export CONAN_PRINT_RUN_COMMANDS=1
+export CONAN_LOGGING_LEVEL=10
+export GIT_SSL_NO_VERIFY=true
+
+# NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
+cmake -E time \
+  conan install .. \
+  --install-folder . \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+  --profile clang \
+  -e flextool:enable_tests=True \
+  -e flextool:enable_llvm_tools=False \
+  -o perfetto:is_hermetic_clang=False
+
+(rm CMakeCache.txt || true)
+
+# You can use `cmake --build . -- -j14` on second run.
+cmake -E time \
+  conan build .. --build-folder=.
+
+cmake -E time \
+  conan package --build-folder=. ..
+
+cmake -E time \
+  conan export-pkg .. conan/stable \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+   --force --profile clang
+
+cmake -E time \
+  conan test ../test_package flextool/master@conan/stable \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+  --profile clang
+```
+
 ## For contibutors: conan editable mode
 
 With the editable packages, you can tell Conan where to find the headers and the artifacts ready for consumption in your local working directory.
@@ -235,16 +305,20 @@ CONAN_PRINT_RUN_COMMANDS=1 \
 CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
-    conan source . --source-folder local_build
+    conan source . \
+    --source-folder local_build \
+    --install-folder local_build
 
 conan build . \
   --build-folder local_build \
-  --source-folder local_build
+  --source-folder local_build \
+  --install-folder local_build
 
 conan package . \
   --build-folder local_build \
   --package-folder local_build/package_dir \
-  --source-folder local_build
+  --source-folder local_build \
+  --install-folder local_build
 ```
 
 Set package to editable mode:
@@ -261,12 +335,14 @@ After change source in folder local_build (run commands in source package folder
 ```
 conan build . \
   --build-folder local_build \
-  --source-folder local_build
+  --source-folder local_build \
+  --install-folder local_build
 
 conan package . \
   --build-folder local_build \
   --package-folder local_build/package_dir \
-  --source-folder local_build
+  --source-folder local_build \
+  --install-folder local_build
 ```
 
 Build your test project.
@@ -922,7 +998,9 @@ CONAN_PRINT_RUN_COMMANDS=1 \
 CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
-    conan source . --source-folder local_build_scan_build
+    conan source . \
+    --source-folder local_build_scan_build \
+    --install-folder local_build_scan_build
 
 # see section about `conan editable mode`
 cd local_build_scan_build
@@ -1351,7 +1429,8 @@ GIT_SSL_NO_VERIFY=true \
 # see section about `conan editable mode`
 conan build . \
   --build-folder local_build_tsan \
-  --source-folder local_build_tsan
+  --source-folder local_build_tsan \
+  --install-folder local_build_tsan
 
 # you can run some tests to check sanitizers
 ./local_build_tsan/bin/Debug/tests/flextool-gmock \
@@ -1532,7 +1611,8 @@ GIT_SSL_NO_VERIFY=true \
 # see section about `conan editable mode`
 conan build . \
   --build-folder local_build_asan \
-  --source-folder local_build_asan
+  --source-folder local_build_asan \
+  --install-folder local_build_asan
 
 # you can run some tests to check sanitizers
 ./local_build_asan/bin/Debug/tests/flextool-gmock \
@@ -1731,7 +1811,8 @@ GIT_SSL_NO_VERIFY=true \
 # see section about `conan editable mode`
 conan build . \
   --build-folder local_build_msan \
-  --source-folder local_build_msan
+  --source-folder local_build_msan \
+  --install-folder local_build_msan
 
 # you can run some tests to check sanitizers
 ./local_build_msan/bin/Debug/tests/flextool-gmock \
@@ -1927,7 +2008,8 @@ GIT_SSL_NO_VERIFY=true \
 # see section about `conan editable mode`
 conan build . \
   --build-folder local_build_ubsan \
-  --source-folder local_build_ubsan
+  --source-folder local_build_ubsan \
+  --install-folder local_build_ubsan
 
 # you can run some tests to check sanitizers
 ./local_build_ubsan/bin/Debug/tests/flextool-gmock \
@@ -2084,7 +2166,9 @@ CONAN_PRINT_RUN_COMMANDS=1 \
 CONAN_LOGGING_LEVEL=10 \
 GIT_SSL_NO_VERIFY=true \
   cmake -E time \
-    conan source . --source-folder local_build_clang_10
+    conan source . \
+    --source-folder local_build_clang_10 \
+    --install-folder local_build_clang_10
 
 # remove old CMakeCache
 (rm local_build_clang_10/CMakeCache.txt || true)
@@ -2092,7 +2176,8 @@ GIT_SSL_NO_VERIFY=true \
 # see section about `conan editable mode`
 conan build . \
   --build-folder local_build_clang_10 \
-  --source-folder local_build_clang_10
+  --source-folder local_build_clang_10 \
+  --install-folder local_build_clang_10
 ```
 
 Perform checks:

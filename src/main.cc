@@ -15,12 +15,14 @@
 #include <base/files/file_path.h>
 #include <base/files/file_util.h>
 #include <base/logging.h>
+#include <base/check.h>
 #include <base/memory/scoped_refptr.h>
 #include <base/optional.h>
 #include <base/threading/thread_restrictions.h>
 
 #include <flexlib/boost_command_line.hpp>
-#include <basis/base_environment.hpp>
+
+#include <basis/base_environment.h>
 
 #include <stdlib.h>
 #include <algorithm>
@@ -404,6 +406,9 @@ int main(int argc, char* argv[])
       return exit_code.value();
     }
   }
+
+  LOG(INFO)
+    << "Using Clang LibTooling";
 
   runClangLibTooling(clang_env);
 

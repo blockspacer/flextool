@@ -11,7 +11,7 @@ clang_tidy_enabler(
   IS_ENABLED
     ${ENABLE_CLANG_TIDY}
   CHECK_TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXTRA_OPTIONS
     # TODO: use file .clang-tidy, similar to
     # https://github.com/mapbox/protozero/blob/ed6ba50979acf97b9c5300ae88a20d8b8b6c2fc4/.clang-tidy

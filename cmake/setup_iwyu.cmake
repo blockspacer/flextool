@@ -29,7 +29,7 @@ iwyu_enabler(
   IS_ENABLED
     ${ENABLE_IWYU}
   CHECK_TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXTRA_OPTIONS
     -std=c++17
     -DCLING_IS_ON=1

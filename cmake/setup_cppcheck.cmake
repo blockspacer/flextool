@@ -15,7 +15,7 @@ cppcheck_enabler(
   IS_ENABLED
     ${ENABLE_CPPCHECK}
   CHECK_TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXTRA_OPTIONS
     # check all #ifdef
     #--force

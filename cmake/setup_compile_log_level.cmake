@@ -13,7 +13,7 @@
 # initializes the value of this property.
 # Non-Makefile generators currently ignore this property.
 set_target_properties(
-  ${LIB_NAME} PROPERTIES
+  ${FLEXTOOL_LIB_NAME} PROPERTIES
   # disable to avoid the build time cost of detailed reports
   RULE_MESSAGES ON
 )

@@ -15,7 +15,7 @@ oclint_enabler(
   IS_ENABLED
     ${ENABLE_OCLINT}
   CHECK_TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXTRA_OPTIONS
     # OCLINT command-line manual
     # https://oclint-docs.readthedocs.io/en/stable/manual/oclint.html

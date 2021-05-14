@@ -6,6 +6,8 @@
 #include <base/sequence_checker.h>
 #include <base/base_paths.h>
 #include <base/logging.h>
+#include <base/check.h>
+#include <base/notreached.h>
 #include <base/path_service.h>
 
 #include <flexlib/boost_command_line.hpp>

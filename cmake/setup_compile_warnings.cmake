@@ -84,7 +84,7 @@ list(APPEND GCCAndClangWarningFlags
 if (cmake_build_type_tolower MATCHES "debug" )
   check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)
   if(CC_HAS_FTRAPV)
-    target_compile_options(${LIB_NAME} PRIVATE
+    target_compile_options(${FLEXTOOL_LIB_NAME} PRIVATE
       # NOTE: SIGABRT to be raised
       # that will normally abort your program on overflow
       -ftrapv
@@ -92,7 +92,7 @@ if (cmake_build_type_tolower MATCHES "debug" )
   endif()
 endif()
 
-target_compile_options(${LIB_NAME} PRIVATE
+target_compile_options(${FLEXTOOL_LIB_NAME} PRIVATE
   # NOTE: explicitly select the "C++ Core Check Lifetime Rules" (or "Microsoft All Rules") in order to enable the lifetime checks.
   # see https://devblogs.microsoft.com/cppblog/c-core-guidelines-checker-in-visual-studio-2017/
   # see https://www.modernescpp.com/index.php/c-core-guidelines-lifetime-safety
@@ -136,6 +136,6 @@ target_compile_options(${LIB_NAME} PRIVATE
 
 # # Helper that can set default warning flags for you
 target_set_warnings( # from cmake_helper_utils (conan package)
-  ${LIB_NAME}
+  ${FLEXTOOL_LIB_NAME}
   ENABLE ALL
   DISABLE Annoying)

@@ -7,6 +7,7 @@
 #include <base/files/file_util.h>
 #include <base/logging.h>
 #include <base/memory/scoped_refptr.h>
+#include <base/check.h>
 
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
@@ -82,6 +83,9 @@ void ClangTool::run(
   annotationMatchOptions
   )
 {
+  LOG(INFO)
+    << "created clang tool...";
+
   CHECK(!args.empty())
     << "You must provide at least one argument"
     " to clang";

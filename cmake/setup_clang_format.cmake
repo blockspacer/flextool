@@ -15,7 +15,7 @@ clang_format_enabler(
   IS_ENABLED
     ${ENABLE_CLANG_FORMAT}
   CHECK_TARGETS
-    ${LIB_NAME}
+    ${FLEXTOOL_LIB_NAME}
   EXTRA_OPTIONS
     # ferror-limit:
     # Used only with --dry-run or -n

@@ -7,11 +7,12 @@
 #include <base/files/file_path.h>
 #include <base/sequence_checker.h>
 #include <base/logging.h>
-#include <base/message_loop/message_loop.h>
-#include <base/message_loop/message_loop_current.h>
 #include <base/strings/string_piece.h>
 #include <base/strings/string_piece_forward.h>
 #include <base/strings/string_util.h>
+#include <base/check.h>
+#include <base/threading/thread_task_runner_handle.h>
+#include <base/notreached.h>
 
 #include <algorithm>
 #include <iterator>
@@ -38,7 +39,7 @@ ScopedClingEnvironment::ScopedClingEnvironment()
 {
   DETACH_FROM_SEQUENCE(sequence_checker_);
 
-  DCHECK(base::MessageLoop::current()->task_runner());
+  DCHECK(base::ThreadTaskRunnerHandle::Get());
 }
 
 ScopedClingEnvironment::~ScopedClingEnvironment()

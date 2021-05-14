@@ -141,10 +141,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "FakeIt:integration=catch",
         # openssl
         "openssl:shared=True",
-        # chromium_base
-        "chromium_base:use_alloc_shim=True",
-        # chromium_tcmalloc
-        "chromium_tcmalloc:use_alloc_shim=True",
     )
 
     @property
@@ -304,7 +300,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
           self.requires("clang_ast/6.0.1@Manu343726/testing")
           self.requires("llvm/6.0.1@Manu343726/testing")
         else:
-          self.requires("cling_conan/master@conan/stable")
+          self.requires("cling_conan/v0.9@conan/stable")
 
         self.requires("flexlib/master@conan/stable")
 
@@ -400,21 +396,13 @@ class flextoolConan(conan_build_helper.CMakePackage):
         if not self.options.enable_clang_from_conan:
           cmake.definitions["ENABLE_CLING"] = 'ON'
 
-        cmake.definitions["ENABLE_UBSAN"] = 'ON'
-        if not self.options.enable_ubsan:
-            cmake.definitions["ENABLE_UBSAN"] = 'OFF'
+        cmake.definitions["ENABLE_UBSAN"] = "ON" if self.options.enable_ubsan else "OFF"
 
-        cmake.definitions["ENABLE_ASAN"] = 'ON'
-        if not self.options.enable_asan:
-            cmake.definitions["ENABLE_ASAN"] = 'OFF'
+        cmake.definitions["ENABLE_ASAN"] = "ON" if self.options.enable_asan else "OFF"
 
-        cmake.definitions["ENABLE_MSAN"] = 'ON'
-        if not self.options.enable_msan:
-            cmake.definitions["ENABLE_MSAN"] = 'OFF'
+        cmake.definitions["ENABLE_MSAN"] = "ON" if self.options.enable_msan else "OFF"
 
-        cmake.definitions["ENABLE_TSAN"] = 'ON'
-        if not self.options.enable_tsan:
-            cmake.definitions["ENABLE_TSAN"] = 'OFF'
+        cmake.definitions["ENABLE_TSAN"] = "ON" if self.options.enable_tsan else "OFF"
 
         cmake.definitions["ENABLE_VALGRIND"] = 'ON'
         if not self.options.enable_valgrind:
@@ -500,6 +488,10 @@ class flextoolConan(conan_build_helper.CMakePackage):
         # -j flag for parallel builds
         cmake.build(args=["--", "-j%s" % cpu_count])
 
+        if self._is_tests_enabled():
+          self.output.info('Running tests')
+          cmake.test(target="flextool_run_unittests", output_on_failure=True)
+
     def package(self):
         self.output.info('Packaging package \'{}\''.format(self.name))
 
@@ -525,12 +517,16 @@ class flextoolConan(conan_build_helper.CMakePackage):
         cmake = self._configure_cmake()
         cmake.install()
 
-        # Local build
-        # see https://docs.conan.io/en/latest/developing_packages/editable_packages.html
-        if not self.in_local_cache:
-            self.copy("conanfile.py", dst=".", keep_path=False)
+        self.copy_conanfile_for_editable_package(".")
+
+        self.rmdir_if_packaged('.git')
+        self.rmdir_if_packaged('tests')
+        self.rmdir_if_packaged('lib/tests')
+        self.rmdir_if_packaged('lib/pkgconfig')
 
     def package_id(self):
+        # NOTE: flextool is build-time tool.
+        # Any project configuration must be able to depend on flextool.
         del self.info.settings.compiler
         del self.info.settings.arch
         self.info.include_build_settings()

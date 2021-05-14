@@ -6,7 +6,7 @@
 #include <base/files/file_path.h>
 #include <base/macros.h>
 
-#include <basis/PluginManager.hpp>
+#include <basis/plugin_manager.h>
 
 #include <vector>
 
