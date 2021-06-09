@@ -452,6 +452,37 @@ conan_build_target_if(
   ENABLE_CLING
   ";-s;cling_conan:build_type=Release")
 
+set(ENABLE_LLVM_9 TRUE CACHE BOOL "ENABLE_LLVM_9")
+if(ENABLE_LLVM_9
+  AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/llvm_9"
+      "https://github.com/blockspacer/conan_llvm_9.git"
+      "")
+endif()
+conan_build_target_if(
+  "llvm_9" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9" # target to build
+  ENABLE_LLVM_9
+  ";-s;llvm_9:build_type=Release\
+;-o;llvm_9:include_what_you_use=True")
+
+set(ENABLE_LLVM_9_INSTALLER TRUE CACHE BOOL "ENABLE_LLVM_9_INSTALLER")
+if(ENABLE_LLVM_9_INSTALLER
+  AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9_installer")
+  git_clone("${CURRENT_SCRIPT_DIR}/.tmp/llvm_9_installer"
+      "https://github.com/blockspacer/conan_llvm_9_installer.git"
+      "")
+endif()
+conan_build_target_if(
+  "llvm_9_installer" # target to clean
+  "conan/stable"
+  "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9_installer" # target to build
+  ENABLE_LLVM_9_INSTALLER
+  ";-s;llvm_9:build_type=Release\
+;-o;llvm_9:include_what_you_use=True\
+;-o;llvm_9_installer:include_what_you_use=True")
+
 # flexlib
 set(ENABLE_FLEXLIB TRUE CACHE BOOL "ENABLE_FLEXLIB")
 if(ENABLE_FLEXLIB
@@ -509,8 +540,7 @@ conan_build_target_if(
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/flextool" # target to build
   ENABLE_FLEXTOOL
-  ";-e;flextool:enable_tests=True;\
--e;flextool:enable_llvm_tools=False")
+  ";-e;flextool:enable_tests=True")
 
 # basis_plugin_helper
 set(ENABLE_BASIS_PLUGIN_HELPER TRUE CACHE BOOL "ENABLE_BASIS_PLUGIN_HELPER")

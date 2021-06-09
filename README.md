@@ -179,25 +179,27 @@ Use command below to re-build flextool (plugins must be installed separately).
 Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html
 
 ```bash
+export VERBOSE=1
+export CONAN_REVISIONS_ENABLED=1
+export CONAN_VERBOSE_TRACEBACK=1
+export CONAN_PRINT_RUN_COMMANDS=1
+export CONAN_LOGGING_LEVEL=10
+export GIT_SSL_NO_VERIFY=true
+
 # Tested with clang 10
 export CXX=clang++-10
 export CC=clang-10
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 # NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-    cmake -E time \
-      conan create . conan/stable \
-      -s build_type=Debug \
-      -s cling_conan:build_type=Release \
-      -s llvm_tools:build_type=Release \
-      --profile clang \
-          -e flextool:enable_tests=True \
-          -e flextool:enable_llvm_tools=True
+cmake -E time \
+  conan create . conan/stable \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+  --profile clang \
+      -e flextool:enable_tests=True \
+      -e flextool:enable_llvm_tools=True
 
 # clean build cache
 conan remove "*" --build --force
@@ -244,10 +246,10 @@ cmake -E time \
   --install-folder . \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
-  -s llvm_tools:build_type=Release \
+  -s llvm_9:build_type=Release \
   --profile clang \
   -e flextool:enable_tests=True \
-  -e flextool:enable_llvm_tools=False \
+  -e flextool:enable_cling=False \
   -o perfetto:is_hermetic_clang=False
 
 (rm CMakeCache.txt || true)
@@ -263,14 +265,16 @@ cmake -E time \
   conan export-pkg .. conan/stable \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
-  -s llvm_tools:build_type=Release \
+  -s llvm_9:build_type=Release \
+  -e flextool:enable_cling=False \
    --force --profile clang
 
 cmake -E time \
   conan test ../test_package flextool/master@conan/stable \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
-  -s llvm_tools:build_type=Release \
+  -s llvm_9:build_type=Release \
+  -e flextool:enable_cling=False \
   --profile clang
 ```
 
@@ -284,30 +288,27 @@ For details, see: [https://docs.conan.io/en/latest/developing_packages/editable_
 Build locally:
 
 ```bash
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-    --profile clang \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True
+export VERBOSE=1
+export CONAN_REVISIONS_ENABLED=1
+export CONAN_VERBOSE_TRACEBACK=1
+export CONAN_PRINT_RUN_COMMANDS=1
+export CONAN_LOGGING_LEVEL=10
+export GIT_SSL_NO_VERIFY=true
 
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan source . \
-    --source-folder local_build \
-    --install-folder local_build
+cmake -E time \
+  conan install . \
+  --install-folder local_build \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+  --profile clang \
+      -e flextool:enable_tests=True \
+      -e flextool:enable_llvm_tools=True
+
+cmake -E time \
+  conan source . \
+  --source-folder local_build \
+  --install-folder local_build
 
 conan build . \
   --build-folder local_build \
@@ -728,16 +729,18 @@ git clone -b testing/1.90 https://github.com/bincrafters/conan-cppcheck_installe
 
 cd conan-cppcheck_installer
 
+export VERBOSE=1
+export CONAN_REVISIONS_ENABLED=1
+export CONAN_VERBOSE_TRACEBACK=1
+export CONAN_PRINT_RUN_COMMANDS=1
+export CONAN_LOGGING_LEVEL=10
+export GIT_SSL_NO_VERIFY=true
+
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 # NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-    cmake -E time \
-      conan create . conan/stable \
-      -s build_type=Release
+cmake -E time \
+  conan create . conan/stable \
+  -s build_type=Release
 
 # clean build cache
 conan remove "*" --build --force
@@ -845,37 +848,39 @@ NOTE: make sure you set `use_alloc_shim=False` and `enable_valgrind=True` (see b
 Run valgrind via cmake:
 
 ```bash
+export VERBOSE=1
+export CONAN_REVISIONS_ENABLED=1
+export CONAN_VERBOSE_TRACEBACK=1
+export CONAN_PRINT_RUN_COMMANDS=1
+export CONAN_LOGGING_LEVEL=10
+export GIT_SSL_NO_VERIFY=true
+
 # NOTE: set `use_alloc_shim=False` and `enable_valgrind=True` for valgrind support
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build_valgrind \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-    --profile clang \
-        -o flextool:enable_valgrind=True \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True \
-        -e abseil:enable_llvm_tools=True \
-        -o chromium_base:enable_valgrind=True \
-        -e chromium_base:enable_llvm_tools=True \
-        -o chromium_base:use_alloc_shim=False \
-        -o perfetto:is_hermetic_clang=False \
-        -o basis:enable_valgrind=True \
-        -e basis:enable_llvm_tools=True \
-        -o flexlib:enable_valgrind=True \
-        -e flexlib:enable_llvm_tools=True \
-        -o flexlib:enable_clang_from_conan=False \
-        -o chromium_tcmalloc:use_alloc_shim=False \
-        --build chromium_base \
-        --build chromium_tcmalloc \
-        --build basis \
-        --build flexlib
+cmake -E time \
+  conan install . \
+  --install-folder local_build_valgrind \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+  --profile clang \
+      -o flextool:enable_valgrind=True \
+      -e flextool:enable_tests=True \
+      -e flextool:enable_llvm_tools=True \
+      -e abseil:enable_llvm_tools=True \
+      -o chromium_base:enable_valgrind=True \
+      -e chromium_base:enable_llvm_tools=True \
+      -o chromium_base:use_alloc_shim=False \
+      -o perfetto:is_hermetic_clang=False \
+      -o basis:enable_valgrind=True \
+      -e basis:enable_llvm_tools=True \
+      -o flexlib:enable_valgrind=True \
+      -e flexlib:enable_llvm_tools=True \
+      -o flexlib:enable_clang_from_conan=False \
+      -o chromium_tcmalloc:use_alloc_shim=False \
+      --build chromium_base \
+      --build chromium_tcmalloc \
+      --build basis \
+      --build flexlib
 
 cd ~/flextool
 
@@ -977,30 +982,27 @@ c++-analyzer -v
 # must exist
 scan-build -v
 
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build_scan_build \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-    --profile clang \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True
+export VERBOSE=1
+export CONAN_REVISIONS_ENABLED=1
+export CONAN_VERBOSE_TRACEBACK=1
+export CONAN_PRINT_RUN_COMMANDS=1
+export CONAN_LOGGING_LEVEL=10
+export GIT_SSL_NO_VERIFY=true
 
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan source . \
-    --source-folder local_build_scan_build \
-    --install-folder local_build_scan_build
+cmake -E time \
+  conan install . \
+  --install-folder local_build_scan_build \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+  --profile clang \
+      -e flextool:enable_tests=True \
+      -e flextool:enable_llvm_tools=True
+
+cmake -E time \
+  conan source . \
+  --source-folder local_build_scan_build \
+  --install-folder local_build_scan_build
 
 # see section about `conan editable mode`
 cd local_build_scan_build
@@ -1319,782 +1321,9 @@ You can integrate `uncrustify` with IDE:
 * QT Creator: [https://doc.qt.io/qtcreator/creator-beautifier.html](https://doc.qt.io/qtcreator/creator-beautifier.html)
 * Visual Studio Code: [https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify](https://marketplace.visualstudio.com/items?itemName=LaurentTreguier.uncrustify)
 
-## For contibutors: Thread Sanitizer
+## HOW TO BUILD WITH SANITIZERS ENABLED
 
-NOTE: Libc/libstdc++ static linking is not supported.
-
-NOTE: Tsan does not support C++ exceptions.
-
-NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
-
-NOTE: Non-position-independent executables are not supported.
-Therefore, the fsanitize=thread flag will cause Clang to act as though the -fPIE flag had been supplied if compiling without -fPIC, and as though the -pie flag had been supplied if linking an executable.
-
-Set env. var.:
-
-```bash
-# see https://github.com/google/sanitizers/wiki/ThreadSanitizerFlags
-export TSAN_OPTIONS="handle_segv=0:disable_coredump=0:abort_on_error=1:report_thread_leaks=0"
-
-# make sure that env. var. TSAN_SYMBOLIZER_PATH points to llvm-symbolizer
-# conan package llvm_tools provides llvm-symbolizer
-# and prints its path during cmake configure step
-# echo $TSAN_SYMBOLIZER_PATH
-export TSAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
-
-export CFLAGS="-fsanitize=thread -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export CXXFLAGS="-fsanitize=thread -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
-```
-
-Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
-
-```bash
--s llvm_tools:build_type=Release \
-  -e flextool:enable_llvm_tools=True
-```
-
-You must build project and some deps with `enable_tsan=True`:
-
-```bash
-export CC=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang" | head -n 1)
-
-export CXX=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang++" | head -n 1)
-
-# must exist
-file $(dirname $CXX)/../lib/clang/10.0.1/lib/linux/libclang_rt.tsan_cxx-x86_64.a
-
-# NOTE: NO `--profile` argument cause we use `CXX` env. var
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build_tsan \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-        -o llvm_tools:enable_tsan=True \
-        -o llvm_tools:include_what_you_use=False \
-        -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=10 \
-        -s llvm_tools:compiler.libcxx=libstdc++11 \
-        -e flextool:compile_with_llvm_tools=True \
-        -s compiler=clang \
-        -s compiler.version=10 \
-        -s compiler.libcxx=libc++ \
-        -o openssl:shared=True \
-        -o openssl:enable_tsan=True \
-        -e openssl:enable_llvm_tools=True \
-        -e openssl:compile_with_llvm_tools=True \
-        -e conan_gtest:compile_with_llvm_tools=True \
-        -e conan_gtest:enable_llvm_tools=True \
-        -e benchmark:compile_with_llvm_tools=True \
-        -e benchmark:enable_llvm_tools=True \
-        -e fmt:compile_with_llvm_tools=True \
-        -e fmt:enable_llvm_tools=True \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True \
-        -o flextool:enable_tsan=True \
-        -o perfetto:is_tsan=True \
-        -o perfetto:is_hermetic_clang=False \
-        -e abseil:enable_llvm_tools=True \
-        -o chromium_base:enable_tsan=True \
-        -e chromium_base:enable_llvm_tools=True \
-        -o chromium_base:use_alloc_shim=False \
-        -o basis:enable_tsan=True \
-        -e basis:enable_llvm_tools=True \
-        -e boost:enable_llvm_tools=True \
-        -o boost:enable_tsan=True \
-        -e boost:compile_with_llvm_tools=True \
-        -o boost:no_exceptions=True \
-        -o flexlib:enable_tsan=True \
-        -e flexlib:enable_llvm_tools=True \
-        -o flexlib:enable_clang_from_conan=False \
-        -o chromium_tcmalloc:use_alloc_shim=False \
-        --build chromium_base \
-        --build chromium_tcmalloc \
-        --build basis \
-        --build flexlib \
-        --build missing \
-        --build cascade
-
-# remove old CMakeCache
-(rm local_build_tsan/CMakeCache.txt || true)
-
-# see section about `conan editable mode`
-conan build . \
-  --build-folder local_build_tsan \
-  --source-folder local_build_tsan \
-  --install-folder local_build_tsan
-
-# you can run some tests to check sanitizers
-./local_build_tsan/bin/Debug/tests/flextool-gmock \
-  --gtest_filter=ToolsSanityTest.DISABLED_ThreadSanitizerTest \
-  --gtest_also_run_disabled_tests
-```
-
-NOTE: Change of options may require rebuild of some deps (`--build=missing`).
-
-Read TSAN manuals:
-
-* [https://clang.llvm.org/docs/ThreadSanitizer.html](https://clang.llvm.org/docs/ThreadSanitizer.html)
-* [https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual](https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual)
-* [https://www.jetbrains.com/help/clion/google-sanitizers.html#TSanChapter](https://www.jetbrains.com/help/clion/google-sanitizers.html#TSanChapter)
-* [https://www.chromium.org/developers/testing/threadsanitizer-tsan-v2](https://www.chromium.org/developers/testing/threadsanitizer-tsan-v2)
-
-NOTE: ThreadSanitizer generally requires all code to be compiled with -fsanitize=thread.
-If some code (e.g. dynamic libraries) is not compiled with the flag, it can lead to false positive race reports, false negative race reports, and/or missed stack frames in reports depending on the nature of non-instrumented code.
-
-Usage (`-DENABLE_TSAN=ON`):
-
-```bash
-# NOTE: also re-build all deps with sanitizers enabled
-
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build_tsan
-
-# optional
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_TSAN=ON
-cmake .. \
-  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
-  -DENABLE_TSAN=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DENABLE_DOCTEST=OFF \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCOMPILE_WITH_LLVM_TOOLS=TRUE
-
-# remove old build artifacts
-rm -rf flextool
-rm -rf bin
-find . -iname '*.o' -exec rm {} \;
-find . -iname '*.a' -exec rm {} \;
-find . -iname '*.dll' -exec rm {} \;
-find . -iname '*.lib' -exec rm {} \;
-
-# build code
-cmake -E time cmake --build . \
-  --config Debug \
-  -- -j8
-
-# do not forget to reset compile flags
-unset CFLAGS
-unset CXXFLAGS
-unset LDFLAGS
-```
-
-NOTE: you can create blacklist file; see:
-
-* [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
-* [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
-
-## For contibutors: Address Sanitizer
-
-NOTE: build with exceptions and rtti disabled; see: [https://bugs.chromium.org/p/chromium/issues/detail?id=832808](https://bugs.chromium.org/p/chromium/issues/detail?id=832808)
-
-For details, see:
-
-* [http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/](http://btorpey.github.io/blog/2014/03/27/using-clangs-address-sanitizer/)
-* [https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/](https://genbattle.bitbucket.io/blog/2018/01/05/Dev-Santa-Claus-Part-1/)
-
-NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
-
-Set env. var.:
-
-```bash
-# see https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
-export ASAN_OPTIONS="fast_unwind_on_malloc=0:strict_init_order=1:check_initialization_order=true:symbolize=1:handle_segv=0:detect_leaks=1:detect_stack_use_after_return=1:disable_coredump=0:abort_on_error=1"
-# you can also set LSAN_OPTIONS=suppressions=suppr.txt
-
-# make sure that env. var. ASAN_SYMBOLIZER_PATH points to llvm-symbolizer
-# conan package llvm_tools provides llvm-symbolizer
-# and prints its path during cmake configure step
-# echo $ASAN_SYMBOLIZER_PATH
-export ASAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
-
-export CFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export CXXFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
-```
-
-Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
-
-```bash
--s llvm_tools:build_type=Release \
-  -e flextool:enable_llvm_tools=True
-```
-
-You must build project and some deps with `enable_asan=True`:
-
-```bash
-export CC=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang" | head -n 1)
-
-export CXX=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang++" | head -n 1)
-
-# must exist
-file $(dirname $CXX)/../lib/clang/10.0.1/lib/linux/libclang_rt.asan_cxx-x86_64.a
-
-# NOTE: NO `--profile` argument cause we use `CXX` env. var
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build_asan \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-        -o llvm_tools:enable_asan=True \
-        -o llvm_tools:include_what_you_use=False \
-        -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=10 \
-        -s llvm_tools:compiler.libcxx=libstdc++11 \
-        -e flextool:compile_with_llvm_tools=True \
-        -s compiler=clang \
-        -s compiler.version=10 \
-        -s compiler.libcxx=libc++ \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True \
-        -o flextool:enable_asan=True \
-        -o openssl:shared=True \
-        -o openssl:enable_asan=True \
-        -e openssl:enable_llvm_tools=True \
-        -e openssl:compile_with_llvm_tools=True \
-        -e conan_gtest:compile_with_llvm_tools=True \
-        -e conan_gtest:enable_llvm_tools=True \
-        -e benchmark:compile_with_llvm_tools=True \
-        -e benchmark:enable_llvm_tools=True \
-        -e fmt:compile_with_llvm_tools=True \
-        -e fmt:enable_llvm_tools=True \
-        -o perfetto:is_asan=True \
-        -o perfetto:is_hermetic_clang=False \
-        -e abseil:enable_llvm_tools=True \
-        -o chromium_base:enable_asan=True \
-        -e chromium_base:enable_llvm_tools=True \
-        -o chromium_base:use_alloc_shim=False \
-        -o basis:enable_asan=True \
-        -e basis:enable_llvm_tools=True \
-        -e boost:enable_llvm_tools=True \
-        -o boost:enable_asan=True \
-        -e boost:compile_with_llvm_tools=True \
-        -o boost:no_exceptions=True \
-        -o flexlib:enable_asan=True \
-        -e flexlib:enable_llvm_tools=True \
-        -o flexlib:enable_clang_from_conan=False \
-        -o chromium_tcmalloc:use_alloc_shim=False \
-        --build chromium_base \
-        --build chromium_tcmalloc \
-        --build basis \
-        --build flexlib \
-        --build missing \
-        --build cascade
-
-# remove old CMakeCache
-(rm local_build_asan/CMakeCache.txt || true)
-
-# see section about `conan editable mode`
-conan build . \
-  --build-folder local_build_asan \
-  --source-folder local_build_asan \
-  --install-folder local_build_asan
-
-# you can run some tests to check sanitizers
-./local_build_asan/bin/Debug/tests/flextool-gmock \
-  --gtest_filter=ToolsSanityTest.DISABLED_AddressSanitizerTest \
-  --gtest_also_run_disabled_tests
-# must print `AddressSanitizer: stack-buffer-overflow on address...`
-
-# do not forget to reset compile flags
-unset CFLAGS
-unset CXXFLAGS
-unset LDFLAGS
-```
-
-NOTE: Change of options may require rebuild of some deps (`--build=missing`).
-
-Read ASAN manuals:
-
-* [https://clang.llvm.org/docs/AddressSanitizer.html](https://clang.llvm.org/docs/AddressSanitizer.html)
-* [https://www.chromium.org/developers/testing/addresssanitizer](https://www.chromium.org/developers/testing/addresssanitizer)
-* [https://www.jetbrains.com/help/clion/google-sanitizers.html#AsanChapter](https://www.jetbrains.com/help/clion/google-sanitizers.html#AsanChapter)
-* [https://github.com/google/sanitizers/wiki](https://github.com/google/sanitizers/wiki)
-
-NOTE: `detect_leaks=1` enables Leak Sanitizer, see [https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer](https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer)
-
-Usage (`-DENABLE_ASAN=ON`):
-
-```bash
-# NOTE: also re-build all deps with sanitizers enabled
-
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build_asan
-
-# optional
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_ASAN=ON
-cmake .. \
-  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
-  -DENABLE_ASAN=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DENABLE_DOCTEST=OFF \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCOMPILE_WITH_LLVM_TOOLS=TRUE
-
-# remove old build artifacts
-rm -rf flextool
-rm -rf bin
-find . -iname '*.o' -exec rm {} \;
-find . -iname '*.a' -exec rm {} \;
-find . -iname '*.dll' -exec rm {} \;
-find . -iname '*.lib' -exec rm {} \;
-
-# build code
-cmake -E time cmake --build . \
-  --config Debug \
-  -- -j8
-```
-
-NOTE: you can create blacklist file; see:
-
-* [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
-* [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
-
-## For contibutors: Memory Sanitizer
-
-NOTE: MemorySanitizer requires that all program code is instrumented.
-This also includes any libraries that the program depends on, even libc. Failing to achieve this may result in false reports.
-For the same reason you may need to replace all inline assembly code that writes to memory with a pure C/C++ code.
-
-NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
-
-Set env. var.:
-
-```bash
-# see https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
-export MSAN_OPTIONS="poison_in_dtor=1:fast_unwind_on_malloc=0:check_initialization_order=true:handle_segv=0:detect_leaks=1:detect_stack_use_after_return=1:disable_coredump=0:abort_on_error=1"
-# you can also set LSAN_OPTIONS=suppressions=suppr.txt
-
-# make sure that env. var. MSAN_SYMBOLIZER_PATH points to llvm-symbolizer
-# conan package llvm_tools provides llvm-symbolizer
-# and prints its path during cmake configure step
-# echo $MSAN_SYMBOLIZER_PATH
-export MSAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
-
-export CFLAGS="-fsanitize=memory -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export CXXFLAGS="-fsanitize=memory -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
-```
-
-Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
-
-```bash
--s llvm_tools:build_type=Release \
-  -e flextool:enable_llvm_tools=True
-```
-
-If you want MemorySanitizer to work properly and not produce any false positives, you must ensure that all the code in your program and in the libraries it uses is instrumented (i.e. built with `-fsanitize=memory`).
-In particular, you would need to link against MSan-instrumented C++ standard library. See: [https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo](https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo)
-You need to re-build both C++ standard library and googletest (and other dependencies) with MemorySanitizer.
-
-Re-build all required projects with `-o llvm_tools:enable_msan=True`, `enable_llvm_tools=True`, `compile_with_llvm_tools=True`, and `llvm_tools:build_type=Release` to use MSan-instrumented C++ standard library.
-
-NOTE: re-build some deps with custom MSan-instrumented C++ standard library. For that you can add to `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`: `-fsanitize=memory -stdlib=libc++ -L/usr/src/libcxx_msan/lib -lc++abi -I/usr/src/libcxx_msan/include -I/usr/src/libcxx_msan/include/c++/v1` (replace paths to yours). Usually dependency will have option like `-o *:enable_msan=True` to achieve same effect.
-
-You must build project and some deps with `enable_msan=True`:
-
-```bash
-# NOTE: Re-build all deps with MSan-instrumented C++ standard library.
-# Usually it may be achieved using `*:compile_with_llvm_tools=True` and `-o llvm_tools:enable_msan=True`.
-
-export CC=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang" | head -n 1)
-
-export CXX=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang++" | head -n 1)
-
-# must exist
-file $(dirname $CXX)/../lib/clang/10.0.1/lib/linux/libclang_rt.msan_cxx-x86_64.a
-
-export LD_LIBRARY_PATH="$(dirname $CXX)/../lib:$LD_LIBRARY_PATH"
-
-# TODO
-# export MSAN_LIB="$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "libclang_rt.msan-*.so" | head -n 1)"
-# must exist
-# file $MSAN_LIB
-# export LD_PRELOAD="$MSAN_LIB $LD_PRELOAD"
-
-sudo ldconfig
-
-# NOTE: NO `--profile` argument cause we use `CXX` env. var
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build_msan \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-        -o llvm_tools:enable_msan=True \
-        -o llvm_tools:include_what_you_use=False \
-        -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=10 \
-        -s llvm_tools:compiler.libcxx=libstdc++11 \
-        -e flextool:compile_with_llvm_tools=True \
-        -s compiler=clang \
-        -s compiler.version=10 \
-        -s compiler.libcxx=libc++ \
-        -o openssl:shared=True \
-        -o openssl:enable_msan=True \
-        -e openssl:enable_llvm_tools=True \
-        -e openssl:compile_with_llvm_tools=True \
-        -e conan_gtest:compile_with_llvm_tools=True \
-        -e conan_gtest:enable_llvm_tools=True \
-        -e benchmark:compile_with_llvm_tools=True \
-        -e benchmark:enable_llvm_tools=True \
-        -e fmt:compile_with_llvm_tools=True \
-        -e fmt:enable_llvm_tools=True \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True \
-        -o flextool:enable_msan=True \
-        -o perfetto:is_msan=True \
-        -o perfetto:is_hermetic_clang=False \
-        -e abseil:enable_llvm_tools=True \
-        -o chromium_base:enable_msan=True \
-        -e chromium_base:enable_llvm_tools=True \
-        -o chromium_base:use_alloc_shim=False \
-        -o basis:enable_msan=True \
-        -e basis:enable_llvm_tools=True \
-        -e boost:enable_llvm_tools=True \
-        -o boost:enable_msan=True \
-        -e boost:compile_with_llvm_tools=True \
-        -o boost:no_exceptions=True \
-        -o flexlib:enable_msan=True \
-        -e flexlib:enable_llvm_tools=True \
-        -o flexlib:enable_clang_from_conan=False \
-        -o chromium_tcmalloc:use_alloc_shim=False \
-        --build chromium_base \
-        --build chromium_tcmalloc \
-        --build basis \
-        --build flexlib \
-        --build missing \
-        --build cascade
-
-# remove old CMakeCache
-(rm local_build_msan/CMakeCache.txt || true)
-
-# see section about `conan editable mode`
-conan build . \
-  --build-folder local_build_msan \
-  --source-folder local_build_msan \
-  --install-folder local_build_msan
-
-# you can run some tests to check sanitizers
-./local_build_msan/bin/Debug/tests/flextool-gmock \
-  --gtest_filter=ToolsSanityTest.DISABLED_MemorySanitizerTest \
-  --gtest_also_run_disabled_tests
-
-# do not forget to reset compile flags
-unset CFLAGS
-unset CXXFLAGS
-unset LDFLAGS
-```
-
-NOTE: Change of options may require rebuild of some deps (`--build=missing`).
-
-Read MSAN manuals:
-
-* [https://www.chromium.org/developers/testing/memorysanitizer](https://www.chromium.org/developers/testing/memorysanitizer)
-* [https://github.com/google/sanitizers/wiki](https://github.com/google/sanitizers/wiki)
-* [https://www.jetbrains.com/help/clion/google-sanitizers.html#MSanChapter](https://www.jetbrains.com/help/clion/google-sanitizers.html#MSanChapter)
-* [https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43308.pdf](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43308.pdf)
-
-NOTE: `detect_leaks=1` enables Leak Sanitizer; see: [https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer](https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer)
-
-Usage (`-DENABLE_MSAN=ON`):
-
-```bash
-# NOTE: also re-build all deps with sanitizers enabled
-
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build_msan
-
-# optional
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_MSAN=ON
-cmake .. \
-  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
-  -DENABLE_MSAN=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DENABLE_DOCTEST=OFF \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCOMPILE_WITH_LLVM_TOOLS=TRUE
-
-# remove old build artifacts
-rm -rf flextool
-rm -rf bin
-find . -iname '*.o' -exec rm {} \;
-find . -iname '*.a' -exec rm {} \;
-find . -iname '*.dll' -exec rm {} \;
-find . -iname '*.lib' -exec rm {} \;
-
-# build code
-cmake -E time cmake --build . \
-  --config Debug \
-  -- -j8
-```
-
-NOTE: you can create blacklist file; see:
-
-* [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
-* [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
-
-FAQ:
-
-* How to use MemorySanitizer (MSAN) with `syscall(SYS_getrandom, ..., ..., ...)`?
-  Use __msan_unpoison:
-  ```cpp
-  #if defined(__has_feature)
-  #if __has_feature(memory_sanitizer)
-          /* MemorySanitizer (MSAN) does not support syscall(SYS_getrandom, ..., ..., ...):
-           * Use __msan_unpoison to make MSAN understand how many bytes that have been
-           * written to ent32.
-           *
-           * __msan_unpoison does not change the actual memory content, but only MSAN's
-           * perception of the memory content.
-           *
-           * See https://github.com/google/sanitizers/issues/852 ("memory sanitizer: not
-           * tracking memory initialization with getrandom") for details.
-           */
-          __msan_unpoison(ent32, rv);
-  #endif
-  #endif
-  ```
-
-## For contibutors: Undefined Behavior Sanitizer
-
-NOTE: Disable custom memory allocation functions (use use_alloc_shim=False). This can hide memory access bugs and prevent the detection of memory access errors.
-
-Set env. var.:
-
-```bash
-# see https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
-export UBSAN_OPTIONS="fast_unwind_on_malloc=0:handle_segv=0:disable_coredump=0:halt_on_error=1:print_stacktrace=1:report_error_type=1"
-
-# make sure that env. var. UBSAN_SYMBOLIZER_PATH points to llvm-symbolizer
-# conan package llvm_tools provides llvm-symbolizer
-# and prints its path during cmake configure step
-# echo $UBSAN_SYMBOLIZER_PATH
-export UBSAN_SYMBOLIZER_PATH=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/llvm-symbolizer" | head -n 1)
-
-export CFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export CXXFLAGS="-fsanitize=address,undefined -fno-exceptions -DBOOST_EXCEPTION_DISABLE=1 -DBOOST_NO_EXCEPTIONS=1 -DBOOST_USE_ASAN=1 -fuse-ld=lld -stdlib=libc++ -lc++ -lc++abi -lunwind"
-
-export LDFLAGS="-stdlib=libc++ -lc++ -lc++abi -lunwind"
-```
-
-Requires `enable_llvm_tools=True` and `llvm_tools:build_type=Release`:
-
-```bash
--s llvm_tools:build_type=Release \
-  -e flextool:enable_llvm_tools=True
-```
-
-NOTE: Make sure to use clang++ (not ld) as a linker, so that your executable is linked with proper UBSan runtime libraries.
-
-You must build project and some deps with `enable_ubsan=True`:
-
-```bash
-export CC=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang" | head -n 1)
-
-export CXX=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang++" | head -n 1)
-
-# must exist
-file $(dirname $CXX)/../lib/clang/10.0.1/lib/linux/libclang_rt.ubsan_standalone-x86_64.a
-
-# NOTE: NO `--profile` argument cause we use `CXX` env. var
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build_ubsan \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-        -o llvm_tools:enable_ubsan=True \
-        -o llvm_tools:include_what_you_use=False \
-        -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=10 \
-        -s llvm_tools:compiler.libcxx=libstdc++11 \
-        -e flextool:compile_with_llvm_tools=True \
-        -s compiler=clang \
-        -s compiler.version=10 \
-        -s compiler.libcxx=libc++ \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True \
-        -o flextool:enable_ubsan=True \
-        -o openssl:shared=True \
-        -o openssl:enable_ubsan=True \
-        -e openssl:enable_llvm_tools=True \
-        -e openssl:compile_with_llvm_tools=True \
-        -e conan_gtest:compile_with_llvm_tools=True \
-        -e conan_gtest:enable_llvm_tools=True \
-        -e benchmark:compile_with_llvm_tools=True \
-        -e benchmark:enable_llvm_tools=True \
-        -e fmt:compile_with_llvm_tools=True \
-        -e fmt:enable_llvm_tools=True \
-        -o perfetto:is_ubsan=True \
-        -o perfetto:is_hermetic_clang=False \
-        -e abseil:enable_llvm_tools=True \
-        -o chromium_base:enable_ubsan=True \
-        -e chromium_base:enable_llvm_tools=True \
-        -o chromium_base:use_alloc_shim=False \
-        -o basis:enable_ubsan=True \
-        -e basis:enable_llvm_tools=True \
-        -e boost:enable_llvm_tools=True \
-        -o boost:enable_ubsan=True \
-        -e boost:compile_with_llvm_tools=True \
-        -o boost:no_exceptions=True \
-        -o flexlib:enable_ubsan=True \
-        -e flexlib:enable_llvm_tools=True \
-        -o flexlib:enable_clang_from_conan=False \
-        -o chromium_tcmalloc:use_alloc_shim=False \
-        --build chromium_base \
-        --build chromium_tcmalloc \
-        --build basis \
-        --build flexlib \
-        --build missing \
-        --build cascade
-
-# remove old CMakeCache
-(rm local_build_ubsan/CMakeCache.txt || true)
-
-# see section about `conan editable mode`
-conan build . \
-  --build-folder local_build_ubsan \
-  --source-folder local_build_ubsan \
-  --install-folder local_build_ubsan
-
-# you can run some tests to check sanitizers
-./local_build_ubsan/bin/Debug/tests/flextool-gmock \
-  --gtest_filter=ToolsSanityTest.DISABLED_UndefinedBehaviorSanitizerTest \
-  --gtest_also_run_disabled_tests
-
-# do not forget to reset compile flags
-unset CFLAGS
-unset CXXFLAGS
-unset LDFLAGS
-```
-
-NOTE: Use `_Nonnull` annotation, see [https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#ubsan-checks](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#ubsan-checks)
-
-`_Nonnull` annotation requires `-fsanitize=nullability-*`, so we enable them by default:
-
-```bash
-  -fsanitize=nullability-arg \
-  -fsanitize=nullability-assign \
-  -fsanitize=nullability-return \
-```
-
-```cpp
-Violation of the nonnull Parameter Attribute in C
-In the following example, the call to the has_nonnull_argument function breaks the nonnull attribute of the parameter p.
-
-void has_nonnull_argument(__attribute__((nonnull)) int *p) {
-     // ...
-}
-has_nonnull_argument(NULL); // Error: nonnull parameter attribute violation
-```
-
-NOTE: Change of options may require rebuild of some deps (`--build=missing`).
-
-Read UBSAN manuals:
-
-* [https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
-* [https://www.jetbrains.com/help/clion/google-sanitizers.html#UbSanChapter](https://www.jetbrains.com/help/clion/google-sanitizers.html#UbSanChapter)
-* [https://github.com/google/sanitizers/wiki](https://github.com/google/sanitizers/wiki)
-* [https://www.chromium.org/developers/testing/undefinedbehaviorsanitizer](https://www.chromium.org/developers/testing/undefinedbehaviorsanitizer)
-
-Usage (`-DENABLE_UBSAN=ON`):
-
-```bash
-# NOTE: also re-build all deps with sanitizers enabled
-
-cd ~/flextool
-
-# see section about `conan editable mode`
-cd local_build_ubsan
-
-# optional
-# remove old CMakeCache
-(rm CMakeCache.txt || true)
-
-# NOTE: -DENABLE_UBSAN=ON
-cmake .. \
-  -DCMAKE_VERBOSE_MAKEFILE=TRUE \
-  -DENABLE_UBSAN=ON \
-  -DENABLE_TESTS=FALSE \
-  -DBASE_NEED_GEN_BUILD_DATE=FALSE \
-  -DENABLE_DOCTEST=OFF \
-  -DBUILD_SHARED_LIBS=FALSE \
-  -DCONAN_AUTO_INSTALL=OFF \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCOMPILE_WITH_LLVM_TOOLS=TRUE
-
-# remove old build artifacts
-rm -rf flextool
-rm -rf bin
-find . -iname '*.o' -exec rm {} \;
-find . -iname '*.a' -exec rm {} \;
-find . -iname '*.dll' -exec rm {} \;
-find . -iname '*.lib' -exec rm {} \;
-
-# build code
-cmake -E time cmake --build . \
-  --config Debug \
-  -- -j8
-```
-
-NOTE: you can create blacklist file; see:
-
-* [https://clang.llvm.org/docs/SanitizerSpecialCaseList.html](https://clang.llvm.org/docs/SanitizerSpecialCaseList.html)
-* [https://www.mono-project.com/docs/debug+profile/clang/blacklists/](https://www.mono-project.com/docs/debug+profile/clang/blacklists/)
+See https://github.com/blockspacer/llvm_9_installer#how-to-use-with-sanitizers
 
 ## For contibutors: build using clang 10 from conan
 
@@ -2129,46 +1358,43 @@ export CC=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*b
 
 export CXX=$(find ~/.conan/data/llvm_tools/master/conan/stable/package/ -path "*bin/clang++" | head -n 1)
 
+export VERBOSE=1
+export CONAN_REVISIONS_ENABLED=1
+export CONAN_VERBOSE_TRACEBACK=1
+export CONAN_PRINT_RUN_COMMANDS=1
+export CONAN_LOGGING_LEVEL=10
+export GIT_SSL_NO_VERIFY=true
+
 # NOTE: NO `--profile` argument cause we use `CXX` env. var
 # NOTE: you may want to re-build `cling_conan` with clang 10
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan install . \
-    --install-folder local_build_clang_10 \
-    -s build_type=Debug \
-    -s cling_conan:build_type=Release \
-    -s llvm_tools:build_type=Release \
-        --build missing \
-        --build cascade \
-        -s cling_conan:compiler=clang \
-        -s cling_conan:compiler.version=10 \
-        -s cling_conan:compiler.libcxx=libstdc++11 \
-        -o llvm_tools:include_what_you_use=True \
-        -s llvm_tools:compiler=clang \
-        -s llvm_tools:compiler.version=10 \
-        -s llvm_tools:compiler.libcxx=libstdc++11 \
-        -e flextool:enable_tests=True \
-        -e flextool:enable_llvm_tools=True \
-        -e flextool:compile_with_llvm_tools=True \
-        -e boost:enable_llvm_tools=True \
-        -e boost:compile_with_llvm_tools=True \
-        -s compiler=clang \
-        -s compiler.version=10 \
-        -s compiler.libcxx=libc++
+cmake -E time \
+  conan install . \
+  --install-folder local_build_clang_10 \
+  -s build_type=Debug \
+  -s cling_conan:build_type=Release \
+  -s llvm_tools:build_type=Release \
+      --build missing \
+      --build cascade \
+      -s cling_conan:compiler=clang \
+      -s cling_conan:compiler.version=10 \
+      -s cling_conan:compiler.libcxx=libstdc++11 \
+      -o llvm_tools:include_what_you_use=True \
+      -s llvm_tools:compiler=clang \
+      -s llvm_tools:compiler.version=10 \
+      -s llvm_tools:compiler.libcxx=libstdc++11 \
+      -e flextool:enable_tests=True \
+      -e flextool:enable_llvm_tools=True \
+      -e flextool:compile_with_llvm_tools=True \
+      -e boost:enable_llvm_tools=True \
+      -e boost:compile_with_llvm_tools=True \
+      -s compiler=clang \
+      -s compiler.version=10 \
+      -s compiler.libcxx=libc++
 
-CONAN_REVISIONS_ENABLED=1 \
-CONAN_VERBOSE_TRACEBACK=1 \
-CONAN_PRINT_RUN_COMMANDS=1 \
-CONAN_LOGGING_LEVEL=10 \
-GIT_SSL_NO_VERIFY=true \
-  cmake -E time \
-    conan source . \
-    --source-folder local_build_clang_10 \
-    --install-folder local_build_clang_10
+cmake -E time \
+  conan source . \
+  --source-folder local_build_clang_10 \
+  --install-folder local_build_clang_10
 
 # remove old CMakeCache
 (rm local_build_clang_10/CMakeCache.txt || true)
@@ -2741,7 +1967,7 @@ See LICENSE files.
 
 #### D
 
-##### Denis trofimov
+##### Denis Trofimov
 
 - C++ Developer
 - [github](https://github.com/blockspacer)

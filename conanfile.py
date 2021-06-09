@@ -9,9 +9,19 @@ from distutils.util import strtobool
 
 conan_build_helper = python_requires("conan_build_helper/[~=0.0]@conan/stable")
 
+# Users locally they get the 1.0.0 version,
+# without defining any env-var at all,
+# and CI servers will append the build number.
+# USAGE
+# version = get_version("1.0.0")
+# BUILD_NUMBER=-pre1+build2 conan export-pkg . my_channel/release
+def get_version(version):
+    bn = os.getenv("BUILD_NUMBER")
+    return (version + bn) if bn else version
+
 class flextoolConan(conan_build_helper.CMakePackage):
     name = "flextool"
-    version = "master"
+    version = get_version("master")
     url = "https://CHANGE_ME"
     #repo_url = 'https://github.com/google/flatbuffers.git'
     #homepage = "https://github.com/google/flatbuffers"
@@ -38,7 +48,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
                        "third_party/*", "flexlib/*")
 
     options = {
-        "enable_clang_from_conan": [True, False],
+        "enable_cling": [True, False],
         "enable_ubsan": [True, False],
         "enable_asan": [True, False],
         "enable_msan": [True, False],
@@ -52,6 +62,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
     }
 
     default_options = (
+        "enable_cling=False",
         #"*:shared=False",
         "enable_gold_linker=False",
         "enable_fuzz_afl=False",
@@ -61,7 +72,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "enable_msan=False",
         "enable_tsan=False",
         "enable_valgrind=False",
-        "enable_clang_from_conan=False",
         # boost
         "boost:no_rtti=False",
         "boost:no_exceptions=False",
@@ -94,51 +104,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
         "boost:without_date_time=False",
         "boost:without_exception=False",
         "boost:without_container=False",
-        # llvm
-        "llvm:shared=False",
-        "compiler-rt:shared=False",
-        "clang:shared=False",
-        "llvm_headers:shared=False",
-        "clang_headers:shared=False",
-        "clang_executables:shared=False",
-        "llvm_demangle:shared=False",
-        "llvm_support:shared=False",
-        "llvm_binary_format:shared=False",
-        "llvm_core:shared=False",
-        "llvm_mc:shared=False",
-        "llvm_bit_reader:shared=False",
-        "llvm_mc_parser:shared=False",
-        "llvm_object:shared=False",
-        "llvm_profile_data:shared=False",
-        "llvm_analysis:shared=False",
-        "llvm_transform_utils:shared=False",
-        "llvm_instcombine:shared=False",
-        "llvm_bit_writer:shared=False",
-        "llvm_target:shared=False",
-        "llvm_scalar_opts:shared=False",
-        "llvm_option:shared=False",
-        "llvm_debuginfo_codeview:shared=False",
-        "llvm_codegen:shared=False",
-        "llvm_x86_utils:shared=False",
-        "llvm_x86_asm_printer:shared=False",
-        "llvm_mc_disassembler:shared=False",
-        "llvm_debuginfo_msf:shared=False",
-        "llvm_global_isel:shared=False",
-        "llvm_asm_printer:shared=False",
-        "llvm_x86_info:shared=False",
-        "llvm_x86_asm_parser:shared=False",
-        "llvm_x86_desc:shared=False",
-        "llvm_selection_dag:shared=False",
-        "clang_lex:shared=False",
-        "clang_basic:shared=False",
-        "llvm_x86_codegen:shared=False",
-        "clang_analysis:shared=False",
-        "clang_ast:shared=False",
         # flexlib
         "flexlib:shared=False",
-        "flexlib:enable_clang_from_conan=False",
-        # FakeIt
-        "FakeIt:integration=catch",
         # openssl
         "openssl:shared=True",
     )
@@ -150,10 +117,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
     @property
     def _build_dir(self):
         return "."
-
-    # installs clang 10 from conan
-    def _is_llvm_tools_enabled(self):
-      return self._environ_option("ENABLE_LLVM_TOOLS", default = 'false')
 
     def _is_lwyu_enabled(self):
       return self._environ_option("ENABLE_LWYU", default = 'false')
@@ -191,33 +154,13 @@ class flextoolConan(conan_build_helper.CMakePackage):
     def _is_lto_enabled(self):
       return self._environ_option("ENABLE_LTO", default = 'false')
 
-    # sets cmake variables required to use clang 10 from conan
-    def _is_compile_with_llvm_tools_enabled(self):
-      return self._environ_option("COMPILE_WITH_LLVM_TOOLS", default = 'false')
-
     def configure(self):
         lower_build_type = str(self.settings.build_type).lower()
-
-        if lower_build_type != "release" and not self._is_llvm_tools_enabled():
-            self.output.warn('enable llvm_tools for Debug builds')
-
-        if self._is_iwyu_enabled() and (not self._is_llvm_tools_enabled() or not self.options['llvm_tools'].include_what_you_use):
-            raise ConanInvalidConfiguration("iwyu requires llvm_tools enabled and -o llvm_tools:include_what_you_use=True")
-
-        if self._is_compile_with_llvm_tools_enabled() and not self._is_llvm_tools_enabled():
-            raise ConanInvalidConfiguration("to compile with llvm_tools you must be enable llvm_tools")
 
         if self.options.enable_valgrind:
             self.options["flexlib"].enable_valgrind = True
             self.options["basis"].enable_valgrind = True
             self.options["chromium_base"].enable_valgrind = True
-
-        if self.options.enable_ubsan \
-           or self.options.enable_asan \
-           or self.options.enable_msan \
-           or self.options.enable_tsan:
-            if not self._is_llvm_tools_enabled():
-                raise ConanInvalidConfiguration("sanitizers require llvm_tools")
 
         if self.options.enable_ubsan \
            or self.options.enable_asan \
@@ -259,6 +202,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
               self.options["conan_gtest"].enable_tsan = True
 
     def build_requirements(self):
+        self.build_requires("llvm_9_installer/master@conan/stable")
         self.build_requires("cmake_platform_detection/master@conan/stable")
         self.build_requires("cmake_build_options/master@conan/stable")
         self.build_requires("cmake_helper_utils/master@conan/stable")
@@ -272,15 +216,11 @@ class flextoolConan(conan_build_helper.CMakePackage):
         if self._is_cppcheck_enabled():
           self.build_requires("cppcheck_installer/1.90@conan/stable")
 
-        # provides clang-tidy, clang-format, IWYU, scan-build, etc.
-        if self._is_llvm_tools_enabled():
-          self.build_requires("llvm_tools/master@conan/stable")
-
     def requirements(self):
+        self.requires("llvm_9/master@conan/stable")
+
         if self._is_tests_enabled():
-            self.requires("catch2/[>=2.1.0]@bincrafters/stable")
             self.requires("conan_gtest/stable@conan/stable")
-            self.requires("FakeIt/[>=2.0.4]@gasuketsu/stable")
 
         self.requires("chromium_icu/master@conan/stable")
 
@@ -291,15 +231,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
 
         self.requires("chromium_build_util/master@conan/stable")
 
-        if self.options.enable_clang_from_conan:
-          self.requires("llvm_support/6.0.1@Manu343726/testing")
-          self.requires("libclang/6.0.1@Manu343726/testing")
-          self.requires("clang_tooling/6.0.1@Manu343726/testing")
-          self.requires("clang_tooling_core/6.0.1@Manu343726/testing")
-          self.requires("clang_analysis/6.0.1@Manu343726/testing")
-          self.requires("clang_ast/6.0.1@Manu343726/testing")
-          self.requires("llvm/6.0.1@Manu343726/testing")
-        else:
+        if self.options.enable_cling:
           self.requires("cling_conan/v0.9@conan/stable")
 
         self.requires("flexlib/master@conan/stable")
@@ -383,8 +315,6 @@ class flextoolConan(conan_build_helper.CMakePackage):
 
         self.add_cmake_option(cmake, "ENABLE_LTO", self._is_lto_enabled())
 
-        self.add_cmake_option(cmake, "COMPILE_WITH_LLVM_TOOLS", self._is_compile_with_llvm_tools_enabled())
-
         cmake.definitions["CONAN_AUTO_INSTALL"] = 'OFF'
 
         if self.settings.compiler == 'gcc':
@@ -393,8 +323,7 @@ class flextoolConan(conan_build_helper.CMakePackage):
             cmake.definitions["CMAKE_CXX_COMPILER"] = "g++-{}".format(
                 self.settings.compiler.version)
 
-        if not self.options.enable_clang_from_conan:
-          cmake.definitions["ENABLE_CLING"] = 'ON'
+        cmake.definitions["ENABLE_CLING"] = "ON" if self.options.enable_cling else "OFF"
 
         cmake.definitions["ENABLE_UBSAN"] = "ON" if self.options.enable_ubsan else "OFF"
 
@@ -524,12 +453,15 @@ class flextoolConan(conan_build_helper.CMakePackage):
         self.rmdir_if_packaged('lib/tests')
         self.rmdir_if_packaged('lib/pkgconfig')
 
+    # NOTE: It is build-time tool.
+    # Any project configuration must be able to depend on it.
     def package_id(self):
-        # NOTE: flextool is build-time tool.
-        # Any project configuration must be able to depend on flextool.
-        del self.info.settings.compiler
-        del self.info.settings.arch
         self.info.include_build_settings()
+        if self.settings.os_build == "Windows":
+            del self.info.settings.arch_build # same build is used for x86 and x86_64
+        del self.info.settings.arch
+        del self.info.settings.compiler
+        del self.info.settings.build_type
 
     def package_info(self):
         self.cpp_info.includedirs = ['{}/include'.format(self.package_folder)]

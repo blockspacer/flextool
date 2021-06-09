@@ -195,6 +195,8 @@ add_executable(flextool::exe
 # -------------------------------- link_libraries ------------------------------------
 
 target_link_libraries(${FLEXTOOL_LIB_NAME} PUBLIC
+  -lncurses
+  -ltinfo
   ${USED_3DPARTY_LIBS}
   ${USED_SYSTEM_LIBS}
 )
@@ -223,15 +225,6 @@ if(ENABLE_CLING)
                 /EXPORT:cling_runtime_internal_throwIfInvalidPointer")
   endif()
 endif(ENABLE_CLING)
-
-if(ENABLE_CLANG_FROM_CONAN)
-  target_link_libraries( ${FLEXTOOL_LIB_NAME} PUBLIC#PRIVATE
-    CONAN_PKG::libclang
-    CONAN_PKG::clang_tooling
-    CONAN_PKG::clang_tooling_core
-    CONAN_PKG::llvm_support
-  )
-endif(ENABLE_CLANG_FROM_CONAN)
 
 # -------------------------------- Includes ------------------------------------
 

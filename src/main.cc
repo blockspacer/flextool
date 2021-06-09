@@ -163,6 +163,7 @@ base::Optional<int> initEnv(
     }
   }
 
+#if defined(CLING_IS_ON)
   // ScopedClingEnvironment
   {
     {
@@ -185,8 +186,8 @@ base::Optional<int> initEnv(
         << "creating"
         " plugin::ToolPlugin::Events"
         "::RegisterClingInterpreter";
-      DCHECK(cling_env.clingInterpreter);
       DCHECK(plugin_env.main_events_dispatcher);
+      DCHECK(cling_env.clingInterpreter);
 
       using RegisterClingInterpreter
         = plugin::ToolPlugin::Events::RegisterClingInterpreter;
@@ -201,11 +202,14 @@ base::Optional<int> initEnv(
         );
     }
   }
+#endif // defined(CLING_IS_ON)
 
   // continue setup of ScopedClingEnvironment,
   // depends on Cling
   {
+#if defined(CLING_IS_ON)
     DCHECK(cling_env.clingInterpreter);
+#endif // defined(CLING_IS_ON)
 
     /// \note allow plugins to process commands before
     /// pre-built logic

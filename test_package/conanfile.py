@@ -55,6 +55,8 @@ class TestPackageConan(ConanFile):
             self.output.info('self.package_folder = %s' % (self.package_folder))
             self.output.info('self.source_folder = %s' % (self.source_folder))
 
+            llvm_root = self.deps_cpp_info["llvm_9"].rootpath
+
             #
             # cling_includes must point to cling/Interpreter/RuntimeUniverse.h
             #
@@ -77,14 +79,38 @@ class TestPackageConan(ConanFile):
             # run executable
             # NOTE: generates file in filesystem
             #
+              #" --extra-arg=-isystem{}" \
+              #" --extra-arg=-isystem{}".format(self.source_folder, \
+              #os.path.join(llvm_root, "include/c++/v1"),
+              #os.path.join(llvm_root, "include"),
+              #os.path.join(llvm_root, "lib/clang/9.0.1/include"),
+              #cling_includes
+
             flextool_cmd = os.environ['flextool_BIN'] + \
-              " {}/test_package.cpp" \
+              " {}/test_package_cling.cpp" \
               " --outdir=." \
               " --indir=." \
-              " --vmodule=*=9999 --enable-logging=stderr --log-level=100" \
-              " --extra-arg=-I{}" \
-              " --extra-arg=-I{}".format(self.source_folder, \
-              cling_includes, clang_includes)
+              " --vmodule=*=9999 --enable-logging=stderr --log-level=100"
+            # flextool_cmd = flextool_cmd + " --extra-arg=-D__CLANG__"
+            # flextool_cmd = flextool_cmd + " --extra-arg=-fPIC"
+            # flextool_cmd = flextool_cmd + " --extra-arg=-nostdinc++"
+            # #flextool_cmd = flextool_cmd + " --extra-arg=-nostdinc"
+            # flextool_cmd = flextool_cmd + " --extra-arg=-std=c++17"
+            # flextool_cmd = flextool_cmd + " --extra-arg=-stdlib=libc++"
+            # # path to features.h
+            # flextool_cmd = flextool_cmd + " --extra-arg=-isystem{}".format("/usr/include/linux")
+            # flextool_cmd = flextool_cmd + " --extra-arg=-isystem{}".format("/usr/include/x86_64-linux-gnu")
+            # flextool_cmd = flextool_cmd + " --extra-arg=-isystem{}".format(cling_includes)
+            # flextool_cmd = flextool_cmd + " --extra-arg=-isystem{}".format(os.path.join(llvm_root, "lib/clang/9.0.1/include"))
+            # flextool_cmd = flextool_cmd + " --extra-arg=-isystem{}".format(os.path.join(llvm_root, "include/c++/v1"))
+            # flextool_cmd = flextool_cmd + " --extra-arg=-isystem{}".format(os.path.join(llvm_root, "include"))
+            # #flextool_cmd = flextool_cmd + " --extra-arg=-lc++"
+            # #flextool_cmd = flextool_cmd + " --extra-arg=-lc++abi"
+            # #flextool_cmd = flextool_cmd + " --extra-arg=-lm"
+            # #flextool_cmd = flextool_cmd + " --extra-arg=-lc"
+            # #flextool_cmd = flextool_cmd + " --extra-arg=-L{}/lib".format(llvm_root)
+            # #flextool_cmd = flextool_cmd + " --extra-arg=-Wl,-rpath,{}/lib".format(llvm_root)
+            # flextool_cmd = flextool_cmd + " --extra-arg=-resource-dir {}/lib/clang/9.0.1".format(llvm_root)
             self.output.info('flextool_cmd = %s' % (flextool_cmd))
             self.run(flextool_cmd, run_environment=True)
 
