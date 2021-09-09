@@ -202,7 +202,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
               self.options["conan_gtest"].enable_tsan = True
 
     def build_requirements(self):
-        self.build_requires("llvm_9_installer/master@conan/stable")
+        if not self.options.enable_cling:
+          self.build_requires("llvm_9_installer/master@conan/stable")
         self.build_requires("cmake_platform_detection/master@conan/stable")
         self.build_requires("cmake_build_options/master@conan/stable")
         self.build_requires("cmake_helper_utils/master@conan/stable")
@@ -217,7 +218,8 @@ class flextoolConan(conan_build_helper.CMakePackage):
           self.build_requires("cppcheck_installer/1.90@conan/stable")
 
     def requirements(self):
-        self.requires("llvm_9/master@conan/stable")
+        if not self.options.enable_cling:
+          self.requires("llvm_9/master@conan/stable")
 
         if self._is_tests_enabled():
             self.requires("conan_gtest/stable@conan/stable")

@@ -1,8 +1,8 @@
-#ifdef __GLIBCXX__
-  #error \"Using libstdc++\"
-#else
-  #warning \"Using libc++\"
-#endif
+//#ifdef __GLIBCXX__
+//  #error \"Using libstdc++\"
+//#else
+//  #warning \"Using libc++\"
+//#endif
 
 #include <iostream>
 #include <string>

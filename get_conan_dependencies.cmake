@@ -452,8 +452,8 @@ conan_build_target_if(
   ENABLE_CLING
   ";-s;cling_conan:build_type=Release")
 
-set(ENABLE_LLVM_9 TRUE CACHE BOOL "ENABLE_LLVM_9")
-if(ENABLE_LLVM_9
+set(ENABLE_LLVM TRUE CACHE BOOL "ENABLE_LLVM")
+if(ENABLE_LLVM
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/llvm_9"
       "https://github.com/blockspacer/conan_llvm_9.git"
@@ -463,12 +463,12 @@ conan_build_target_if(
   "llvm_9" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9" # target to build
-  ENABLE_LLVM_9
+  ENABLE_LLVM
   ";-s;llvm_9:build_type=Release\
 ;-o;llvm_9:include_what_you_use=True")
 
-set(ENABLE_LLVM_9_INSTALLER TRUE CACHE BOOL "ENABLE_LLVM_9_INSTALLER")
-if(ENABLE_LLVM_9_INSTALLER
+set(ENABLE_LLVM_INSTALLER TRUE CACHE BOOL "ENABLE_LLVM_INSTALLER")
+if(ENABLE_LLVM_INSTALLER
   AND NOT EXISTS "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9_installer")
   git_clone("${CURRENT_SCRIPT_DIR}/.tmp/llvm_9_installer"
       "https://github.com/blockspacer/conan_llvm_9_installer.git"
@@ -478,7 +478,7 @@ conan_build_target_if(
   "llvm_9_installer" # target to clean
   "conan/stable"
   "${CURRENT_SCRIPT_DIR}/.tmp/llvm_9_installer" # target to build
-  ENABLE_LLVM_9_INSTALLER
+  ENABLE_LLVM_INSTALLER
   ";-s;llvm_9:build_type=Release\
 ;-o;llvm_9:include_what_you_use=True\
 ;-o;llvm_9_installer:include_what_you_use=True")

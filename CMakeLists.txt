@@ -262,8 +262,8 @@ target_compile_options(${FLEXTOOL_LIB_NAME}
 
 # without rtti you will get error:
 # ERROR: boost::bad_any_cast: failed conversion using boost::any_cast
-#target_compile_options(${FLEXTOOL_LIB_NAME} PRIVATE
-#  -frtti)
+target_compile_options(${FLEXTOOL_LIB_NAME} PRIVATE
+  -frtti)
 
 set(DEBUG_LIBRARY_SUFFIX "")
 set_target_properties(${FLEXTOOL_LIB_NAME}

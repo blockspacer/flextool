@@ -60,7 +60,7 @@ cmake -E time conan config install conan/remotes/
 
 NOTE: cling with LLVM build may take couple of hours.
 
-Command below uses `--profile clang`.
+Command below uses `--profile clang12_compiler12_compiler`.
 
 Example conan profile `~/.conan/profiles/clang`:
 
@@ -84,54 +84,54 @@ CXX=/usr/bin/clang++-10
 cmake_installer/3.15.5@conan/stable
 ```
 
+Create clang12_compiler profile:
+
+```bash
+[settings]
+# We are building in Ubuntu Linux
+
+os_build=Linux
+os=Linux
+arch_build=x86_64
+arch=x86_64
+
+compiler=clang
+compiler.version=12
+compiler.libcxx=libstdc++11
+compiler.cppstd=17
+
+llvm_9:build_type=Release
+
+[env]
+CC=/usr/bin/clang-12
+CXX=/usr/bin/clang++-12
+
+[build_requires]
+cmake_installer/3.15.5@conan/stable
+```
+
 Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html.
 
-We use `buildConanThirdparty.cmake` script to download and install conan packages.
+We use `.cmake` script to download and install conan packages.
 
 ```bash
-# NOTE: don't forget to re-run `conan install` or `conan create` after command below
-# NOTE: change `build_type=Debug` to `build_type=Release` in production
+git clone https://github.com/blockspacer/conan_github_downloader.git ~/conan_github_downloader
+
 cmake \
-  -DEXTRA_CONAN_OPTS=\
-"--profile;clang\
+  -DSCRIPT_PATH="$PWD/get_conan_dependencies.cmake"\
+  -DENABLE_CLING=TRUE\
+  -DENABLE_LLVM=TRUE\
+  -DENABLE_LLVM_INSTALLER=FALSE\
+  -DEXTRA_CONAN_OPTS="--profile;clang12_compiler\
 ;-s;build_type=Debug\
 ;-s;cling_conan:build_type=Release\
-;-s;llvm_tools:build_type=Release\
+;-s;llvm_12:build_type=Release\
 ;--build;missing" \
-  -DENABLE_LLVM_TOOLS=FALSE \
-  -DENABLE_CLING=TRUE \
-  -P tools/buildConanThirdparty.cmake
+  -P ~/conan_github_downloader/conan_github_downloader.cmake
 
 # clean build cache
 conan remove "*" --build --force
 ```
-
-- llvm_tools package
-
-NOTE: `llvm_tools` package is optional; you can skip it using `enable_llvm_tools=False` like so: `-e flextool:enable_llvm_tools=False -e basis:enable_llvm_tools=False -e chromium_base:enable_llvm_tools=False`
-
-NOTE: LLVM build may take couple of hours.
-
-NOTE: `-DENABLE_LLVM_TOOLS=TRUE` does the same (using `buildConanThirdparty.cmake`)
-
-Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html.
-
-You can install `llvm_tools` like so:
-
-```bash
-git clone https://github.com/blockspacer/llvm_tools.git
-cd llvm_tools
-conan create . \
-  conan/stable \
-  -s build_type=Release \
-  --profile clang \
-  --build missing
-
-# clean build cache
-conan remove "*" --build --force
-```
-
-Up-to-date instructions are found here: [https://github.com/blockspacer/llvm_tools](https://github.com/blockspacer/llvm_tools)
 
 ## Easy install with common plugins
 
@@ -139,24 +139,20 @@ If you want to install flextool and its plugins in single command, change the op
 
 NOTE: `tools/buildConanThirdparty.cmake` will perform a FULL RE-BUILD; it may take couple of hours.
 
-Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html.
+Command below uses `--profile clang12_compiler12_compiler`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html.
 
 We use `buildConanThirdparty.cmake` script to download and install conan packages.
 
 NOTE: set `-DENABLE_CLING=FALSE` if you already installed Cling using `tools/buildConanThirdparty.cmake` above.
 
 ```bash
-# NOTE: don't forget to re-run `conan install` or `conan create` after command below
-# NOTE: change `build_type=Debug` to `build_type=Release` in production
+git clone https://github.com/blockspacer/conan_github_downloader.git ~/conan_github_downloader
+
 cmake \
-  -DEXTRA_CONAN_OPTS=\
-"--profile;clang\
-;-s;build_type=Debug\
-;-s;cling_conan:build_type=Release\
-;-s;llvm_tools:build_type=Release\
-;--build;missing" \
-  -DENABLE_LLVM_TOOLS=FALSE \
-  -DENABLE_CLING=TRUE \
+  -DSCRIPT_PATH="$PWD/get_conan_dependencies.cmake"\
+  -DENABLE_CLING=TRUE\
+  -DENABLE_LLVM=TRUE\
+  -DENABLE_LLVM_INSTALLER=FALSE\
   -DENABLE_FLEXTOOL=TRUE \
   -DENABLE_BASIS_PLUGIN_HELPER=TRUE \
   -DENABLE_FLEX_REFLECT_PLUGIN=TRUE \
@@ -166,7 +162,12 @@ cmake \
   -DENABLE_FLEX_TYPECLASS_PLUGIN=TRUE \
   -DENABLE_FLEX_META_PLUGIN=TRUE \
   -DENABLE_FLEX_META_DEMO=TRUE \
-  -P tools/buildConanThirdparty.cmake
+  -DEXTRA_CONAN_OPTS="--profile;clang12_compiler\
+;-s;build_type=Debug\
+;-s;cling_conan:build_type=Release\
+;-s;llvm_12:build_type=Release\
+;--build;missing" \
+  -P ~/conan_github_downloader/conan_github_downloader.cmake
 
 # clean build cache
 conan remove "*" --build --force
@@ -176,7 +177,7 @@ conan remove "*" --build --force
 
 Use command below to re-build flextool (plugins must be installed separately).
 
-Command below uses `--profile clang`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html
+Command below uses `--profile clang12_compiler12_compiler`. Before creation of conan profile file, see: https://docs.conan.io/en/latest/using_packages/using_profiles.html
 
 ```bash
 export VERBOSE=1
@@ -184,11 +185,6 @@ export CONAN_REVISIONS_ENABLED=1
 export CONAN_VERBOSE_TRACEBACK=1
 export CONAN_PRINT_RUN_COMMANDS=1
 export CONAN_LOGGING_LEVEL=10
-export GIT_SSL_NO_VERIFY=true
-
-# Tested with clang 10
-export CXX=clang++-10
-export CC=clang-10
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 # NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
@@ -197,7 +193,7 @@ cmake -E time \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
   -s llvm_tools:build_type=Release \
-  --profile clang \
+  --profile clang12_compiler \
       -e flextool:enable_tests=True \
       -e flextool:enable_llvm_tools=True
 
@@ -230,52 +226,94 @@ find . -type f -name "*_buildflags.tmp" -exec rm {} \;
 
 (rm -rf local_build || true)
 
-mkdir local_build
-
-cd local_build
-
 export CONAN_REVISIONS_ENABLED=1
 export CONAN_VERBOSE_TRACEBACK=1
 export CONAN_PRINT_RUN_COMMANDS=1
 export CONAN_LOGGING_LEVEL=10
-export GIT_SSL_NO_VERIFY=true
+
+export PKG_NAME=flextool/master@conan/stable
+
+(CONAN_REVISIONS_ENABLED=1 \
+    conan remove --force $PKG_NAME || true)
 
 # NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
 cmake -E time \
-  conan install .. \
-  --install-folder . \
+  conan install . \
+  --install-folder local_build \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
-  -s llvm_9:build_type=Release \
-  --profile clang \
+  -s llvm_12:build_type=Release \
+  -o openssl:shared=True \
+  -e basis:enable_tests=True \
+  -o chromium_base:shared=True \
+  -e chromium_base:enable_tests=True \
+  -o perfetto:is_hermetic_clang=False \
+  --profile clang12_compiler \
+  -e flexlib:enable_tests=True \
+  -o flexlib:shared=False \
+  -o perfetto:is_hermetic_clang=False \
+  -o flexlib:enable_cling=True \
   -e flextool:enable_tests=True \
-  -e flextool:enable_cling=False \
-  -o perfetto:is_hermetic_clang=False
+  -o flextool:enable_cling=True
 
-(rm CMakeCache.txt || true)
+(rm local_build/CMakeCache.txt || true)
+
+cmake -E time \
+  conan source . \
+  --source-folder . \
+  --install-folder local_build
 
 # You can use `cmake --build . -- -j14` on second run.
 cmake -E time \
-  conan build .. --build-folder=.
+  conan build . \
+  --build-folder local_build \
+  --source-folder . \
+  --install-folder local_build
+
+conan package . \
+  --build-folder local_build \
+  --package-folder local_build/package_dir \
+  --source-folder . \
+  --install-folder local_build
 
 cmake -E time \
-  conan package --build-folder=. ..
+  conan export-pkg . conan/stable \
+  --package-folder local_build/package_dir \
+  -s build_type=Debug \
+   --force \
+  -s cling_conan:build_type=Release \
+  -s llvm_12:build_type=Release \
+  -o openssl:shared=True \
+  -e basis:enable_tests=True \
+  -o chromium_base:shared=True \
+  -e chromium_base:enable_tests=True \
+  -o perfetto:is_hermetic_clang=False \
+  --profile clang12_compiler \
+  -e flexlib:enable_tests=True \
+  -o flexlib:shared=False \
+  -o perfetto:is_hermetic_clang=False \
+  -o flexlib:enable_cling=True \
+  -e flextool:enable_tests=True \
+  -o flextool:enable_cling=True
 
 cmake -E time \
-  conan export-pkg .. conan/stable \
+  conan test test_package \
+  flextool/master@conan/stable \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
-  -s llvm_9:build_type=Release \
-  -e flextool:enable_cling=False \
-   --force --profile clang
-
-cmake -E time \
-  conan test ../test_package flextool/master@conan/stable \
-  -s build_type=Debug \
-  -s cling_conan:build_type=Release \
-  -s llvm_9:build_type=Release \
-  -e flextool:enable_cling=False \
-  --profile clang
+  -s llvm_12:build_type=Release \
+  -o openssl:shared=True \
+  -e basis:enable_tests=True \
+  -o chromium_base:shared=True \
+  -e chromium_base:enable_tests=True \
+  -o perfetto:is_hermetic_clang=False \
+  --profile clang12_compiler \
+  -e flexlib:enable_tests=True \
+  -o flexlib:shared=False \
+  -o perfetto:is_hermetic_clang=False \
+  -o flexlib:enable_cling=True \
+  -e flextool:enable_tests=True \
+  -o flextool:enable_cling=True
 ```
 
 ## For contibutors: conan editable mode
@@ -293,7 +331,6 @@ export CONAN_REVISIONS_ENABLED=1
 export CONAN_VERBOSE_TRACEBACK=1
 export CONAN_PRINT_RUN_COMMANDS=1
 export CONAN_LOGGING_LEVEL=10
-export GIT_SSL_NO_VERIFY=true
 
 cmake -E time \
   conan install . \
@@ -301,7 +338,7 @@ cmake -E time \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
   -s llvm_tools:build_type=Release \
-  --profile clang \
+  --profile clang12_compiler \
       -e flextool:enable_tests=True \
       -e flextool:enable_llvm_tools=True
 
@@ -395,10 +432,6 @@ EOF
 ```
 
 ```bash
-# Tested with clang 10
-export CXX=clang++-10
-export CC=clang-10
-
 mkdir build_flex
 
 cd build_flex
@@ -429,6 +462,7 @@ conan workspace install \
   -s cling_conan:build_type=Release \
   -s llvm_tools:build_type=Release \
     -o openssl:shared=True \
+    -o chromium_base:shared=True \
     -e basis:enable_tests=True \
     -e abseil:enable_llvm_tools=True \
     -o chromium_base:use_alloc_shim=True \
@@ -444,9 +478,6 @@ conan workspace install \
 Build into folder created by `conan workspace install`:
 
 ```bash
-export CXX=clang++-10
-export CC=clang-10
-
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 export build_type=Debug
 
@@ -548,10 +579,6 @@ root:
 Use `add_dependencies` in `CMakeLists.txt`:
 
 ```bash
-# Tested with clang 10
-export CXX=clang++-10
-export CC=clang-10
-
 mkdir build_flex
 
 cd build_flex
@@ -608,6 +635,7 @@ conan workspace install \
     -s llvm_tools:build_type=Release \
     -e basis:enable_tests=True \
     -o openssl:shared=True \
+    -o chromium_base:shared=True \
     -o chromium_base:use_alloc_shim=True \
     -o perfetto:is_hermetic_clang=False \
     -o chromium_tcmalloc:use_alloc_shim=True \
@@ -641,9 +669,6 @@ conan workspace install \
 Build and test workspace:
 
 ```bash
-export CXX=clang++-10
-export CC=clang-10
-
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 export build_type=Debug
 
@@ -734,7 +759,6 @@ export CONAN_REVISIONS_ENABLED=1
 export CONAN_VERBOSE_TRACEBACK=1
 export CONAN_PRINT_RUN_COMMANDS=1
 export CONAN_LOGGING_LEVEL=10
-export GIT_SSL_NO_VERIFY=true
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 # NOTE: use --build=missing if you got error `ERROR: Missing prebuilt package`
@@ -853,7 +877,6 @@ export CONAN_REVISIONS_ENABLED=1
 export CONAN_VERBOSE_TRACEBACK=1
 export CONAN_PRINT_RUN_COMMANDS=1
 export CONAN_LOGGING_LEVEL=10
-export GIT_SSL_NO_VERIFY=true
 
 # NOTE: set `use_alloc_shim=False` and `enable_valgrind=True` for valgrind support
 cmake -E time \
@@ -862,7 +885,7 @@ cmake -E time \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
   -s llvm_tools:build_type=Release \
-  --profile clang \
+  --profile clang12_compiler \
       -o flextool:enable_valgrind=True \
       -e flextool:enable_tests=True \
       -e flextool:enable_llvm_tools=True \
@@ -987,7 +1010,6 @@ export CONAN_REVISIONS_ENABLED=1
 export CONAN_VERBOSE_TRACEBACK=1
 export CONAN_PRINT_RUN_COMMANDS=1
 export CONAN_LOGGING_LEVEL=10
-export GIT_SSL_NO_VERIFY=true
 
 cmake -E time \
   conan install . \
@@ -995,7 +1017,7 @@ cmake -E time \
   -s build_type=Debug \
   -s cling_conan:build_type=Release \
   -s llvm_tools:build_type=Release \
-  --profile clang \
+  --profile clang12_compiler \
       -e flextool:enable_tests=True \
       -e flextool:enable_llvm_tools=True
 
@@ -1006,9 +1028,6 @@ cmake -E time \
 
 # see section about `conan editable mode`
 cd local_build_scan_build
-
-export CXX=clang++-10
-export CC=clang-10
 
 # NOTE: change `build_type=Debug` to `build_type=Release` in production
 export build_type=Debug
@@ -1109,9 +1128,6 @@ For details, see: [https://include-what-you-use.org/](https://include-what-you-u
 Usage (runs cmake with `-DENABLE_IWYU=ON`):
 
 ```bash
-export CXX=clang++-10
-export CC=clang-10
-
 # creates local build in separate folder and runs cmake targets
 cmake -DIWYU="ON" -DCLEAN_OLD="ON" -P tools/run_tool.cmake
 ```
@@ -1363,7 +1379,6 @@ export CONAN_REVISIONS_ENABLED=1
 export CONAN_VERBOSE_TRACEBACK=1
 export CONAN_PRINT_RUN_COMMANDS=1
 export CONAN_LOGGING_LEVEL=10
-export GIT_SSL_NO_VERIFY=true
 
 # NOTE: NO `--profile` argument cause we use `CXX` env. var
 # NOTE: you may want to re-build `cling_conan` with clang 10
